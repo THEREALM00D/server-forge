@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(yarn create:*)",
+      "WebFetch(domain:mui.com)",
+      "WebFetch(domain:www.electronjs.org)",
+      "Bash(yarn add:*)",
+      "WebFetch(domain:docs.palworldgame.com)"
+    ]
+  }
+}
