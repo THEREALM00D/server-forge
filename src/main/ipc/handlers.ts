@@ -4,6 +4,7 @@ import { SteamCMD } from '../steamcmd/SteamCMD'
 import { PalConfigParser } from '../config/PalConfigParser'
 import { SystemMonitor } from '../monitor/SystemMonitor'
 import { FirewallManager } from '../firewall/FirewallManager'
+import { PalworldApiClient } from '../server/PalworldApiClient'
 import Store from 'electron-store'
 
 export function registerIpcHandlers(): void {
@@ -63,13 +64,32 @@ export function registerIpcHandlers(): void {
       event.sender.send('server:log', line)
     })
   })
-  ipcMain.handle('server:stop', () => serverManager.stop())
+  const getApiClient = (): PalworldApiClient | null => {
+    const serverPath = store.get('serverPath', '')
+    const cfg = configParser.read(serverPath)
+    if (!cfg.RESTAPIEnabled) return null
+    return new PalworldApiClient(Number(cfg.RESTAPIPort ?? 8212), String(cfg.AdminPassword ?? ''))
+  }
+
+  const getStopConfig = () => {
+    const serverPath = store.get('serverPath', '')
+    const cfg = configParser.read(serverPath)
+    return {
+      restApiEnabled: cfg.RESTAPIEnabled === true,
+      restApiPort: Number(cfg.RESTAPIPort ?? 8212),
+      adminPassword: String(cfg.AdminPassword ?? ''),
+      shutdownWaittime: 0,
+      shutdownMessage: '',
+    }
+  }
+
+  ipcMain.handle('server:stop', () => serverManager.stop(getStopConfig()))
   ipcMain.handle('server:restart', async (event) => {
     const serverPath = store.get('serverPath', '')
     const args = store.get('serverArgs', [])
     return serverManager.restart(serverPath, args, (line) => {
       event.sender.send('server:log', line)
-    })
+    }, getStopConfig())
   })
   ipcMain.handle('server:status', () => serverManager.getStatus())
 
@@ -121,6 +141,48 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('firewall:deleteCustomRule', (_, name: string, protocol: 'TCP' | 'UDP') =>
     firewall.deleteCustomRule(name, protocol)
   )
+
+  // --- Palworld REST API ---
+  ipcMain.handle('palapi:getInfo', () => {
+    const client = getApiClient()
+    if (!client) throw new Error('REST API non configurée')
+    return client.getInfo()
+  })
+  ipcMain.handle('palapi:getPlayers', () => {
+    const client = getApiClient()
+    if (!client) throw new Error('REST API non configurée')
+    return client.getPlayers()
+  })
+  ipcMain.handle('palapi:getMetrics', () => {
+    const client = getApiClient()
+    if (!client) throw new Error('REST API non configurée')
+    return client.getMetrics()
+  })
+  ipcMain.handle('palapi:announce', (_, message: string) => {
+    const client = getApiClient()
+    if (!client) throw new Error('REST API non configurée')
+    return client.announce(message)
+  })
+  ipcMain.handle('palapi:kick', (_, userid: string, message?: string) => {
+    const client = getApiClient()
+    if (!client) throw new Error('REST API non configurée')
+    return client.kick(userid, message)
+  })
+  ipcMain.handle('palapi:ban', (_, userid: string, message?: string) => {
+    const client = getApiClient()
+    if (!client) throw new Error('REST API non configurée')
+    return client.ban(userid, message)
+  })
+  ipcMain.handle('palapi:unban', (_, userid: string) => {
+    const client = getApiClient()
+    if (!client) throw new Error('REST API non configurée')
+    return client.unban(userid)
+  })
+  ipcMain.handle('palapi:shutdown', (_, waittime: number, message?: string) => {
+    const client = getApiClient()
+    if (!client) throw new Error('REST API non configurée')
+    return client.shutdown(waittime, message)
+  })
 
   // --- App info ---
   ipcMain.handle('app:getVersion', () => app.getVersion())

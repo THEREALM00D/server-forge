@@ -67,6 +67,17 @@ const api = {
     deleteCustomRule: (name: string, protocol: 'TCP' | 'UDP') =>
       ipcRenderer.invoke('firewall:deleteCustomRule', name, protocol),
   },
+  // Palworld REST API
+  palapi: {
+    getInfo: () => ipcRenderer.invoke('palapi:getInfo'),
+    getPlayers: () => ipcRenderer.invoke('palapi:getPlayers'),
+    getMetrics: () => ipcRenderer.invoke('palapi:getMetrics'),
+    announce: (message: string) => ipcRenderer.invoke('palapi:announce', message),
+    kick: (userid: string, message?: string) => ipcRenderer.invoke('palapi:kick', userid, message),
+    ban: (userid: string, message?: string) => ipcRenderer.invoke('palapi:ban', userid, message),
+    unban: (userid: string) => ipcRenderer.invoke('palapi:unban', userid),
+    shutdown: (waittime: number, message?: string) => ipcRenderer.invoke('palapi:shutdown', waittime, message),
+  },
   // Dialog
   dialog: {
     selectFolder: () => ipcRenderer.invoke('dialog:selectFolder')

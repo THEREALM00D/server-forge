@@ -6,6 +6,36 @@ interface SystemStats {
   uptime: number
 }
 
+interface PalServerInfo {
+  version: string
+  servername: string
+  description: string
+  worldguid: string
+}
+
+interface PalPlayer {
+  name: string
+  accountName: string
+  playerId: string
+  userId: string
+  ip: string
+  ping: number
+  location_x: number
+  location_y: number
+  level: number
+  building_count: number
+}
+
+interface PalMetrics {
+  serverfps: number
+  currentplayernum: number
+  serverframetime: number
+  maxplayernum: number
+  uptime: number
+  basecampnum: number
+  days: number
+}
+
 interface API {
   window: {
     minimize: () => Promise<void>
@@ -52,6 +82,16 @@ interface API {
     listCustomRules: () => Promise<Array<{ name: string; port: number; protocol: 'TCP' | 'UDP'; active: boolean }>>
     createCustomRule: (name: string, port: number, protocol: 'TCP' | 'UDP') => Promise<{ success: boolean; error?: string }>
     deleteCustomRule: (name: string, protocol: 'TCP' | 'UDP') => Promise<{ success: boolean; error?: string }>
+  }
+  palapi: {
+    getInfo: () => Promise<PalServerInfo>
+    getPlayers: () => Promise<{ players: PalPlayer[] }>
+    getMetrics: () => Promise<PalMetrics>
+    announce: (message: string) => Promise<void>
+    kick: (userid: string, message?: string) => Promise<void>
+    ban: (userid: string, message?: string) => Promise<void>
+    unban: (userid: string) => Promise<void>
+    shutdown: (waittime: number, message?: string) => Promise<void>
   }
   dialog: {
     selectFolder: () => Promise<string | null>

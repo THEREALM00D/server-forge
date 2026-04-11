@@ -1,0 +1,89 @@
+import http from 'http'
+
+export interface ServerInfo {
+  version: string
+  servername: string
+  description: string
+  worldguid: string
+}
+
+export interface Player {
+  name: string
+  accountName: string
+  playerId: string
+  userId: string
+  ip: string
+  ping: number
+  location_x: number
+  location_y: number
+  level: number
+  building_count: number
+}
+
+export interface ServerMetrics {
+  serverfps: number
+  currentplayernum: number
+  serverframetime: number
+  maxplayernum: number
+  uptime: number
+  basecampnum: number
+  days: number
+}
+
+export class PalworldApiClient {
+  private auth: string
+
+  constructor(private port: number, adminPassword: string) {
+    this.auth = Buffer.from(`admin:${adminPassword}`).toString('base64')
+  }
+
+  private request<T = void>(method: string, path: string, body?: object): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const payload = body ? JSON.stringify(body) : ''
+      const req = http.request(
+        {
+          hostname: '127.0.0.1',
+          port: this.port,
+          path: `/v1/api${path}`,
+          method,
+          headers: {
+            Authorization: `Basic ${this.auth}`,
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(payload),
+          },
+          timeout: 8000,
+        },
+        (res) => {
+          let data = ''
+          res.on('data', (chunk) => (data += chunk))
+          res.on('end', () => {
+            if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+              try { resolve(data ? (JSON.parse(data) as T) : (undefined as T)) }
+              catch { resolve(undefined as T) }
+            } else {
+              reject(new Error(`HTTP ${res.statusCode}`))
+            }
+          })
+        }
+      )
+      req.on('error', reject)
+      req.on('timeout', () => { req.destroy(); reject(new Error('Timeout')) })
+      if (payload) req.write(payload)
+      req.end()
+    })
+  }
+
+  getInfo()    { return this.request<ServerInfo>('GET', '/info') }
+  getPlayers() { return this.request<{ players: Player[] }>('GET', '/players') }
+  getMetrics() { return this.request<ServerMetrics>('GET', '/metrics') }
+  getSettings(){ return this.request<Record<string, unknown>>('GET', '/settings') }
+
+  announce(message: string)               { return this.request('POST', '/announce', { message }) }
+  save()                                  { return this.request('POST', '/save') }
+  shutdown(waittime: number, message = '') { return this.request('POST', '/shutdown', { waittime, message }) }
+  stop()                                  { return this.request('POST', '/stop') }
+
+  kick(userid: string, message?: string)  { return this.request('POST', '/kick', { userid, message }) }
+  ban(userid: string, message?: string)   { return this.request('POST', '/ban', { userid, message }) }
+  unban(userid: string)                   { return this.request('POST', '/unban', { userid }) }
+}

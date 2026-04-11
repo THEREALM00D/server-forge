@@ -1,6 +1,15 @@
 import { spawn, ChildProcess, exec } from 'child_process'
 import { join } from 'path'
 import { existsSync } from 'fs'
+import { PalworldApiClient } from './PalworldApiClient'
+
+export interface StopConfig {
+  restApiEnabled?: boolean
+  restApiPort?: number
+  adminPassword?: string
+  shutdownWaittime?: number
+  shutdownMessage?: string
+}
 
 export type ServerStatus = 'stopped' | 'starting' | 'running' | 'stopping' | 'crashed'
 
@@ -10,6 +19,7 @@ export class ServerManager {
   private autoRestart = false
   private restartCount = 0
   private readonly maxRestarts = 5
+  private onLog: (line: string) => void = () => {}
 
   async start(
     serverPath: string,
@@ -25,6 +35,7 @@ export class ServerManager {
       return { success: false, error: `PalServer.exe not found at: ${exe}` }
     }
 
+    this.onLog = onLog
     this.status = 'starting'
     onLog('[Manager] Starting Palworld server...')
 
@@ -72,41 +83,92 @@ export class ServerManager {
     }
   }
 
-  async stop(): Promise<{ success: boolean; error?: string }> {
+  private async stopViaApi(client: PalworldApiClient, waittime: number, message: string): Promise<boolean> {
+    try {
+      if (message) {
+        await client.announce(message)
+        this.onLog(`[Manager] Annonce envoyée: ${message}`)
+      }
+      this.onLog('[Manager] Sauvegarde en cours...')
+      await client.save()
+      this.onLog('[Manager] Sauvegarde terminée.')
+      await client.shutdown(waittime, '')
+      this.onLog(`[Manager] Shutdown API envoyé (attente ${waittime}s).`)
+      return true
+    } catch (err) {
+      this.onLog(`[Manager] API indisponible: ${(err as Error).message}`)
+      return false
+    }
+  }
+
+  private forceKill(pid: number): void {
+    if (process.platform === 'win32') {
+      exec(`taskkill /F /T /PID ${pid}`, (err) => {
+        if (err) try { this.process?.kill('SIGKILL') } catch {}
+      })
+    } else {
+      try { this.process?.kill('SIGKILL') } catch {}
+    }
+  }
+
+  async stop(cfg?: StopConfig): Promise<{ success: boolean; error?: string }> {
     if (!this.process || this.status === 'stopped') {
       return { success: false, error: 'Server is not running' }
     }
 
     this.autoRestart = false
     this.status = 'stopping'
+
     const pid = this.process.pid
 
+    if (cfg?.restApiEnabled && cfg.restApiPort && cfg.adminPassword) {
+      const client = new PalworldApiClient(cfg.restApiPort, cfg.adminPassword)
+      const waittime = cfg.shutdownWaittime ?? 0
+      const message = cfg.shutdownMessage ?? ''
+      const apiOk = await this.stopViaApi(client, waittime, message)
+
+      if (apiOk && waittime > 0) {
+        // Wait for the server to shut itself down gracefully
+        this.onLog(`[Manager] Attente arrêt gracieux (${waittime}s)...`)
+        await new Promise<void>((resolve) => {
+          let done = false
+          const finish = () => { if (!done) { done = true; resolve() } }
+          this.process!.once('close', finish)
+          setTimeout(finish, (waittime + 10) * 1000)
+        })
+        return { success: true }
+      }
+
+      if (!apiOk && pid) {
+        this.onLog('[Manager] Arrêt forcé via taskkill...')
+        return new Promise((resolve) => {
+          let done = false
+          const finish = () => { if (!done) { done = true; resolve({ success: true }) } }
+          this.process!.once('close', finish)
+          setTimeout(finish, 6000)
+          this.forceKill(pid)
+        })
+      }
+    }
+
+    this.onLog('[Manager] Arrêt du serveur...')
     return new Promise((resolve) => {
       let done = false
-      const finish = () => {
-        if (!done) { done = true; resolve({ success: true }) }
-      }
-
+      const finish = () => { if (!done) { done = true; resolve({ success: true }) } }
       this.process!.once('close', finish)
       setTimeout(finish, 6000)
-
-      if (process.platform === 'win32' && pid) {
-        exec(`taskkill /F /T /PID ${pid}`, (err) => {
-          if (err) try { this.process?.kill('SIGKILL') } catch {}
-        })
-      } else {
-        try { this.process!.kill('SIGKILL') } catch {}
-      }
+      if (pid) this.forceKill(pid)
     })
   }
 
   async restart(
     serverPath: string,
     args: string[],
-    onLog: (line: string) => void
+    onLog: (line: string) => void,
+    cfg?: StopConfig
   ): Promise<{ success: boolean; error?: string }> {
     if (this.process) {
-      await this.stop()
+      await this.stop(cfg)
       await new Promise((r) => setTimeout(r, 1500))
     }
     this.restartCount = 0
