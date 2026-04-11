@@ -2,15 +2,108 @@ import { useState, useEffect } from 'react'
 import { useForm } from '@tanstack/react-form'
 import {
   Box, Typography, Paper, Button, TextField,
-  Switch, FormControlLabel, Stack, Divider, Alert
+  Switch, FormControlLabel, Stack, Divider, Alert,
+  Select, MenuItem, FormControl, InputLabel,
 } from '@mui/material'
 import SaveIcon from '@mui/icons-material/Save'
 import { useServer } from '../context/ServerContext'
 import { configService } from '../services/configService'
 
 type Settings = Record<string, string | number | boolean>
-interface FieldDef { key: string; label: string; type: 'text' | 'number' | 'boolean' }
+interface SelectOption { value: string; label: string }
+interface FieldDef { key: string; label: string; type: 'text' | 'number' | 'boolean' | 'select'; options?: SelectOption[] }
 interface FieldGroup { label: string; fields: FieldDef[] }
+
+type DifficultyPreset = Partial<Record<string, string | number | boolean>>
+
+const DIFFICULTY_PRESETS: Record<string, DifficultyPreset> = {
+  Casual: {
+    ExpRate: 3.0,
+    PalCaptureRate: 2.0,
+    PalSpawnNumRate: 1.0,
+    PalDamageRateAttack: 0.5,
+    PalDamageRateDefense: 0.3,
+    PlayerDamageRateAttack: 2.0,
+    PlayerDamageRateDefense: 0.3,
+    PlayerStomachDecreaceRate: 0.1,
+    PlayerStaminaDecreaceRate: 0.1,
+    PlayerAutoHPRegeneRate: 2.0,
+    PlayerAutoHpRegeneRateInSleep: 3.0,
+    PalStomachDecreaceRate: 0.1,
+    PalStaminaDecreaceRate: 0.1,
+    PalAutoHPRegeneRate: 2.0,
+    PalAutoHpRegeneRateInSleep: 3.0,
+    BuildObjectDamageRate: 0.5,
+    BuildObjectDeteriorationDamageRate: 0.0,
+    CollectionDropRate: 2.0,
+    CollectionObjectHpRate: 0.5,
+    CollectionObjectRespawnSpeedRate: 2.0,
+    EnemyDropItemRate: 2.0,
+    DeathPenalty: 'None',
+    bEnableInvaderEnemy: false,
+    bEnableNonLoginPenalty: false,
+    WorkSpeedRate: 2.0,
+    PalEggDefaultHatchingTime: 10.0,
+  },
+  Normal: {
+    ExpRate: 1.0,
+    PalCaptureRate: 1.0,
+    PalSpawnNumRate: 1.0,
+    PalDamageRateAttack: 1.0,
+    PalDamageRateDefense: 1.0,
+    PlayerDamageRateAttack: 1.0,
+    PlayerDamageRateDefense: 1.0,
+    PlayerStomachDecreaceRate: 1.0,
+    PlayerStaminaDecreaceRate: 1.0,
+    PlayerAutoHPRegeneRate: 1.0,
+    PlayerAutoHpRegeneRateInSleep: 1.0,
+    PalStomachDecreaceRate: 1.0,
+    PalStaminaDecreaceRate: 1.0,
+    PalAutoHPRegeneRate: 1.0,
+    PalAutoHpRegeneRateInSleep: 1.0,
+    BuildObjectDamageRate: 1.0,
+    BuildObjectDeteriorationDamageRate: 1.0,
+    CollectionDropRate: 1.0,
+    CollectionObjectHpRate: 1.0,
+    CollectionObjectRespawnSpeedRate: 1.0,
+    EnemyDropItemRate: 1.0,
+    DeathPenalty: 'Item',
+    bEnableInvaderEnemy: true,
+    bEnableNonLoginPenalty: true,
+    WorkSpeedRate: 1.0,
+    PalEggDefaultHatchingTime: 72.0,
+  },
+  Hard: {
+    // Reset params touched by other presets back to Normal
+    PalDamageRateAttack: 1.0,
+    PalDamageRateDefense: 1.0,
+    PlayerStomachDecreaceRate: 1.0,
+    PlayerStaminaDecreaceRate: 1.0,
+    PlayerAutoHPRegeneRate: 1.0,
+    PlayerAutoHpRegeneRateInSleep: 1.0,
+    PalStomachDecreaceRate: 1.0,
+    PalStaminaDecreaceRate: 1.0,
+    PalAutoHPRegeneRate: 1.0,
+    PalAutoHpRegeneRateInSleep: 1.0,
+    BuildObjectDamageRate: 1.0,
+    BuildObjectDeteriorationDamageRate: 1.0,
+    CollectionDropRate: 1.0,
+    CollectionObjectHpRate: 1.0,
+    CollectionObjectRespawnSpeedRate: 1.0,
+    PalSpawnNumRate: 1.0,
+    WorkSpeedRate: 1.0,
+    bEnableInvaderEnemy: true,
+    bEnableNonLoginPenalty: true,
+    // Hard-specific parameters
+    ExpRate: 0.8,
+    PalCaptureRate: 0.8,
+    PlayerDamageRateAttack: 0.5,
+    PlayerDamageRateDefense: 4.0,
+    EnemyDropItemRate: 0.5,
+    PalEggDefaultHatchingTime: 72.0,
+    DeathPenalty: 'All',
+  },
+}
 
 const FIELD_GROUPS: FieldGroup[] = [
   {
@@ -129,7 +222,12 @@ const FIELD_GROUPS: FieldGroup[] = [
   {
     label: 'Mort & Pénalités',
     fields: [
-      { key: 'DeathPenalty', label: 'Pénalité de mort', type: 'text' },
+      { key: 'DeathPenalty', label: 'Pénalité de mort', type: 'select', options: [
+        { value: 'None', label: 'Aucune' },
+        { value: 'Item', label: 'Objets' },
+        { value: 'ItemAndEquipment', label: 'Objets + équipement' },
+        { value: 'All', label: 'Tout' },
+      ]},
       { key: 'BlockRespawnTime', label: 'Temps de blocage respawn', type: 'number' },
       { key: 'RespawnPenaltyDurationThreshold', label: 'Seuil durée pénalité respawn', type: 'number' },
       { key: 'RespawnPenaltyTimeScale', label: 'Échelle temps pénalité respawn', type: 'number' },
@@ -162,7 +260,12 @@ const FIELD_GROUPS: FieldGroup[] = [
   {
     label: 'Gameplay',
     fields: [
-      { key: 'Difficulty', label: 'Difficulté', type: 'text' },
+      { key: 'Difficulty', label: 'Difficulté', type: 'select', options: [
+        { value: 'None', label: 'Personnalisé' },
+        { value: 'Casual', label: 'Casual' },
+        { value: 'Normal', label: 'Normal' },
+        { value: 'Hard', label: 'Difficile' },
+      ]},
       { key: 'bIsMultiplay', label: 'Multijoueur', type: 'boolean' },
       { key: 'bHardcore', label: 'Mode Hardcore', type: 'boolean' },
       { key: 'bCharacterRecreateInHardcore', label: 'Recréer perso en Hardcore', type: 'boolean' },
@@ -232,6 +335,12 @@ export default function Config() {
     })
   }, [state.serverPath])
 
+  const applyDifficultyPreset = (difficulty: string) => {
+    const preset = DIFFICULTY_PRESETS[difficulty]
+    if (!preset) return
+    Object.entries(preset).forEach(([k, v]) => form.setFieldValue(k as never, v as never))
+  }
+
   if (!state.serverPath) {
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60%' }}>
@@ -257,7 +366,7 @@ export default function Config() {
                 {group.label}
               </Typography>
               <Stack spacing={1.5}>
-                {group.fields.map(({ key, label, type }, idx) => (
+                {group.fields.map(({ key, label, type, options }, idx) => (
                   <form.Field key={key} name={key as never}>
                     {(field) => (
                       <>
@@ -274,6 +383,25 @@ export default function Config() {
                             label={<Typography variant="body2">{label}</Typography>}
                             sx={{ justifyContent: 'space-between', ml: 0, flexDirection: 'row-reverse' }}
                           />
+                        ) : type === 'select' ? (
+                          <Stack direction="row" sx={{ alignItems: 'center', gap: 2 }}>
+                            <Typography variant="body2" sx={{ minWidth: 200 }}>{label}</Typography>
+                            <FormControl size="small" sx={{ flex: 1 }}>
+                              <InputLabel>{label}</InputLabel>
+                              <Select
+                                label={label}
+                                value={String(field.state.value ?? '')}
+                                onChange={(e) => {
+                                  field.handleChange(e.target.value as never)
+                                  if (key === 'Difficulty') applyDifficultyPreset(e.target.value)
+                                }}
+                              >
+                                {options?.map((opt) => (
+                                  <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+                          </Stack>
                         ) : (
                           <Stack direction="row" sx={{ alignItems: 'center', gap: 2 }}>
                             <Typography variant="body2" sx={{ minWidth: 200 }}>{label}</Typography>
