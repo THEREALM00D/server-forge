@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react'
 import type { ServerStatus, SystemStats } from '../types'
-import { configService } from '../services/configService'
+import { configService } from '../games/palworld/services/configService'
 import { monitorService } from '../services/monitorService'
-import { serverService } from '../services/serverService'
+import { serverService } from '../games/palworld/services/serverService'
 
 interface ServerState {
   status: ServerStatus

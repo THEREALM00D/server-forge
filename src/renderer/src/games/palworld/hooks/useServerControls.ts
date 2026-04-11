@@ -1,4 +1,4 @@
-import { useServer } from '../context/ServerContext'
+import { useServer } from '../../../context/ServerContext'
 import { serverService } from '../services/serverService'
 
 export function useServerControls() {

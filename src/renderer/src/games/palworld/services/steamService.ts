@@ -1,4 +1,4 @@
-import type { OperationResult } from '../types'
+import type { OperationResult } from '../../../types'
 
 export const steamService = {
   isInstalled: (): Promise<boolean> => window.api.steamcmd.isInstalled(),

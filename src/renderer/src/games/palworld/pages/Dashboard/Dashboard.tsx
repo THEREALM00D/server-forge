@@ -2,9 +2,9 @@ import { Box, Typography, Paper, Button, Chip, LinearProgress, Stack } from '@mu
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import StopIcon from '@mui/icons-material/Stop'
 import RestartAltIcon from '@mui/icons-material/RestartAlt'
-import { useServer } from '../context/ServerContext'
-import { useServerControls } from '../hooks/useServerControls'
-import type { SystemStats } from '../types'
+import { useServer } from '../../../../context/ServerContext'
+import { useServerControls } from '../../hooks/useServerControls'
+import type { SystemStats } from '../../../../types'
 
 const STATUS_COLOR: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   running: 'success',

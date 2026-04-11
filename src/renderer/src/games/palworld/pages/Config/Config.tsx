@@ -6,8 +6,8 @@ import {
   Select, MenuItem, FormControl, InputLabel,
 } from '@mui/material'
 import SaveIcon from '@mui/icons-material/Save'
-import { useServer } from '../context/ServerContext'
-import { configService } from '../services/configService'
+import { useServer } from '../../../../context/ServerContext'
+import { configService } from '../../services/configService'
 
 type Settings = Record<string, string | number | boolean>
 interface SelectOption { value: string; label: string }

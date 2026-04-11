@@ -1,4 +1,4 @@
-import type { FirewallRuleStatus, OperationResult } from '../types'
+import type { FirewallRuleStatus, OperationResult } from '../../../types'
 
 export const firewallService = {
   isAdmin: (): Promise<boolean> => window.api.firewall.isAdmin(),

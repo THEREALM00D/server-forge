@@ -11,9 +11,9 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import CancelIcon from '@mui/icons-material/Cancel'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
-import { useServer } from '../context/ServerContext'
-import { firewallService } from '../services/firewallService'
-import { configService } from '../services/configService'
+import { useServer } from '../../../../context/ServerContext'
+import { firewallService } from '../../services/firewallService'
+import { configService } from '../../services/configService'
 import type { FirewallRuleStatus } from '../types'
 
 const RULE_KEYS: Record<string, 'game' | 'rcon' | 'restapi'> = {

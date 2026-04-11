@@ -3,9 +3,9 @@ import { Box, Typography, Paper, Button, TextField, Stack, Chip, Divider } from 
 import FolderOpenIcon from '@mui/icons-material/FolderOpen'
 import DownloadIcon from '@mui/icons-material/Download'
 import UpdateIcon from '@mui/icons-material/Update'
-import { useServer } from '../context/ServerContext'
-import { steamService } from '../services/steamService'
-import { dialogService } from '../services/dialogService'
+import { useServer } from '../../context/ServerContext'
+import { steamService } from '../../games/palworld/services/steamService'
+import { dialogService } from '../../services/dialogService'
 
 export default function Install() {
   const { state, dispatch } = useServer()

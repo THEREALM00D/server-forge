@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Box, Typography, Paper, Button, Stack, Divider } from '@mui/material'
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep'
-import { useServer } from '../context/ServerContext'
+import { useServer } from '../../../../context/ServerContext'
 
 export default function Logs() {
   const { state, dispatch } = useServer()

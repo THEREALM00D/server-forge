@@ -1,4 +1,4 @@
-import type { OperationResult, ServerStatus } from '../types'
+import type { OperationResult, ServerStatus } from '../../../types'
 
 export const serverService = {
   start: (): Promise<OperationResult> => window.api.server.start(),

@@ -4,8 +4,8 @@ import DownloadIcon from '@mui/icons-material/Download'
 import SettingsIcon from '@mui/icons-material/Settings'
 import ArticleIcon from '@mui/icons-material/Article'
 import RouterIcon from '@mui/icons-material/Router'
-import { Page } from '../App'
-import { useServer } from '../context/ServerContext'
+import { Page } from '../../App'
+import { useServer } from '../../context/ServerContext'
 
 const STATUS_COLOR: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   running: 'success',
