@@ -1,4 +1,4 @@
-import { spawn, ChildProcess } from 'child_process'
+import { spawn, ChildProcess, exec } from 'child_process'
 import { join } from 'path'
 import { existsSync } from 'fs'
 
@@ -79,19 +79,24 @@ export class ServerManager {
 
     this.autoRestart = false
     this.status = 'stopping'
+    const pid = this.process.pid
 
     return new Promise((resolve) => {
-      const timeout = setTimeout(() => {
-        this.process?.kill('SIGKILL')
-        resolve({ success: true })
-      }, 10000)
+      let done = false
+      const finish = () => {
+        if (!done) { done = true; resolve({ success: true }) }
+      }
 
-      this.process!.on('close', () => {
-        clearTimeout(timeout)
-        resolve({ success: true })
-      })
+      this.process!.once('close', finish)
+      setTimeout(finish, 6000)
 
-      this.process!.kill('SIGTERM')
+      if (process.platform === 'win32' && pid) {
+        exec(`taskkill /F /T /PID ${pid}`, (err) => {
+          if (err) try { this.process?.kill('SIGKILL') } catch {}
+        })
+      } else {
+        try { this.process!.kill('SIGKILL') } catch {}
+      }
     })
   }
 
@@ -102,6 +107,7 @@ export class ServerManager {
   ): Promise<{ success: boolean; error?: string }> {
     if (this.process) {
       await this.stop()
+      await new Promise((r) => setTimeout(r, 1500))
     }
     this.restartCount = 0
     return this.start(serverPath, args, onLog)
