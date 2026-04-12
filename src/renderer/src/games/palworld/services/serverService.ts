@@ -1,4 +1,4 @@
-import type { OperationResult, ServerStatus } from '../../../types'
+import type { OperationResult, ServerStatus } from "../../../types";
 
 export const serverService = {
   start: (): Promise<OperationResult> => window.api.server.start(),
@@ -7,4 +7,4 @@ export const serverService = {
   getStatus: (): Promise<ServerStatus> =>
     window.api.server.getStatus() as Promise<ServerStatus>,
   onLog: (cb: (line: string) => void) => window.api.server.onLog(cb),
-}
+};

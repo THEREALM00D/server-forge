@@ -1,24 +1,38 @@
-import { join } from 'path'
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
-import { dirname } from 'path'
+import { join } from "path";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import { dirname } from "path";
 
-export type PalSettings = Record<string, string | number | boolean>
+export type PalSettings = Record<string, string | number | boolean>;
 
 // Enum fields: Palworld expects unquoted identifiers, not quoted strings.
 const UNQUOTED_FIELDS = new Set([
-  'Difficulty', 'DeathPenalty', 'RandomizerType', 'LogFormatType',
-])
+  "Difficulty",
+  "DeathPenalty",
+  "RandomizerType",
+  "LogFormatType",
+]);
 
 // Integer fields: serialized without decimal places.
 const INTEGER_FIELDS = new Set([
-  'DropItemMaxNum', 'DropItemMaxNum_UNKO', 'BaseCampMaxNum', 'BaseCampMaxNumInGuild',
-  'BaseCampWorkerMaxNum', 'GuildPlayerMaxNum', 'CoopPlayerMaxNum', 'ServerPlayerMaxNum',
-  'MaxBuildingLimitNum', 'SupplyDropSpan', 'ChatPostLimitPerMinute',
-  'RCONPort', 'RESTAPIPort', 'PublicPort',
-  'GuildRejoinCooldownMinutes', 'AdditionalDropItemNumWhenPlayerKillingInPvPMode',
-])
+  "DropItemMaxNum",
+  "DropItemMaxNum_UNKO",
+  "BaseCampMaxNum",
+  "BaseCampMaxNumInGuild",
+  "BaseCampWorkerMaxNum",
+  "GuildPlayerMaxNum",
+  "CoopPlayerMaxNum",
+  "ServerPlayerMaxNum",
+  "MaxBuildingLimitNum",
+  "SupplyDropSpan",
+  "ChatPostLimitPerMinute",
+  "RCONPort",
+  "RESTAPIPort",
+  "PublicPort",
+  "GuildRejoinCooldownMinutes",
+  "AdditionalDropItemNumWhenPlayerKillingInPvPMode",
+]);
 
-const CONFIG_REL_PATH = 'Pal/Saved/Config/WindowsServer/PalWorldSettings.ini'
+const CONFIG_REL_PATH = "Pal/Saved/Config/WindowsServer/PalWorldSettings.ini";
 
 /**
  * Default values sourced from https://docs.palworldgame.com/settings-and-operation/configuration/
@@ -26,9 +40,9 @@ const CONFIG_REL_PATH = 'Pal/Saved/Config/WindowsServer/PalWorldSettings.ini'
  */
 export const DEFAULT_SETTINGS: PalSettings = {
   // Difficulty / randomizer
-  Difficulty: 'None',
-  RandomizerType: 'None',
-  RandomizerSeed: '',
+  Difficulty: "None",
+  RandomizerType: "None",
+  RandomizerSeed: "",
   bIsRandomizerPalLevelRandom: false,
 
   // Time speed
@@ -70,7 +84,7 @@ export const DEFAULT_SETTINGS: PalSettings = {
   EnemyDropItemRate: 1.0,
 
   // Death / combat
-  DeathPenalty: 'All',
+  DeathPenalty: "All",
   bEnablePlayerToPlayerDamage: false,
   bEnableFriendlyFire: false,
   bEnableInvaderEnemy: true,
@@ -98,8 +112,8 @@ export const DEFAULT_SETTINGS: PalSettings = {
   AutoSaveSpan: 10.0,
 
   // Platform / logging
-  CrossplayPlatforms: '(Steam,Xbox,PS5,Mac)',
-  LogFormatType: 'Text',
+  CrossplayPlatforms: "(Steam,Xbox,PS5,Mac)",
+  LogFormatType: "Text",
 
   // Gameplay features
   bIsMultiplay: false,
@@ -121,20 +135,20 @@ export const DEFAULT_SETTINGS: PalSettings = {
   // Server identity
   CoopPlayerMaxNum: 4,
   ServerPlayerMaxNum: 32,
-  ServerName: 'Default Palworld Server',
-  ServerDescription: '',
-  AdminPassword: '',
-  ServerPassword: '',
+  ServerName: "Default Palworld Server",
+  ServerDescription: "",
+  AdminPassword: "",
+  ServerPassword: "",
   PublicPort: 8211,
-  PublicIP: '',
+  PublicIP: "",
   RCONEnabled: false,
   RCONPort: 25575,
   RESTAPIEnabled: false,
   RESTAPIPort: 8212,
   bIsUseBackupSaveData: true,
-  Region: '',
+  Region: "",
   bUseAuth: true,
-  BanListURL: 'https://api.palworldgame.com/api/banlist.txt',
+  BanListURL: "https://api.palworldgame.com/api/banlist.txt",
 
   // Misc
   SupplyDropSpan: 180,
@@ -149,7 +163,7 @@ export const DEFAULT_SETTINGS: PalSettings = {
   bEnableFastTravelOnlyBaseCamp: false,
   bAllowClientMod: false,
   bIsShowJoinLeftMessage: false,
-  DenyTechnologyList: '()',
+  DenyTechnologyList: "()",
 
   // Respawn penalties
   GuildRejoinCooldownMinutes: 0,
@@ -160,7 +174,7 @@ export const DEFAULT_SETTINGS: PalSettings = {
   // PvP kill drops
   bDisplayPvPItemNumOnWorldMap_BaseCamp: false,
   bDisplayPvPItemNumOnWorldMap_Player: false,
-  AdditionalDropItemWhenPlayerKillingInPvPMode: 'PlayerDropItem',
+  AdditionalDropItemWhenPlayerKillingInPvPMode: "PlayerDropItem",
   AdditionalDropItemNumWhenPlayerKillingInPvPMode: 1,
   bAdditionalDropItemWhenPlayerKillingInPvPMode: false,
 
@@ -170,62 +184,70 @@ export const DEFAULT_SETTINGS: PalSettings = {
   bAllowEnhanceStat_Stamina: true,
   bAllowEnhanceStat_Weight: true,
   bAllowEnhanceStat_WorkSpeed: true,
-}
+};
 
 export class PalConfigParser {
   read(serverPath: string): PalSettings {
-    const iniPath = join(serverPath, CONFIG_REL_PATH)
-    if (!existsSync(iniPath)) return { ...DEFAULT_SETTINGS }
-    const content = readFileSync(iniPath, 'utf-8')
-    return this.parseIni(content)
+    const iniPath = join(serverPath, CONFIG_REL_PATH);
+    if (!existsSync(iniPath)) return { ...DEFAULT_SETTINGS };
+    const content = readFileSync(iniPath, "utf-8");
+    return this.parseIni(content);
   }
 
-  write(serverPath: string, settings: PalSettings): { success: boolean; error?: string } {
-    const iniPath = join(serverPath, CONFIG_REL_PATH)
+  write(
+    serverPath: string,
+    settings: PalSettings,
+  ): { success: boolean; error?: string } {
+    const iniPath = join(serverPath, CONFIG_REL_PATH);
     try {
-      mkdirSync(dirname(iniPath), { recursive: true })
-      writeFileSync(iniPath, this.serializeIni(settings), 'utf-8')
-      return { success: true }
+      mkdirSync(dirname(iniPath), { recursive: true });
+      writeFileSync(iniPath, this.serializeIni(settings), "utf-8");
+      return { success: true };
     } catch (err) {
-      return { success: false, error: String(err) }
+      return { success: false, error: String(err) };
     }
   }
 
   private parseIni(content: string): PalSettings {
-    const settings: PalSettings = { ...DEFAULT_SETTINGS }
-    const match = content.match(/OptionSettings=\(([^()]*(?:\([^)]*\)[^()]*)*)\)/)
-    if (!match) return settings
+    const settings: PalSettings = { ...DEFAULT_SETTINGS };
+    const match = content.match(
+      /OptionSettings=\(([^()]*(?:\([^)]*\)[^()]*)*)\)/,
+    );
+    if (!match) return settings;
 
     // Split on commas that are NOT inside parentheses
-    const pairs = match[1].match(/[^,()]+(?:\([^)]*\))?[^,()]*/g) ?? []
+    const pairs = match[1].match(/[^,()]+(?:\([^)]*\))?[^,()]*/g) ?? [];
     for (const pair of pairs) {
-      const eqIdx = pair.indexOf('=')
-      if (eqIdx === -1) continue
-      const key = pair.slice(0, eqIdx).trim()
-      const raw = pair.slice(eqIdx + 1).trim()
-      settings[key] = this.parseValue(raw)
+      const eqIdx = pair.indexOf("=");
+      if (eqIdx === -1) continue;
+      const key = pair.slice(0, eqIdx).trim();
+      const raw = pair.slice(eqIdx + 1).trim();
+      settings[key] = this.parseValue(raw);
     }
-    return settings
+    return settings;
   }
 
   private parseValue(raw: string): string | number | boolean {
-    if (raw === 'True' || raw === 'true') return true
-    if (raw === 'False' || raw === 'false') return false
-    const num = Number(raw)
-    if (!isNaN(num) && raw !== '') return num
-    return raw.replace(/^"(.*)"$/, '$1')
+    if (raw === "True" || raw === "true") return true;
+    if (raw === "False" || raw === "false") return false;
+    const num = Number(raw);
+    if (!isNaN(num) && raw !== "") return num;
+    return raw.replace(/^"(.*)"$/, "$1");
   }
 
   private serializeIni(settings: PalSettings): string {
     const pairs = Object.entries(settings).map(([key, val]) => {
-      if (typeof val === 'boolean') return `${key}=${val ? 'True' : 'False'}`
-      if (typeof val === 'number') {
-        return INTEGER_FIELDS.has(key) ? `${key}=${val}` : `${key}=${val.toFixed(6)}`
+      if (typeof val === "boolean") return `${key}=${val ? "True" : "False"}`;
+      if (typeof val === "number") {
+        return INTEGER_FIELDS.has(key)
+          ? `${key}=${val}`
+          : `${key}=${val.toFixed(6)}`;
       }
-      if (typeof val === 'string' && val.startsWith('(') && val.endsWith(')')) return `${key}=${val}`
-      if (UNQUOTED_FIELDS.has(key)) return `${key}=${val}`
-      return `${key}="${val}"`
-    })
-    return `[/Script/Pal.PalGameWorldSettings]\nOptionSettings=(${pairs.join(',')})\n`
+      if (typeof val === "string" && val.startsWith("(") && val.endsWith(")"))
+        return `${key}=${val}`;
+      if (UNQUOTED_FIELDS.has(key)) return `${key}=${val}`;
+      return `${key}="${val}"`;
+    });
+    return `[/Script/Pal.PalGameWorldSettings]\nOptionSettings=(${pairs.join(",")})\n`;
   }
 }

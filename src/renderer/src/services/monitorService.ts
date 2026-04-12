@@ -1,4 +1,4 @@
-import type { SystemStats } from '../types'
+import type { SystemStats } from "../types";
 
 export const monitorService = {
   startPolling: (): Promise<void> => window.api.monitor.startPolling(),
@@ -7,4 +7,4 @@ export const monitorService = {
     window.api.monitor.getStats() as Promise<SystemStats>,
   onStats: (cb: (stats: SystemStats) => void) =>
     window.api.monitor.onStats(cb as (stats: unknown) => void),
-}
+};
