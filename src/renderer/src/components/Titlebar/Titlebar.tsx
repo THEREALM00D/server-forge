@@ -2,6 +2,7 @@ import { Box, IconButton, Typography } from "@mui/material";
 import RemoveIcon from "@mui/icons-material/Remove";
 import CropSquareIcon from "@mui/icons-material/CropSquare";
 import CloseIcon from "@mui/icons-material/Close";
+import logo from "../../assets/logo.png";
 
 export default function Titlebar() {
   return (
@@ -18,12 +19,15 @@ export default function Titlebar() {
         userSelect: "none",
       }}
     >
-      <Typography
-        variant="body2"
-        sx={{ fontWeight: 600, color: "text.primary", letterSpacing: 0.5 }}
-      >
-        Palworld Manager
-      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <img src={logo} alt="ServerForge" width={20} height={20} />
+        <Typography
+          variant="body2"
+          sx={{ fontWeight: 600, color: "text.primary", letterSpacing: 0.5 }}
+        >
+          ServerForge
+        </Typography>
+      </Box>
 
       <Box sx={{ display: "flex", WebkitAppRegion: "no-drag" }}>
         <IconButton
