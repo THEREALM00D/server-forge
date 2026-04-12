@@ -33,7 +33,7 @@ import { useServer } from "../../../../context/ServerContext";
 import { useNotification } from "../../../../context/NotificationContext";
 import { firewallService } from "../../services/firewallService";
 import { configService } from "../../services/configService";
-import type { FirewallRuleStatus } from "../types";
+import type { FirewallRuleStatus } from "../../../../types";
 
 const RULE_KEYS: Record<string, "game" | "rcon" | "restapi"> = {
   "Palworld Server - Game": "game",
@@ -416,7 +416,7 @@ export default function Network() {
             value={newPort}
             onChange={(e) => setNewPort(e.target.value.replace(/\D/g, ""))}
             disabled={!isAdmin || creating}
-            inputProps={{ maxLength: 5 }}
+            slotProps={{ htmlInput: { maxLength: 5 } }}
             sx={{ flex: 1 }}
           />
           <FormControl
