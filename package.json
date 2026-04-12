@@ -8,6 +8,7 @@
   "license": "MIT",
   "scripts": {
     "format": "prettier --write .",
+    "fix:prettier": "prettier --write",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
