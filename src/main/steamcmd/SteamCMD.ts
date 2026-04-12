@@ -1,9 +1,14 @@
 import { join } from 'path'
-import { existsSync, mkdirSync } from 'fs'
+import { existsSync, mkdirSync, readFileSync } from 'fs'
 import { spawn } from 'child_process'
 import { app } from 'electron/main'
-import https from 'https'
 import fs from 'fs'
+
+export interface UpdateCheckResult {
+  upToDate: boolean
+  installedBuild: string | null
+  requiredBuild: string | null
+}
 
 const PALWORLD_APP_ID = '2394010'
 const STEAMCMD_URL = 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip'
@@ -85,6 +90,65 @@ export class SteamCMD {
       })
 
       proc.on('error', (err) => resolve({ success: false, error: err.message }))
+    })
+  }
+
+  private getInstalledBuildId(installPath: string): string | null {
+    // SteamCMD peut écrire le manifest dans installPath/steamapps/ ou dans son propre répertoire
+    const candidates = [
+      join(installPath, 'steamapps', `appmanifest_${PALWORLD_APP_ID}.acf`),
+      join(this.steamcmdDir, 'steamapps', `appmanifest_${PALWORLD_APP_ID}.acf`),
+    ]
+    for (const acf of candidates) {
+      if (!existsSync(acf)) continue
+      const match = readFileSync(acf, 'utf-8').match(/"buildid"\s+"(\d+)"/)
+      if (match) return match[1]
+    }
+    return null
+  }
+
+  checkForUpdate(installPath: string): Promise<UpdateCheckResult> {
+    const installedBuild = this.getInstalledBuildId(installPath)
+    if (!installedBuild || !this.isInstalled()) {
+      return Promise.resolve({ upToDate: false, installedBuild, requiredBuild: null })
+    }
+
+    return new Promise((resolve) => {
+      const fallback = { upToDate: false, installedBuild, requiredBuild: null }
+      let settled = false
+      const done = (result: UpdateCheckResult) => {
+        if (!settled) { settled = true; resolve(result) }
+      }
+
+      const timer = setTimeout(() => done(fallback), 30000)
+      let output = ''
+
+      // app_info_update 1 force le rafraîchissement du cache Steam
+      // app_info_print retourne les infos du depot en VDF (inclut le buildid de la branche public)
+      const proc = spawn(this.exe, [
+        '+login', 'anonymous',
+        '+app_info_update', '1',
+        '+app_info_print', PALWORLD_APP_ID,
+        '+quit',
+      ], { cwd: this.steamcmdDir })
+
+      proc.stdout?.on('data', (d: Buffer) => { output += d.toString() })
+      proc.stderr?.on('data', (d: Buffer) => { output += d.toString() })
+
+      proc.on('close', () => {
+        clearTimeout(timer)
+        // Trouver le buildid dans la section "public" du VDF
+        const match = output.match(/"public"\s*\{[^}]*?"buildid"\s+"(\d+)"/s)
+        if (!match) { done(fallback); return }
+        const latestBuild = match[1]
+        done({
+          upToDate: installedBuild === latestBuild,
+          installedBuild,
+          requiredBuild: installedBuild !== latestBuild ? latestBuild : null,
+        })
+      })
+
+      proc.on('error', () => { clearTimeout(timer); done(fallback) })
     })
   }
 

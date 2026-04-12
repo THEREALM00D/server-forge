@@ -12,6 +12,7 @@ import CancelIcon from '@mui/icons-material/Cancel'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { useServer } from '../../../../context/ServerContext'
+import { useNotification } from '../../../../context/NotificationContext'
 import { firewallService } from '../../services/firewallService'
 import { configService } from '../../services/configService'
 import type { FirewallRuleStatus } from '../types'
@@ -29,8 +30,7 @@ export default function Network() {
   const [customRules, setCustomRules] = useState<FirewallRuleStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const { notify } = useNotification()
   const [newName, setNewName] = useState('')
   const [newPort, setNewPort] = useState('')
   const [newProtocol, setNewProtocol] = useState<'TCP' | 'UDP'>('UDP')
@@ -48,7 +48,6 @@ export default function Network() {
 
   const refresh = useCallback(async () => {
     setLoading(true)
-    setError('')
     const [admin, { gamePort, rconPort, restApiPort }] = await Promise.all([
       firewallService.isAdmin(),
       getPorts(),
@@ -65,25 +64,18 @@ export default function Network() {
 
   useEffect(() => { refresh() }, [refresh])
 
-  const flash = (msg: string) => {
-    setSuccess(msg)
-    setTimeout(() => setSuccess(''), 3000)
-  }
-
   const handleToggle = async (rule: FirewallRuleStatus) => {
     const key = RULE_KEYS[rule.name]
     if (!key) return
     setBusy(rule.name)
-    setError('')
-
     if (rule.active) {
       const res = await firewallService.disableRule(key)
-      if (!res.success) setError(res.error ?? 'Erreur')
-      else flash(`Règle "${rule.name}" supprimée`)
+      if (!res.success) notify(res.error ?? 'Erreur', 'error')
+      else notify(`Règle "${rule.name}" supprimée`, 'success')
     } else {
       const res = await firewallService.enableRule(key, rule.port, rule.protocol)
-      if (!res.success) setError(res.error ?? 'Erreur')
-      else flash(`Règle "${rule.name}" ajoutée`)
+      if (!res.success) notify(res.error ?? 'Erreur', 'error')
+      else notify(`Règle "${rule.name}" ajoutée`, 'success')
     }
     await refresh()
     setBusy(null)
@@ -91,20 +83,18 @@ export default function Network() {
 
   const handleApplyAll = async () => {
     setBusy('all')
-    setError('')
     const { gamePort, rconPort, restApiPort } = await getPorts()
     const res = await firewallService.applyAll(gamePort, rconPort, restApiPort)
-    if (!res.success) setError(res.errors.join('\n'))
-    else flash('Toutes les règles ont été appliquées')
+    if (!res.success) notify(res.errors.join('\n'), 'error')
+    else notify('Toutes les règles ont été appliquées', 'success')
     await refresh()
     setBusy(null)
   }
 
   const handleRemoveAll = async () => {
     setBusy('all')
-    setError('')
     await firewallService.removeAll()
-    flash('Toutes les règles Palworld ont été supprimées')
+    notify('Toutes les règles Palworld ont été supprimées', 'info')
     await refresh()
     setBusy(null)
   }
@@ -112,16 +102,15 @@ export default function Network() {
   const handleCreateCustomRule = async () => {
     const port = parseInt(newPort, 10)
     if (!newName.trim() || isNaN(port) || port < 1 || port > 65535) {
-      setError('Nom et port valide (1-65535) requis')
+      notify('Nom et port valide (1-65535) requis', 'warning')
       return
     }
     setCreating(true)
-    setError('')
     const res = await firewallService.createCustomRule(newName.trim(), port, newProtocol)
     if (!res.success) {
-      setError(res.error ?? 'Erreur lors de la création')
+      notify(res.error ?? 'Erreur lors de la création', 'error')
     } else {
-      flash(`Règle "${newName.trim()}" créée`)
+      notify(`Règle "${newName.trim()}" créée`, 'success')
       setNewName('')
       setNewPort('')
       await refresh()
@@ -131,10 +120,9 @@ export default function Network() {
 
   const handleDeleteCustomRule = async (rule: FirewallRuleStatus) => {
     setBusy(`custom-${rule.name}-${rule.protocol}`)
-    setError('')
     const res = await firewallService.deleteCustomRule(rule.name, rule.protocol)
-    if (!res.success) setError(res.error ?? 'Erreur lors de la suppression')
-    else flash(`Règle "${rule.name}" supprimée`)
+    if (!res.success) notify(res.error ?? 'Erreur lors de la suppression', 'error')
+    else notify(`Règle "${rule.name}" supprimée`, 'success')
     await refresh()
     setBusy(null)
   }
@@ -386,8 +374,6 @@ export default function Network() {
         )}
       </Paper>
 
-      {error && <Alert severity="error" sx={{ whiteSpace: 'pre-line' }}>{error}</Alert>}
-      {success && <Alert severity="success">{success}</Alert>}
     </Stack>
   )
 }

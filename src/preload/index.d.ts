@@ -51,6 +51,7 @@ interface API {
     install: () => Promise<{ success: boolean; error?: string }>
     installPalworld: (path: string) => Promise<{ success: boolean; error?: string }>
     updatePalworld: () => Promise<{ success: boolean; error?: string }>
+    checkForUpdate: () => Promise<{ upToDate: boolean; installedBuild: string | null; requiredBuild: string | null }>
     onProgress: (cb: (msg: string) => void) => () => void
   }
   server: {

@@ -18,6 +18,7 @@ const api = {
     install: () => ipcRenderer.invoke('steamcmd:install'),
     installPalworld: (path: string) => ipcRenderer.invoke('steamcmd:installPalworld', path),
     updatePalworld: () => ipcRenderer.invoke('steamcmd:updatePalworld'),
+    checkForUpdate: () => ipcRenderer.invoke('steamcmd:checkForUpdate'),
     onProgress: (cb: (msg: string) => void) => {
       ipcRenderer.on('steamcmd:progress', (_e, msg) => cb(msg))
       return () => ipcRenderer.removeAllListeners('steamcmd:progress')

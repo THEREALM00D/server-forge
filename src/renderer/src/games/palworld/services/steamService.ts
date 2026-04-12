@@ -6,5 +6,6 @@ export const steamService = {
   installPalworld: (path: string): Promise<OperationResult> =>
     window.api.steamcmd.installPalworld(path),
   updatePalworld: (): Promise<OperationResult> => window.api.steamcmd.updatePalworld(),
+  checkForUpdate: () => window.api.steamcmd.checkForUpdate(),
   onProgress: (cb: (msg: string) => void) => window.api.steamcmd.onProgress(cb),
 }

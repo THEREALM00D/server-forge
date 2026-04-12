@@ -1,11 +1,19 @@
 import { useState, useEffect, useRef } from 'react'
-import { Box, Typography, Paper, Button, TextField, Stack, Chip, Divider } from '@mui/material'
+import { Box, Typography, Paper, Button, TextField, Stack, Chip, Divider, Alert } from '@mui/material'
 import FolderOpenIcon from '@mui/icons-material/FolderOpen'
 import DownloadIcon from '@mui/icons-material/Download'
 import UpdateIcon from '@mui/icons-material/Update'
+import SyncIcon from '@mui/icons-material/Sync'
 import { useServer } from '../../context/ServerContext'
 import { steamService } from '../../games/palworld/services/steamService'
 import { dialogService } from '../../services/dialogService'
+
+interface UpdateStatus {
+  checked: boolean
+  upToDate: boolean
+  installedBuild: string | null
+  requiredBuild: string | null
+}
 
 export default function Install() {
   const { state, dispatch } = useServer()
@@ -13,6 +21,8 @@ export default function Install() {
   const [installPath, setInstallPath] = useState(state.serverPath || 'C:\\PalworldServer')
   const [logs, setLogs] = useState<string[]>([])
   const [running, setRunning] = useState(false)
+  const [checkingUpdate, setCheckingUpdate] = useState(false)
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus | null>(null)
   const logsEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -48,16 +58,28 @@ export default function Install() {
     if (!installPath) return
     setRunning(true); setLogs([])
     const res = await steamService.installPalworld(installPath)
-    if (res.success) dispatch({ type: 'SET_SERVER_PATH', payload: installPath })
-    else addLog(`Erreur: ${res.error}`)
+    if (res.success) {
+      dispatch({ type: 'SET_SERVER_PATH', payload: installPath })
+      setUpdateStatus(null)
+    } else {
+      addLog(`Erreur: ${res.error}`)
+    }
     setRunning(false)
   }
 
   const handleUpdate = async () => {
     setRunning(true); setLogs([])
     const res = await steamService.updatePalworld()
-    if (!res.success) addLog(`Erreur: ${res.error}`)
+    if (res.success) setUpdateStatus(null)
+    else addLog(`Erreur: ${res.error}`)
     setRunning(false)
+  }
+
+  const handleCheckUpdate = async () => {
+    setCheckingUpdate(true)
+    const result = await steamService.checkForUpdate()
+    setUpdateStatus({ checked: true, ...result })
+    setCheckingUpdate(false)
   }
 
   return (
@@ -113,6 +135,51 @@ export default function Install() {
           </Button>
         </Stack>
       </Paper>
+
+      {state.serverPath && (
+        <Paper sx={{ p: 2.5 }}>
+          <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: updateStatus?.checked ? 2 : 0 }}>
+            <Box>
+              <Typography variant="subtitle2">Mise à jour disponible ?</Typography>
+              {updateStatus?.installedBuild && (
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  Build installé : {updateStatus.installedBuild}
+                </Typography>
+              )}
+            </Box>
+            <Button
+              size="small" variant="outlined" startIcon={<SyncIcon />}
+              disabled={checkingUpdate || running || !steamInstalled}
+              onClick={handleCheckUpdate}
+            >
+              {checkingUpdate ? 'Connexion à Steam...' : 'Vérifier'}
+            </Button>
+          </Stack>
+
+          {updateStatus?.checked && (
+            updateStatus.upToDate ? (
+              <Alert severity="success" sx={{ mt: 0 }}>
+                Le serveur est à jour.
+              </Alert>
+            ) : updateStatus.installedBuild === null ? (
+              <Alert severity="warning" sx={{ mt: 0 }}>
+                Impossible de lire le build installé — le serveur est-il bien installé dans ce dossier ?
+              </Alert>
+            ) : (
+              <Alert severity="warning" sx={{ mt: 0 }}
+                action={
+                  <Button color="inherit" size="small" disabled={running || !steamInstalled} onClick={handleUpdate}>
+                    Mettre à jour
+                  </Button>
+                }
+              >
+                Mise à jour disponible
+                {updateStatus.requiredBuild && ` (build ${updateStatus.requiredBuild})`}.
+              </Alert>
+            )
+          )}
+        </Paper>
+      )}
 
       {logs.length > 0 && (
         <Paper sx={{ p: 2 }}>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ThemeProvider, createTheme, CssBaseline, Box } from '@mui/material'
 import { ServerProvider } from './context/ServerContext'
+import { NotificationProvider } from './context/NotificationContext'
 import Dashboard from './games/palworld/pages/Dashboard/Dashboard'
 import Install from './pages/Install/Install'
 import Config from './games/palworld/pages/Config/Config'
@@ -63,6 +64,7 @@ export default function App() {
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
+      <NotificationProvider>
       <ServerProvider>
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'background.default' }}>
           <Titlebar />
@@ -74,6 +76,7 @@ export default function App() {
           </Box>
         </Box>
       </ServerProvider>
+      </NotificationProvider>
     </ThemeProvider>
   )
 }

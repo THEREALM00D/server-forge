@@ -55,6 +55,10 @@ export function registerIpcHandlers(): void {
       event.sender.send('steamcmd:progress', progress)
     })
   })
+  ipcMain.handle('steamcmd:checkForUpdate', async () => {
+    const installPath = store.get('serverPath', '')
+    return steamcmd.checkForUpdate(installPath)
+  })
 
   // --- Server controls ---
   ipcMain.handle('server:start', async (event) => {

@@ -46,10 +46,14 @@ export class ServerManager {
         stdio: ['ignore', 'pipe', 'pipe']
       })
 
+      this.process.on('spawn', () => {
+        if (this.status === 'starting') this.status = 'running'
+        onLog('[Manager] Processus démarré.')
+      })
+
       this.process.stdout?.on('data', (data: Buffer) => {
         const lines = data.toString().split('\n').filter(Boolean)
         lines.forEach((line) => onLog(line))
-        if (this.status === 'starting') this.status = 'running'
       })
 
       this.process.stderr?.on('data', (data: Buffer) => {
@@ -59,7 +63,8 @@ export class ServerManager {
 
       this.process.on('close', (code) => {
         const wasRunning = this.status === 'running'
-        this.status = code === 0 ? 'stopped' : 'crashed'
+        // Si on était en train d'arrêter volontairement, on passe à 'stopped' quel que soit le code
+        this.status = this.status === 'stopping' ? 'stopped' : (code === 0 ? 'stopped' : 'crashed')
         this.process = null
         onLog(`[Manager] Server exited with code ${code}`)
 

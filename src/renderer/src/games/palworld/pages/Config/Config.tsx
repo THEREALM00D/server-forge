@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react'
 import { useForm } from '@tanstack/react-form'
 import {
   Box, Typography, Paper, Button, TextField,
-  Switch, FormControlLabel, Stack, Divider, Alert,
+  Switch, FormControlLabel, Stack, Divider,
   Select, MenuItem, FormControl, InputLabel,
 } from '@mui/material'
 import SaveIcon from '@mui/icons-material/Save'
 import { useServer } from '../../../../context/ServerContext'
+import { useNotification } from '../../../../context/NotificationContext'
 import { configService } from '../../services/configService'
 
 type Settings = Record<string, string | number | boolean>
@@ -313,17 +314,16 @@ const FIELD_GROUPS: FieldGroup[] = [
 
 export default function Config() {
   const { state } = useServer()
+  const { notify } = useNotification()
   const [saved, setSaved] = useState(false)
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
 
   const form = useForm<Settings>({
     defaultValues: {},
     onSubmit: async ({ value }) => {
-      setError('')
       const res = await configService.writePalConfig(value)
       if (res.success) { setSaved(true); setTimeout(() => setSaved(false), 2000) }
-      else setError(res.error ?? 'Erreur inconnue')
+      else notify(res.error ?? 'Erreur inconnue', 'error')
     },
   })
 
@@ -426,8 +426,6 @@ export default function Config() {
               </Stack>
             </Paper>
           ))}
-
-          {error && <Alert severity="error">{error}</Alert>}
 
           <Button type="submit" variant="contained" size="large" startIcon={<SaveIcon />} color={saved ? 'success' : 'primary'}>
             {saved ? 'Sauvegardé !' : 'Sauvegarder la configuration'}
