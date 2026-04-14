@@ -349,7 +349,7 @@ export default function Dashboard() {
                       sx={{ alignItems: "center" }}
                     >
                       <Chip
-                        label={`${p.ping} ms`}
+                        label={`${p.ping.toFixed(0)} ms`}
                         size="small"
                         variant="outlined"
                       />
