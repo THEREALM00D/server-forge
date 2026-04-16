@@ -26,6 +26,19 @@ interface PalPlayer {
   building_count: number;
 }
 
+interface BackupEntry {
+  name: string;
+  path: string;
+  size: number;
+  createdAt: number;
+}
+
+interface BackupConfig {
+  backupDir: string;
+  backupKeep: number;
+  backupIntervalMinutes: number;
+}
+
 interface PalMetrics {
   serverfps: number;
   currentplayernum: number;
@@ -134,6 +147,14 @@ interface API {
     ban: (userid: string, message?: string) => Promise<void>;
     unban: (userid: string) => Promise<void>;
     shutdown: (waittime: number, message?: string) => Promise<void>;
+  };
+  backup: {
+    getConfig: () => Promise<BackupConfig>;
+    setConfig: (cfg: BackupConfig) => Promise<void>;
+    list: () => Promise<BackupEntry[]>;
+    create: () => Promise<BackupEntry>;
+    restore: (backupPath: string) => Promise<void>;
+    delete: (backupPath: string) => Promise<void>;
   };
   dialog: {
     selectFolder: () => Promise<string | null>;

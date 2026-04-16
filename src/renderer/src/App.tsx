@@ -7,10 +7,17 @@ import Install from "./pages/Install/Install";
 import Config from "./games/palworld/pages/Config/Config";
 import Logs from "./games/palworld/pages/Logs/Logs";
 import Network from "./games/palworld/pages/Network/Network";
+import Backup from "./games/palworld/pages/Backup/Backup";
 import Titlebar from "./components/Titlebar/Titlebar";
 import Sidebar from "./components/Sidebar/Sidebar";
 
-export type Page = "dashboard" | "install" | "config" | "logs" | "network";
+export type Page =
+  | "dashboard"
+  | "install"
+  | "config"
+  | "logs"
+  | "network"
+  | "backup";
 
 const darkTheme = createTheme({
   palette: {
@@ -63,6 +70,8 @@ export default function App() {
         return <Logs />;
       case "network":
         return <Network />;
+      case "backup":
+        return <Backup />;
     }
   };
 

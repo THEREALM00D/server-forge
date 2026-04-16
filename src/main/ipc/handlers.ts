@@ -5,6 +5,7 @@ import { PalConfigParser } from "../config/PalConfigParser";
 import { SystemMonitor } from "../monitor/SystemMonitor";
 import { FirewallManager } from "../firewall/FirewallManager";
 import { PalworldApiClient } from "../server/PalworldApiClient";
+import { BackupManager } from "../backup/BackupManager";
 import Store from "electron-store";
 
 export function registerIpcHandlers(): void {
@@ -12,6 +13,9 @@ export function registerIpcHandlers(): void {
     serverPath: string;
     serverArgs: string[];
     autoRestart: boolean;
+    backupDir: string;
+    backupKeep: number;
+    backupIntervalMinutes: number;
   }>();
 
   const serverManager = new ServerManager();
@@ -19,6 +23,28 @@ export function registerIpcHandlers(): void {
   const configParser = new PalConfigParser();
   const systemMonitor = new SystemMonitor();
   const firewall = new FirewallManager();
+  const backup = new BackupManager();
+
+  const getBackupDir = (): string => {
+    const stored = store.get("backupDir", "");
+    return stored || backup.getDefaultBackupDir(app.getPath("userData"));
+  };
+
+  const runScheduledBackup = async (): Promise<void> => {
+    if (serverManager.getStatus() !== "running") return;
+    const serverPath = store.get("serverPath", "");
+    if (!serverPath) return;
+    const dir = getBackupDir();
+    await backup.create(serverPath, dir);
+    backup.rotate(dir, store.get("backupKeep", 10));
+  };
+
+  const applyScheduler = (): void => {
+    const minutes = store.get("backupIntervalMinutes", 0);
+    backup.startScheduler(minutes, runScheduledBackup);
+  };
+
+  applyScheduler();
   // --- Window controls ---
   ipcMain.handle("window:minimize", () => {
     BrowserWindow.getFocusedWindow()?.minimize();
@@ -219,6 +245,49 @@ export function registerIpcHandlers(): void {
     const client = getApiClient();
     if (!client) throw new Error("REST API non configurée");
     return client.shutdown(waittime, message);
+  });
+
+  // --- Backups ---
+  ipcMain.handle("backup:getConfig", () => ({
+    backupDir: getBackupDir(),
+    backupKeep: store.get("backupKeep", 10),
+    backupIntervalMinutes: store.get("backupIntervalMinutes", 0),
+  }));
+  ipcMain.handle(
+    "backup:setConfig",
+    (
+      _,
+      cfg: {
+        backupDir: string;
+        backupKeep: number;
+        backupIntervalMinutes: number;
+      },
+    ) => {
+      store.set("backupDir", cfg.backupDir);
+      store.set("backupKeep", cfg.backupKeep);
+      store.set("backupIntervalMinutes", cfg.backupIntervalMinutes);
+      applyScheduler();
+    },
+  );
+  ipcMain.handle("backup:list", () => backup.list(getBackupDir()));
+  ipcMain.handle("backup:create", async () => {
+    const serverPath = store.get("serverPath", "");
+    if (!serverPath) throw new Error("Aucun chemin serveur configuré");
+    const dir = getBackupDir();
+    const entry = await backup.create(serverPath, dir);
+    backup.rotate(dir, store.get("backupKeep", 10));
+    return entry;
+  });
+  ipcMain.handle("backup:restore", async (_, backupPath: string) => {
+    const serverPath = store.get("serverPath", "");
+    if (!serverPath) throw new Error("Aucun chemin serveur configuré");
+    if (serverManager.getStatus() === "running") {
+      throw new Error("Arrêtez le serveur avant de restaurer une sauvegarde");
+    }
+    await backup.restore(serverPath, backupPath);
+  });
+  ipcMain.handle("backup:delete", (_, backupPath: string) => {
+    backup.delete(backupPath);
   });
 
   // --- App info ---

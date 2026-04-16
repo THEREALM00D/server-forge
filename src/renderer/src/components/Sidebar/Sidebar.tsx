@@ -12,6 +12,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ArticleIcon from "@mui/icons-material/Article";
 import RouterIcon from "@mui/icons-material/Router";
+import BackupIcon from "@mui/icons-material/Backup";
 import { Page } from "../../App";
 import { useServer } from "../../context/ServerContext";
 
@@ -52,6 +53,11 @@ const navItems: { id: Page; label: string; icon: React.ReactNode }[] = [
   },
   { id: "logs", label: "Logs", icon: <ArticleIcon fontSize="small" /> },
   { id: "network", label: "Réseau", icon: <RouterIcon fontSize="small" /> },
+  {
+    id: "backup",
+    label: "Sauvegardes",
+    icon: <BackupIcon fontSize="small" />,
+  },
 ];
 
 interface SidebarProps {

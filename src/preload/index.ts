@@ -89,6 +89,18 @@ const api = {
     shutdown: (waittime: number, message?: string) =>
       ipcRenderer.invoke("palapi:shutdown", waittime, message),
   },
+  // Backups
+  backup: {
+    getConfig: () => ipcRenderer.invoke("backup:getConfig"),
+    setConfig: (cfg: { backupDir: string; backupKeep: number }) =>
+      ipcRenderer.invoke("backup:setConfig", cfg),
+    list: () => ipcRenderer.invoke("backup:list"),
+    create: () => ipcRenderer.invoke("backup:create"),
+    restore: (backupPath: string) =>
+      ipcRenderer.invoke("backup:restore", backupPath),
+    delete: (backupPath: string) =>
+      ipcRenderer.invoke("backup:delete", backupPath),
+  },
   // Dialog
   dialog: {
     selectFolder: () => ipcRenderer.invoke("dialog:selectFolder"),
