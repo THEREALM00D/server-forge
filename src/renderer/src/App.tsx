@@ -8,6 +8,7 @@ import Config from "./games/palworld/pages/Config/Config";
 import Logs from "./games/palworld/pages/Logs/Logs";
 import Network from "./games/palworld/pages/Network/Network";
 import Backup from "./games/palworld/pages/Backup/Backup";
+import Schedule from "./games/palworld/pages/Schedule/Schedule";
 import Titlebar from "./components/Titlebar/Titlebar";
 import Sidebar from "./components/Sidebar/Sidebar";
 
@@ -17,7 +18,8 @@ export type Page =
   | "config"
   | "logs"
   | "network"
-  | "backup";
+  | "backup"
+  | "schedule";
 
 const darkTheme = createTheme({
   palette: {
@@ -72,6 +74,8 @@ export default function App() {
         return <Network />;
       case "backup":
         return <Backup />;
+      case "schedule":
+        return <Schedule />;
     }
   };
 

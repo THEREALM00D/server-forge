@@ -6,6 +6,7 @@ import { SystemMonitor } from "../monitor/SystemMonitor";
 import { FirewallManager } from "../firewall/FirewallManager";
 import { PalworldApiClient } from "../server/PalworldApiClient";
 import { BackupManager } from "../backup/BackupManager";
+import { RestartScheduler, RestartConfig } from "../scheduler/RestartScheduler";
 import Store from "electron-store";
 
 export function registerIpcHandlers(): void {
@@ -16,6 +17,7 @@ export function registerIpcHandlers(): void {
     backupDir: string;
     backupKeep: number;
     backupIntervalMinutes: number;
+    restartSchedule: RestartConfig;
   }>();
 
   const serverManager = new ServerManager();
@@ -24,6 +26,45 @@ export function registerIpcHandlers(): void {
   const systemMonitor = new SystemMonitor();
   const firewall = new FirewallManager();
   const backup = new BackupManager();
+  const restartScheduler = new RestartScheduler();
+
+  const defaultRestartConfig: RestartConfig = {
+    enabled: false,
+    time: "04:00",
+    warningMinutes: 5,
+    message: "Le serveur va redémarrer dans {minutes} minutes",
+  };
+
+  const getRestartConfig = (): RestartConfig => {
+    return store.get("restartSchedule", defaultRestartConfig);
+  };
+
+  const getStopConfigForRestart = () => {
+    const serverPath = store.get("serverPath", "");
+    const cfg = configParser.read(serverPath);
+    const restart = getRestartConfig();
+    const msg = restart.message.replace(
+      "{minutes}",
+      String(restart.warningMinutes),
+    );
+    return {
+      restApiEnabled: cfg.RESTAPIEnabled === true,
+      restApiPort: Number(cfg.RESTAPIPort ?? 8212),
+      adminPassword: String(cfg.AdminPassword ?? ""),
+      shutdownWaittime: restart.warningMinutes * 60,
+      shutdownMessage: msg,
+    };
+  };
+
+  restartScheduler.start(getRestartConfig, async () => {
+    if (serverManager.getStatus() !== "running") return;
+    await serverManager.restart(
+      store.get("serverPath", ""),
+      store.get("serverArgs", []),
+      () => {},
+      getStopConfigForRestart(),
+    );
+  });
 
   const getBackupDir = (): string => {
     const stored = store.get("backupDir", "");
@@ -288,6 +329,12 @@ export function registerIpcHandlers(): void {
   });
   ipcMain.handle("backup:delete", (_, backupPath: string) => {
     backup.delete(backupPath);
+  });
+
+  // --- Restart scheduler ---
+  ipcMain.handle("schedule:getRestart", () => getRestartConfig());
+  ipcMain.handle("schedule:setRestart", (_, cfg: RestartConfig) => {
+    store.set("restartSchedule", cfg);
   });
 
   // --- App info ---

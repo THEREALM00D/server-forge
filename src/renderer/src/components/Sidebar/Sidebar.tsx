@@ -13,6 +13,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import ArticleIcon from "@mui/icons-material/Article";
 import RouterIcon from "@mui/icons-material/Router";
 import BackupIcon from "@mui/icons-material/Backup";
+import ScheduleIcon from "@mui/icons-material/Schedule";
 import { Page } from "../../App";
 import { useServer } from "../../context/ServerContext";
 
@@ -57,6 +58,11 @@ const navItems: { id: Page; label: string; icon: React.ReactNode }[] = [
     id: "backup",
     label: "Sauvegardes",
     icon: <BackupIcon fontSize="small" />,
+  },
+  {
+    id: "schedule",
+    label: "Planification",
+    icon: <ScheduleIcon fontSize="small" />,
   },
 ];
 

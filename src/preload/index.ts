@@ -101,6 +101,16 @@ const api = {
     delete: (backupPath: string) =>
       ipcRenderer.invoke("backup:delete", backupPath),
   },
+  // Scheduler
+  schedule: {
+    getRestart: () => ipcRenderer.invoke("schedule:getRestart"),
+    setRestart: (cfg: {
+      enabled: boolean;
+      time: string;
+      warningMinutes: number;
+      message: string;
+    }) => ipcRenderer.invoke("schedule:setRestart", cfg),
+  },
   // Dialog
   dialog: {
     selectFolder: () => ipcRenderer.invoke("dialog:selectFolder"),

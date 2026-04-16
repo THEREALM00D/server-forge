@@ -33,6 +33,13 @@ interface BackupEntry {
   createdAt: number;
 }
 
+interface RestartConfig {
+  enabled: boolean;
+  time: string;
+  warningMinutes: number;
+  message: string;
+}
+
 interface BackupConfig {
   backupDir: string;
   backupKeep: number;
@@ -155,6 +162,10 @@ interface API {
     create: () => Promise<BackupEntry>;
     restore: (backupPath: string) => Promise<void>;
     delete: (backupPath: string) => Promise<void>;
+  };
+  schedule: {
+    getRestart: () => Promise<RestartConfig>;
+    setRestart: (cfg: RestartConfig) => Promise<void>;
   };
   dialog: {
     selectFolder: () => Promise<string | null>;
