@@ -93,6 +93,7 @@ export default function Install() {
   const handleCheckUpdate = async () => {
     setCheckingUpdate(true);
     const result = await steamService.checkForUpdate();
+    console.log("Update check result:", result);
     setUpdateStatus({ checked: true, ...result });
     setCheckingUpdate(false);
   };

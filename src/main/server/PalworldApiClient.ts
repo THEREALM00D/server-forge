@@ -1,34 +1,5 @@
 import http from "http";
-
-export interface ServerInfo {
-  version: string;
-  servername: string;
-  description: string;
-  worldguid: string;
-}
-
-export interface Player {
-  name: string;
-  accountName: string;
-  playerId: string;
-  userId: string;
-  ip: string;
-  ping: number;
-  location_x: number;
-  location_y: number;
-  level: number;
-  building_count: number;
-}
-
-export interface ServerMetrics {
-  serverfps: number;
-  currentplayernum: number;
-  serverframetime: number;
-  maxplayernum: number;
-  uptime: number;
-  basecampnum: number;
-  days: number;
-}
+import type { PalServerInfo, PalPlayer, PalMetrics } from "../../shared/types";
 
 export class PalworldApiClient {
   private auth: string;
@@ -91,13 +62,13 @@ export class PalworldApiClient {
   }
 
   getInfo() {
-    return this.request<ServerInfo>("GET", "/info");
+    return this.request<PalServerInfo>("GET", "/info");
   }
   getPlayers() {
-    return this.request<{ players: Player[] }>("GET", "/players");
+    return this.request<{ players: PalPlayer[] }>("GET", "/players");
   }
   getMetrics() {
-    return this.request<ServerMetrics>("GET", "/metrics");
+    return this.request<PalMetrics>("GET", "/metrics");
   }
   getSettings() {
     return this.request<Record<string, unknown>>("GET", "/settings");

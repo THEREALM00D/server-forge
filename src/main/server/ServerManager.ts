@@ -1,7 +1,9 @@
 import { spawn, ChildProcess, exec } from "child_process";
 import { join } from "path";
 import { existsSync } from "fs";
+import si from "systeminformation";
 import { PalworldApiClient } from "./PalworldApiClient";
+import type { ServerStatus } from "../../shared/types";
 
 export interface StopConfig {
   restApiEnabled?: boolean;
@@ -11,20 +13,84 @@ export interface StopConfig {
   shutdownMessage?: string;
 }
 
-export type ServerStatus =
-  | "stopped"
-  | "starting"
-  | "running"
-  | "stopping"
-  | "crashed";
-
 export class ServerManager {
   private process: ChildProcess | null = null;
+  private adoptedPid: number | null = null;
+  private adoptedPollInterval: NodeJS.Timeout | null = null;
   private status: ServerStatus = "stopped";
   private autoRestart = false;
   private restartCount = 0;
   private readonly maxRestarts = 5;
   private onLog: (line: string) => void = () => {};
+
+  private getRunningPid(): number | null {
+    return this.process?.pid ?? this.adoptedPid ?? null;
+  }
+
+  async tryAdopt(onLog: (line: string) => void): Promise<boolean> {
+    if (this.process || this.adoptedPid) return false;
+    try {
+      const procs = await si.processes();
+      const palProc = procs.list.find((p) =>
+        p.name.toLowerCase().startsWith("palserver"),
+      );
+      if (!palProc) return false;
+
+      this.adoptedPid = palProc.pid;
+      this.status = "running";
+      this.onLog = onLog;
+      onLog(`[Manager] Processus existant détecté (PID ${palProc.pid}).`);
+      this.startAdoptedPoll();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private startAdoptedPoll(): void {
+    if (this.adoptedPollInterval) clearInterval(this.adoptedPollInterval);
+    this.adoptedPollInterval = setInterval(async () => {
+      if (!this.adoptedPid) return;
+      try {
+        const procs = await si.processes();
+        const alive = procs.list.some((p) => p.pid === this.adoptedPid);
+        if (!alive) {
+          this.onLog(
+            `[Manager] Processus adopté (PID ${this.adoptedPid}) disparu.`,
+          );
+          this.adoptedPid = null;
+          this.status = this.status === "stopping" ? "stopped" : "crashed";
+          this.stopAdoptedPoll();
+        }
+      } catch {
+        // ignore
+      }
+    }, 5000);
+  }
+
+  private stopAdoptedPoll(): void {
+    if (this.adoptedPollInterval) {
+      clearInterval(this.adoptedPollInterval);
+      this.adoptedPollInterval = null;
+    }
+  }
+
+  private async waitForPidExit(
+    pid: number,
+    timeoutMs: number,
+  ): Promise<boolean> {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      try {
+        const procs = await si.processes();
+        if (!procs.list.some((p) => p.pid === pid)) return true;
+      } catch {
+        // ignore
+      }
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    return false;
+  }
 
   async start(
     serverPath: string,
@@ -129,38 +195,32 @@ export class ServerManager {
   private forceKill(pid: number): void {
     if (process.platform === "win32") {
       exec(`taskkill /F /T /PID ${pid}`, (err) => {
-        if (err)
+        if (err) {
           try {
             this.process?.kill("SIGKILL");
           } catch {}
+        }
       });
     } else {
       try {
-        this.process?.kill("SIGKILL");
+        process.kill(pid, "SIGKILL");
       } catch {}
     }
   }
 
   async stop(cfg?: StopConfig): Promise<{ success: boolean; error?: string }> {
-    if (!this.process || this.status === "stopped") {
+    const pid = this.getRunningPid();
+    if (!pid || this.status === "stopped") {
       return { success: false, error: "Server is not running" };
     }
 
     this.autoRestart = false;
     this.status = "stopping";
+    const adopted = !this.process && this.adoptedPid !== null;
 
-    const pid = this.process.pid;
-
-    if (cfg?.restApiEnabled && cfg.restApiPort && cfg.adminPassword) {
-      const client = new PalworldApiClient(cfg.restApiPort, cfg.adminPassword);
-      const waittime = cfg.shutdownWaittime ?? 0;
-      const message = cfg.shutdownMessage ?? "";
-      const apiOk = await this.stopViaApi(client, waittime, message);
-
-      if (apiOk && waittime > 0) {
-        // Wait for the server to shut itself down gracefully
-        this.onLog(`[Manager] Attente arrêt gracieux (${waittime}s)...`);
-        await new Promise<void>((resolve) => {
+    const waitForExit = (timeoutMs: number): Promise<void> => {
+      if (this.process) {
+        return new Promise((resolve) => {
           let done = false;
           const finish = () => {
             if (!done) {
@@ -169,41 +229,44 @@ export class ServerManager {
             }
           };
           this.process!.once("close", finish);
-          setTimeout(finish, (waittime + 10) * 1000);
+          setTimeout(finish, timeoutMs);
         });
+      }
+      return this.waitForPidExit(pid, timeoutMs).then(() => {
+        this.adoptedPid = null;
+        this.status = "stopped";
+        this.stopAdoptedPoll();
+      });
+    };
+
+    if (cfg?.restApiEnabled && cfg.restApiPort && cfg.adminPassword) {
+      const client = new PalworldApiClient(cfg.restApiPort, cfg.adminPassword);
+      const waittime = cfg.shutdownWaittime ?? 0;
+      const message = cfg.shutdownMessage ?? "";
+      const apiOk = await this.stopViaApi(client, waittime, message);
+
+      if (apiOk && waittime > 0) {
+        this.onLog(`[Manager] Attente arrêt gracieux (${waittime}s)...`);
+        await waitForExit((waittime + 10) * 1000);
         return { success: true };
       }
 
-      if (!apiOk && pid) {
+      if (!apiOk) {
         this.onLog("[Manager] Arrêt forcé via taskkill...");
-        return new Promise((resolve) => {
-          let done = false;
-          const finish = () => {
-            if (!done) {
-              done = true;
-              resolve({ success: true });
-            }
-          };
-          this.process!.once("close", finish);
-          setTimeout(finish, 6000);
-          this.forceKill(pid);
-        });
+        this.forceKill(pid);
+        await waitForExit(6000);
+        return { success: true };
       }
     }
 
-    this.onLog("[Manager] Arrêt du serveur...");
-    return new Promise((resolve) => {
-      let done = false;
-      const finish = () => {
-        if (!done) {
-          done = true;
-          resolve({ success: true });
-        }
-      };
-      this.process!.once("close", finish);
-      setTimeout(finish, 6000);
-      if (pid) this.forceKill(pid);
-    });
+    this.onLog(
+      adopted
+        ? "[Manager] Arrêt du processus adopté..."
+        : "[Manager] Arrêt du serveur...",
+    );
+    this.forceKill(pid);
+    await waitForExit(6000);
+    return { success: true };
   }
 
   async restart(
@@ -212,7 +275,7 @@ export class ServerManager {
     onLog: (line: string) => void,
     cfg?: StopConfig,
   ): Promise<{ success: boolean; error?: string }> {
-    if (this.process) {
+    if (this.getRunningPid()) {
       await this.stop(cfg);
       await new Promise((r) => setTimeout(r, 1500));
     }

@@ -1,25 +1,18 @@
-export interface SystemStats {
-  cpu: number;
-  ram: number;
-  ramUsed: number;
-  ramTotal: number;
-  uptime: number;
-}
+// Re-export shared types so existing imports keep working.
+export type {
+  SystemStats,
+  ServerStatus,
+  FirewallRuleStatus,
+  PalServerInfo,
+  PalPlayer,
+  PalMetrics,
+  BackupEntry,
+  BackupConfig,
+  RestartConfig,
+  UpdateCheckResult,
+} from "@shared/types";
 
-export type ServerStatus =
-  | "stopped"
-  | "starting"
-  | "running"
-  | "stopping"
-  | "crashed";
-
-export interface FirewallRuleStatus {
-  name: string;
-  port: number;
-  protocol: "TCP" | "UDP";
-  active: boolean;
-}
-
+// Specific to renderer
 export interface OperationResult {
   success: boolean;
   error?: string;

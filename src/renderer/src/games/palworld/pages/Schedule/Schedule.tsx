@@ -12,6 +12,7 @@ import {
   Alert,
 } from "@mui/material";
 import { useNotification } from "../../../../context/NotificationContext";
+import type { RestartConfig } from "@shared/types";
 
 export default function Schedule() {
   const { notify } = useNotification();

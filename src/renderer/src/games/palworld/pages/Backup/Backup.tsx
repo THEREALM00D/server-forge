@@ -21,6 +21,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import { useServer } from "../../../../context/ServerContext";
 import { useNotification } from "../../../../context/NotificationContext";
+import type { BackupEntry, BackupConfig } from "@shared/types";
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;

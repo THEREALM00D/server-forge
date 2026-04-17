@@ -10,13 +10,7 @@ import {
 } from "fs";
 import archiver from "archiver";
 import extractZip from "extract-zip";
-
-export interface BackupEntry {
-  name: string;
-  path: string;
-  size: number;
-  createdAt: number;
-}
+import type { BackupEntry } from "../../shared/types";
 
 export class BackupManager {
   private schedulerTimer: NodeJS.Timeout | null = null;

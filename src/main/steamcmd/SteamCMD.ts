@@ -4,12 +4,7 @@ import { spawn } from "child_process";
 import { app } from "electron/main";
 import fs from "fs";
 import https from "https";
-
-export interface UpdateCheckResult {
-  upToDate: boolean;
-  installedBuild: string | null;
-  requiredBuild: string | null;
-}
+import type { UpdateCheckResult } from "../../shared/types";
 
 const PALWORLD_APP_ID = "2394010";
 const STEAMCMD_URL =

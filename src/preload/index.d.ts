@@ -1,60 +1,14 @@
-interface SystemStats {
-  cpu: number;
-  ram: number;
-  ramUsed: number;
-  ramTotal: number;
-  uptime: number;
-}
-
-interface PalServerInfo {
-  version: string;
-  servername: string;
-  description: string;
-  worldguid: string;
-}
-
-interface PalPlayer {
-  name: string;
-  accountName: string;
-  playerId: string;
-  userId: string;
-  ip: string;
-  ping: number;
-  location_x: number;
-  location_y: number;
-  level: number;
-  building_count: number;
-}
-
-interface BackupEntry {
-  name: string;
-  path: string;
-  size: number;
-  createdAt: number;
-}
-
-interface RestartConfig {
-  enabled: boolean;
-  time: string;
-  warningMinutes: number;
-  message: string;
-}
-
-interface BackupConfig {
-  backupDir: string;
-  backupKeep: number;
-  backupIntervalMinutes: number;
-}
-
-interface PalMetrics {
-  serverfps: number;
-  currentplayernum: number;
-  serverframetime: number;
-  maxplayernum: number;
-  uptime: number;
-  basecampnum: number;
-  days: number;
-}
+import type {
+  SystemStats,
+  PalServerInfo,
+  PalPlayer,
+  PalMetrics,
+  BackupEntry,
+  BackupConfig,
+  RestartConfig,
+  FirewallRuleStatus,
+  UpdateCheckResult,
+} from "../shared/types";
 
 interface API {
   window: {
@@ -73,11 +27,7 @@ interface API {
       path: string,
     ) => Promise<{ success: boolean; error?: string }>;
     updatePalworld: () => Promise<{ success: boolean; error?: string }>;
-    checkForUpdate: () => Promise<{
-      upToDate: boolean;
-      installedBuild: string | null;
-      requiredBuild: string | null;
-    }>;
+    checkForUpdate: () => Promise<UpdateCheckResult>;
     onProgress: (cb: (msg: string) => void) => () => void;
   };
   server: {
@@ -105,14 +55,7 @@ interface API {
       gamePort: number,
       rconPort: number,
       restApiPort: number,
-    ) => Promise<
-      Array<{
-        name: string;
-        port: number;
-        protocol: "TCP" | "UDP";
-        active: boolean;
-      }>
-    >;
+    ) => Promise<FirewallRuleStatus[]>;
     enableRule: (
       key: "game" | "rcon" | "restapi",
       port: number,
@@ -127,14 +70,7 @@ interface API {
       restApiPort: number,
     ) => Promise<{ success: boolean; errors: string[] }>;
     removeAll: () => Promise<void>;
-    listCustomRules: () => Promise<
-      Array<{
-        name: string;
-        port: number;
-        protocol: "TCP" | "UDP";
-        active: boolean;
-      }>
-    >;
+    listCustomRules: () => Promise<FirewallRuleStatus[]>;
     createCustomRule: (
       name: string,
       port: number,
@@ -175,6 +111,10 @@ interface API {
   };
 }
 
-interface Window {
-  api: API;
+declare global {
+  interface Window {
+    api: API;
+  }
 }
+
+export {};

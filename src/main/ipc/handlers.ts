@@ -6,7 +6,8 @@ import { SystemMonitor } from "../monitor/SystemMonitor";
 import { FirewallManager } from "../firewall/FirewallManager";
 import { PalworldApiClient } from "../server/PalworldApiClient";
 import { BackupManager } from "../backup/BackupManager";
-import { RestartScheduler, RestartConfig } from "../scheduler/RestartScheduler";
+import { RestartScheduler } from "../scheduler/RestartScheduler";
+import type { RestartConfig } from "../../shared/types";
 import Store from "electron-store";
 
 export function registerIpcHandlers(): void {
@@ -86,6 +87,16 @@ export function registerIpcHandlers(): void {
   };
 
   applyScheduler();
+
+  const broadcastLog = (line: string): void => {
+    BrowserWindow.getAllWindows().forEach((w) =>
+      w.webContents.send("server:log", line),
+    );
+  };
+
+  // Try to adopt an existing PalServer.exe on startup
+  serverManager.tryAdopt(broadcastLog).catch(() => {});
+
   // --- Window controls ---
   ipcMain.handle("window:minimize", () => {
     BrowserWindow.getFocusedWindow()?.minimize();

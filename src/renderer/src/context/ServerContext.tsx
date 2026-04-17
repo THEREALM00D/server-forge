@@ -56,6 +56,8 @@ const ServerContext = createContext<{
 export function ServerProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
+  console.log("ServerContext state updated:", state);
+
   useEffect(() => {
     configService.getServerPath().then((path) => {
       if (path) dispatch({ type: "SET_SERVER_PATH", payload: path });

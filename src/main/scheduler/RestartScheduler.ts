@@ -1,9 +1,4 @@
-export interface RestartConfig {
-  enabled: boolean;
-  time: string; // "HH:MM" 24h
-  warningMinutes: number;
-  message: string;
-}
+import type { RestartConfig } from "../../shared/types";
 
 export class RestartScheduler {
   private timer: NodeJS.Timeout | null = null;

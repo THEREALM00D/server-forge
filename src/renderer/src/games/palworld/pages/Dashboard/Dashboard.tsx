@@ -20,7 +20,12 @@ import Tooltip from "@mui/material/Tooltip";
 import { useServer } from "../../../../context/ServerContext";
 import { useServerControls } from "../../hooks/useServerControls";
 import { useNotification } from "../../../../context/NotificationContext";
-import type { SystemStats } from "../../../../types";
+import type {
+  SystemStats,
+  PalServerInfo,
+  PalPlayer,
+  PalMetrics,
+} from "@shared/types";
 
 const STATUS_COLOR: Record<
   string,
@@ -92,6 +97,22 @@ function StatCard({
   );
 }
 
+import { intervalToDuration } from "date-fns";
+
+function formatDuration(seconds: number): string {
+  if (!seconds || seconds <= 0) return "—";
+  const d = intervalToDuration({ start: 0, end: seconds * 1000 });
+  const parts: string[] = [];
+  if (d.days) parts.push(`${d.days}j`);
+  if (d.hours) parts.push(`${d.hours}h`);
+  if (d.minutes !== undefined && (d.days || d.hours)) {
+    parts.push(`${String(d.minutes).padStart(2, "0")}m`);
+  } else if (d.minutes) {
+    parts.push(`${d.minutes}m`);
+  }
+  return parts.length ? parts.join("") : `${d.seconds ?? 0}s`;
+}
+
 function StatsGrid({ stats }: { stats: SystemStats }) {
   return (
     <Box sx={{ display: "flex", gap: 2 }}>
@@ -102,13 +123,26 @@ function StatsGrid({ stats }: { stats: SystemStats }) {
         <StatCard label="RAM" value={stats.ram} unit="%" progress={stats.ram} />
       </Box>
       <Box sx={{ flex: 1 }}>
-        <StatCard label="RAM utilisée" value={stats.ramUsed} unit="GB" />
+        <StatCard
+          label="RAM utilisée"
+          value={`${stats.ramUsed} / ${stats.ramTotal}`}
+          unit="GB"
+        />
       </Box>
       <Box sx={{ flex: 1 }}>
         <StatCard
-          label="Uptime"
-          value={Math.floor(stats.uptime / 60)}
-          unit="min"
+          label="RAM serveur"
+          value={`${stats.ramUsedByGame} / ${stats.ramTotal}`}
+          unit="GB"
+        />
+      </Box>
+      <Box sx={{ flex: 1 }}>
+        <StatCard label="Uptime système" value={formatDuration(stats.uptime)} />
+      </Box>
+      <Box sx={{ flex: 1 }}>
+        <StatCard
+          label="Uptime serveur"
+          value={formatDuration(stats.serverUptime)}
         />
       </Box>
     </Box>
