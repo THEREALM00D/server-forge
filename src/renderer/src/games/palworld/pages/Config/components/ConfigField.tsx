@@ -7,8 +7,10 @@ import {
   Stack,
   Switch,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import type { FieldDef } from "../fields";
 
 interface Props {
@@ -17,8 +19,37 @@ interface Props {
   onChange: (value: string | number | boolean) => void;
 }
 
+function FieldLabel({
+  label,
+  description,
+  minWidth,
+}: {
+  label: string;
+  description?: string;
+  minWidth?: number;
+}) {
+  return (
+    <Stack
+      direction="row"
+      sx={{ alignItems: "center", gap: 0.5, minWidth }}
+      component="span"
+    >
+      <Typography variant="body2" component="span">
+        {label}
+      </Typography>
+      {description && (
+        <Tooltip title={description} arrow placement="top">
+          <InfoOutlinedIcon
+            sx={{ fontSize: 16, color: "text.secondary", cursor: "help" }}
+          />
+        </Tooltip>
+      )}
+    </Stack>
+  );
+}
+
 export default function ConfigField({ field, value, onChange }: Props) {
-  const { label, type, options } = field;
+  const { label, type, options, description } = field;
 
   if (type === "boolean") {
     return (
@@ -30,7 +61,7 @@ export default function ConfigField({ field, value, onChange }: Props) {
             onChange={(e) => onChange(e.target.checked)}
           />
         }
-        label={<Typography variant="body2">{label}</Typography>}
+        label={<FieldLabel label={label} description={description} />}
         sx={{
           justifyContent: "space-between",
           ml: 0,
@@ -43,9 +74,7 @@ export default function ConfigField({ field, value, onChange }: Props) {
   if (type === "select") {
     return (
       <Stack direction="row" sx={{ alignItems: "center", gap: 2 }}>
-        <Typography variant="body2" sx={{ minWidth: 200 }}>
-          {label}
-        </Typography>
+        <FieldLabel label={label} description={description} minWidth={200} />
         <FormControl size="small" sx={{ flex: 1 }}>
           <InputLabel>{label}</InputLabel>
           <Select
@@ -66,9 +95,7 @@ export default function ConfigField({ field, value, onChange }: Props) {
 
   return (
     <Stack direction="row" sx={{ alignItems: "center", gap: 2 }}>
-      <Typography variant="body2" sx={{ minWidth: 200 }}>
-        {label}
-      </Typography>
+      <FieldLabel label={label} description={description} minWidth={200} />
       <TextField
         size="small"
         type={type === "number" ? "number" : "text"}
