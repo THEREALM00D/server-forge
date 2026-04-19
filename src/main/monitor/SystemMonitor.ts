@@ -12,8 +12,14 @@ export class SystemMonitor {
       si.processes(),
     ]);
 
-    const palProc = procs.list.find((p) =>
+    const palProcs = procs.list.filter((p) =>
       p.name.toLowerCase().startsWith("palserver"),
+    );
+    // Le lanceur PalServer.exe consomme peu de RAM ; PalServer-Win64-Shipping.exe
+    // est le vrai serveur. On prend le plus gourmand pour couvrir les deux cas.
+    const palProc = palProcs.reduce<(typeof palProcs)[number] | undefined>(
+      (best, p) => (!best || p.memRss > best.memRss ? p : best),
+      undefined,
     );
 
     const ramUsedByGame = palProc
