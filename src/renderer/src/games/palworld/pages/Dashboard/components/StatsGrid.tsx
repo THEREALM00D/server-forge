@@ -1,4 +1,5 @@
 import { Box, Paper, Typography, LinearProgress } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import type { SystemStats } from "@shared/types";
 import { formatDuration } from "../utils";
 
@@ -54,34 +55,48 @@ function StatCard({
 }
 
 export default function StatsGrid({ stats }: { stats: SystemStats }) {
+  const { t } = useTranslation();
   return (
     <Box sx={{ display: "flex", gap: 2 }}>
       <Box sx={{ flex: 1 }}>
-        <StatCard label="CPU" value={stats.cpu} unit="%" progress={stats.cpu} />
-      </Box>
-      <Box sx={{ flex: 1 }}>
-        <StatCard label="RAM" value={stats.ram} unit="%" progress={stats.ram} />
+        <StatCard
+          label={t("dashboard.stats.cpu")}
+          value={stats.cpu}
+          unit="%"
+          progress={stats.cpu}
+        />
       </Box>
       <Box sx={{ flex: 1 }}>
         <StatCard
-          label="RAM utilisée"
+          label={t("dashboard.stats.ram")}
+          value={stats.ram}
+          unit="%"
+          progress={stats.ram}
+        />
+      </Box>
+      <Box sx={{ flex: 1 }}>
+        <StatCard
+          label={t("dashboard.stats.ramUsed")}
           value={`${stats.ramUsed} / ${stats.ramTotal}`}
           unit="GB"
         />
       </Box>
       <Box sx={{ flex: 1 }}>
         <StatCard
-          label="RAM serveur"
+          label={t("dashboard.stats.ramServer")}
           value={`${stats.ramUsedByGame} / ${stats.ramTotal}`}
           unit="GB"
         />
       </Box>
       <Box sx={{ flex: 1 }}>
-        <StatCard label="Uptime système" value={formatDuration(stats.uptime)} />
+        <StatCard
+          label={t("dashboard.stats.uptimeSystem")}
+          value={formatDuration(stats.uptime)}
+        />
       </Box>
       <Box sx={{ flex: 1 }}>
         <StatCard
-          label="Uptime serveur"
+          label={t("dashboard.stats.uptimeServer")}
           value={formatDuration(stats.serverUptime)}
         />
       </Box>

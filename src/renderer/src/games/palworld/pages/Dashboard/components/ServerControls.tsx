@@ -2,6 +2,7 @@ import { Button, Chip, Paper, Stack } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import StopIcon from "@mui/icons-material/Stop";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import { useTranslation } from "react-i18next";
 import type { ServerStatus } from "@shared/types";
 
 const STATUS_COLOR: Record<
@@ -13,14 +14,6 @@ const STATUS_COLOR: Record<
   stopping: "warning",
   crashed: "error",
   stopped: "default",
-};
-
-const STATUS_LABEL: Record<ServerStatus, string> = {
-  running: "En ligne",
-  starting: "Démarrage...",
-  stopping: "Arrêt...",
-  crashed: "Planté",
-  stopped: "Arrêté",
 };
 
 interface Props {
@@ -40,6 +33,7 @@ export default function ServerControls({
   onStop,
   onRestart,
 }: Props) {
+  const { t } = useTranslation();
   return (
     <Paper
       sx={{
@@ -50,7 +44,7 @@ export default function ServerControls({
       }}
     >
       <Chip
-        label={STATUS_LABEL[status] ?? status}
+        label={t(`status.${status}`, { defaultValue: status })}
         color={STATUS_COLOR[status] ?? "default"}
         variant="outlined"
       />
@@ -63,7 +57,7 @@ export default function ServerControls({
           onClick={onStart}
           size="small"
         >
-          Démarrer
+          {t("dashboard.controls.start")}
         </Button>
         <Button
           variant="contained"
@@ -73,7 +67,7 @@ export default function ServerControls({
           onClick={onRestart}
           size="small"
         >
-          Redémarrer
+          {t("dashboard.controls.restart")}
         </Button>
         <Button
           variant="contained"
@@ -83,7 +77,7 @@ export default function ServerControls({
           onClick={onStop}
           size="small"
         >
-          Arrêter
+          {t("dashboard.controls.stop")}
         </Button>
       </Stack>
     </Paper>

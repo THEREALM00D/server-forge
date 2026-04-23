@@ -11,10 +11,12 @@ import {
   Divider,
   Alert,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { useNotification } from "../../../../context/NotificationContext";
 import type { RestartConfig } from "@shared/types";
 
 export default function Schedule() {
+  const { t } = useTranslation();
   const { notify } = useNotification();
   const [cfg, setCfg] = useState<RestartConfig>({
     enabled: false,
@@ -47,13 +49,13 @@ export default function Schedule() {
         RESTAPIEnabled: true,
       });
       if (res.success) {
-        notify("API REST activée. Redémarrez le serveur.", "success");
+        notify(t("schedule.notify.apiEnabled"), "success");
         await checkApi();
       } else {
-        notify(res.error || "Échec de l'activation");
+        notify(res.error || t("schedule.notify.apiEnableFailed"));
       }
     } catch {
-      notify("Impossible de modifier la configuration");
+      notify(t("schedule.notify.apiCannotWrite"));
     }
   };
 
@@ -65,15 +67,15 @@ export default function Schedule() {
   const handleSave = async () => {
     await window.api.schedule.setRestart(cfg);
     setDirty(false);
-    notify("Planification enregistrée", "success");
+    notify(t("schedule.notify.saved"), "success");
   };
 
   return (
     <Stack spacing={3}>
       <Box>
-        <Typography variant="h6">Planification</Typography>
+        <Typography variant="h6">{t("schedule.title")}</Typography>
         <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
-          Redémarrage automatique quotidien du serveur
+          {t("schedule.subtitle")}
         </Typography>
       </Box>
 
@@ -82,12 +84,11 @@ export default function Schedule() {
           severity="warning"
           action={
             <Button color="inherit" size="small" onClick={handleEnableApi}>
-              Activer
+              {t("schedule.enableApi")}
             </Button>
           }
         >
-          L'API REST est désactivée — sans elle, le redémarrage planifié ne
-          pourra pas sauvegarder le monde avant l'arrêt.
+          {t("schedule.apiWarning")}
         </Alert>
       )}
 
@@ -99,13 +100,13 @@ export default function Schedule() {
               onChange={(e) => update({ enabled: e.target.checked })}
             />
           }
-          label="Activer le redémarrage planifié"
+          label={t("schedule.enabled")}
         />
         <Divider sx={{ my: 2 }} />
 
         <Stack spacing={2}>
           <TextField
-            label="Heure (24h)"
+            label={t("schedule.time")}
             type="time"
             size="small"
             value={cfg.time}
@@ -115,7 +116,7 @@ export default function Schedule() {
             slotProps={{ inputLabel: { shrink: true } }}
           />
           <TextField
-            label="Avertissement (minutes avant)"
+            label={t("schedule.warning")}
             type="number"
             size="small"
             value={cfg.warningMinutes}
@@ -127,22 +128,22 @@ export default function Schedule() {
             disabled={!cfg.enabled}
             sx={{ maxWidth: 280 }}
             slotProps={{ htmlInput: { min: 0 } }}
-            helperText="Délai entre l'annonce et l'arrêt (0 = immédiat)"
+            helperText={t("schedule.warningHelper")}
           />
           <TextField
-            label="Message d'annonce"
+            label={t("schedule.message")}
             size="small"
             value={cfg.message}
             onChange={(e) => update({ message: e.target.value })}
             disabled={!cfg.enabled}
-            helperText="{minutes} sera remplacé par le délai"
+            helperText={t("schedule.messageHelper")}
             fullWidth
           />
         </Stack>
 
         <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
           <Button variant="contained" disabled={!dirty} onClick={handleSave}>
-            Enregistrer
+            {t("schedule.save")}
           </Button>
         </Box>
       </Paper>

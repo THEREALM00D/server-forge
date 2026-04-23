@@ -1,4 +1,5 @@
 import { Box, Divider, Paper, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import type { PalServerInfo, PalMetrics } from "@shared/types";
 
 function InfoRow({ label, value }: { label: string; value: string | number }) {
@@ -35,28 +36,38 @@ interface Props {
 }
 
 export default function ServerInfoPanel({ serverInfo, metrics }: Props) {
+  const { t } = useTranslation();
   return (
     <Paper sx={{ p: 2.5, flex: 1 }}>
       <Typography variant="subtitle2" sx={{ mb: 1 }}>
-        Informations du serveur
+        {t("dashboard.info.title")}
       </Typography>
       <Divider sx={{ mb: 1 }} />
-      <InfoRow label="Nom" value={serverInfo.servername} />
-      <InfoRow label="Version" value={serverInfo.version} />
+      <InfoRow label={t("dashboard.info.name")} value={serverInfo.servername} />
+      <InfoRow label={t("dashboard.info.version")} value={serverInfo.version} />
       {serverInfo.description && (
-        <InfoRow label="Description" value={serverInfo.description} />
+        <InfoRow
+          label={t("dashboard.info.description")}
+          value={serverInfo.description}
+        />
       )}
-      <InfoRow label="GUID" value={serverInfo.worldguid} />
+      <InfoRow label={t("dashboard.info.guid")} value={serverInfo.worldguid} />
       {metrics && (
         <>
           <Divider sx={{ my: 1 }} />
           <InfoRow
-            label="Joueurs en ligne"
+            label={t("dashboard.info.onlinePlayers")}
             value={`${metrics.currentplayernum} / ${metrics.maxplayernum}`}
           />
-          <InfoRow label="Jour en jeu" value={metrics.days} />
-          <InfoRow label="FPS serveur" value={metrics.serverfps} />
-          <InfoRow label="Camps de base" value={metrics.basecampnum} />
+          <InfoRow label={t("dashboard.info.dayInGame")} value={metrics.days} />
+          <InfoRow
+            label={t("dashboard.info.serverFps")}
+            value={metrics.serverfps}
+          />
+          <InfoRow
+            label={t("dashboard.info.basecamps")}
+            value={metrics.basecampnum}
+          />
         </>
       )}
     </Paper>

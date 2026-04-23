@@ -6,6 +6,8 @@ import {
   ListItemText,
   Divider,
   Chip,
+  ToggleButtonGroup,
+  ToggleButton,
 } from "@mui/material";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -14,6 +16,7 @@ import ArticleIcon from "@mui/icons-material/Article";
 import RouterIcon from "@mui/icons-material/Router";
 import BackupIcon from "@mui/icons-material/Backup";
 import ScheduleIcon from "@mui/icons-material/Schedule";
+import { useTranslation } from "react-i18next";
 import { Page } from "../../App";
 import { useServer } from "../../context/ServerContext";
 
@@ -28,40 +31,40 @@ const STATUS_COLOR: Record<
   stopped: "default",
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  running: "En ligne",
-  starting: "Démarrage...",
-  stopping: "Arrêt...",
-  crashed: "Planté",
-  stopped: "Arrêté",
-};
-
-const navItems: { id: Page; label: string; icon: React.ReactNode }[] = [
+const navItems: { id: Page; labelKey: string; icon: React.ReactNode }[] = [
   {
     id: "dashboard",
-    label: "Dashboard",
+    labelKey: "sidebar.dashboard",
     icon: <DashboardIcon fontSize="small" />,
   },
   {
     id: "install",
-    label: "Installation",
+    labelKey: "sidebar.install",
     icon: <DownloadIcon fontSize="small" />,
   },
   {
     id: "config",
-    label: "Configuration",
+    labelKey: "sidebar.config",
     icon: <SettingsIcon fontSize="small" />,
   },
-  { id: "logs", label: "Logs", icon: <ArticleIcon fontSize="small" /> },
-  { id: "network", label: "Réseau", icon: <RouterIcon fontSize="small" /> },
+  {
+    id: "logs",
+    labelKey: "sidebar.logs",
+    icon: <ArticleIcon fontSize="small" />,
+  },
+  {
+    id: "network",
+    labelKey: "sidebar.network",
+    icon: <RouterIcon fontSize="small" />,
+  },
   {
     id: "backup",
-    label: "Sauvegardes",
+    labelKey: "sidebar.backup",
     icon: <BackupIcon fontSize="small" />,
   },
   {
     id: "schedule",
-    label: "Planification",
+    labelKey: "sidebar.schedule",
     icon: <ScheduleIcon fontSize="small" />,
   },
 ];
@@ -73,6 +76,14 @@ interface SidebarProps {
 
 export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
   const { state } = useServer();
+  const { t, i18n } = useTranslation();
+
+  const handleLanguageChange = (
+    _: React.MouseEvent<HTMLElement>,
+    newLang: string | null,
+  ) => {
+    if (newLang) i18n.changeLanguage(newLang);
+  };
 
   return (
     <Box
@@ -87,7 +98,7 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
       }}
     >
       <List dense sx={{ py: 1, px: 1 }}>
-        {navItems.map(({ id, label, icon }) => (
+        {navItems.map(({ id, labelKey, icon }) => (
           <ListItemButton
             key={id}
             selected={currentPage === id}
@@ -110,7 +121,7 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
               {icon}
             </ListItemIcon>
             <ListItemText
-              primary={label}
+              primary={t(labelKey)}
               slotProps={{
                 primary: {
                   sx: {
@@ -125,9 +136,24 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
       </List>
 
       <Box sx={{ mt: "auto", p: 2 }}>
+        <ToggleButtonGroup
+          value={i18n.resolvedLanguage ?? "fr"}
+          exclusive
+          onChange={handleLanguageChange}
+          size="small"
+          fullWidth
+          sx={{ mb: 1.5 }}
+        >
+          <ToggleButton value="fr" sx={{ fontSize: 11, py: 0.25 }}>
+            FR
+          </ToggleButton>
+          <ToggleButton value="en" sx={{ fontSize: 11, py: 0.25 }}>
+            EN
+          </ToggleButton>
+        </ToggleButtonGroup>
         <Divider sx={{ mb: 1.5 }} />
         <Chip
-          label={STATUS_LABEL[state.status] ?? state.status}
+          label={t(`status.${state.status}`, { defaultValue: state.status })}
           color={STATUS_COLOR[state.status] ?? "default"}
           size="small"
           variant="outlined"

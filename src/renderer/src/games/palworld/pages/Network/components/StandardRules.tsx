@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import SyncIcon from "@mui/icons-material/Sync";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
+import { useTranslation } from "react-i18next";
 import type { FirewallRuleStatus } from "@shared/types";
 import { firewallService } from "../../../services/firewallService";
 import { useNotification } from "../../../../../context/NotificationContext";
@@ -53,6 +54,7 @@ export default function StandardRules({
   onRefresh,
   getPorts,
 }: Props) {
+  const { t } = useTranslation();
   const { notify } = useNotification();
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -62,16 +64,21 @@ export default function StandardRules({
     setBusy(rule.name);
     if (rule.active) {
       const res = await firewallService.disableRule(key);
-      if (!res.success) notify(res.error ?? "Erreur", "error");
-      else notify(`Règle "${rule.name}" supprimée`, "success");
+      if (!res.success) notify(res.error ?? t("common.error"), "error");
+      else
+        notify(
+          t("network.standard.ruleRemoved", { name: rule.name }),
+          "success",
+        );
     } else {
       const res = await firewallService.enableRule(
         key,
         rule.port,
         rule.protocol,
       );
-      if (!res.success) notify(res.error ?? "Erreur", "error");
-      else notify(`Règle "${rule.name}" ajoutée`, "success");
+      if (!res.success) notify(res.error ?? t("common.error"), "error");
+      else
+        notify(t("network.standard.ruleAdded", { name: rule.name }), "success");
     }
     await onRefresh();
     setBusy(null);
@@ -82,7 +89,7 @@ export default function StandardRules({
     const { gamePort, rconPort, restApiPort } = await getPorts();
     const res = await firewallService.applyAll(gamePort, rconPort, restApiPort);
     if (!res.success) notify(res.errors.join("\n"), "error");
-    else notify("Toutes les règles ont été appliquées", "success");
+    else notify(t("network.standard.allApplied"), "success");
     await onRefresh();
     setBusy(null);
   };
@@ -90,7 +97,7 @@ export default function StandardRules({
   const handleRemoveAll = async () => {
     setBusy("all");
     await firewallService.removeAll();
-    notify("Toutes les règles Palworld ont été supprimées", "info");
+    notify(t("network.standard.allRemoved"), "info");
     await onRefresh();
     setBusy(null);
   };
@@ -109,10 +116,10 @@ export default function StandardRules({
             color: "text.secondary",
           }}
         >
-          Règles pare-feu
+          {t("network.standard.title")}
         </Typography>
         <Stack direction="row" spacing={1}>
-          <Tooltip title="Relire les ports depuis PalWorldSettings.ini et créer toutes les règles">
+          <Tooltip title={t("network.standard.applyAllTooltip")}>
             <span>
               <Button
                 size="small"
@@ -127,11 +134,11 @@ export default function StandardRules({
                 disabled={busy !== null || !isAdmin}
                 onClick={handleApplyAll}
               >
-                Tout appliquer
+                {t("network.standard.applyAll")}
               </Button>
             </span>
           </Tooltip>
-          <Tooltip title="Supprimer toutes les règles Palworld du pare-feu">
+          <Tooltip title={t("network.standard.removeAllTooltip")}>
             <span>
               <Button
                 size="small"
@@ -141,7 +148,7 @@ export default function StandardRules({
                 disabled={busy !== null || !isAdmin}
                 onClick={handleRemoveAll}
               >
-                Tout supprimer
+                {t("network.standard.removeAll")}
               </Button>
             </span>
           </Tooltip>
@@ -156,10 +163,18 @@ export default function StandardRules({
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell sx={HEAD_SX}>Règle</TableCell>
-              <TableCell sx={HEAD_SX}>Port</TableCell>
-              <TableCell sx={HEAD_SX}>Proto</TableCell>
-              <TableCell sx={HEAD_SX}>État</TableCell>
+              <TableCell sx={HEAD_SX}>
+                {t("network.standard.colRule")}
+              </TableCell>
+              <TableCell sx={HEAD_SX}>
+                {t("network.standard.colPort")}
+              </TableCell>
+              <TableCell sx={HEAD_SX}>
+                {t("network.standard.colProto")}
+              </TableCell>
+              <TableCell sx={HEAD_SX}>
+                {t("network.standard.colState")}
+              </TableCell>
               <TableCell align="right" />
             </TableRow>
           </TableHead>
@@ -200,9 +215,9 @@ export default function StandardRules({
                     {busy === rule.name ? (
                       <CircularProgress size={14} color="inherit" />
                     ) : rule.active ? (
-                      "Désactiver"
+                      t("network.standard.disable")
                     ) : (
-                      "Activer"
+                      t("network.standard.enable")
                     )}
                   </Button>
                 </TableCell>

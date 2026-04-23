@@ -11,6 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import { useTranslation } from "react-i18next";
 import type { FieldDef } from "../fields";
 
 interface Props {
@@ -49,7 +50,12 @@ function FieldLabel({
 }
 
 export default function ConfigField({ field, value, onChange }: Props) {
-  const { label, type, options, description } = field;
+  const { t } = useTranslation();
+  const { key, type, options } = field;
+  const label = t(`config.fields.${key}.label`, { defaultValue: key });
+  const description = t(`config.fields.${key}.description`, {
+    defaultValue: "",
+  });
 
   if (type === "boolean") {
     return (
@@ -84,7 +90,7 @@ export default function ConfigField({ field, value, onChange }: Props) {
           >
             {options?.map((opt) => (
               <MenuItem key={opt.value} value={opt.value}>
-                {opt.label}
+                {t(opt.labelKey)}
               </MenuItem>
             ))}
           </Select>

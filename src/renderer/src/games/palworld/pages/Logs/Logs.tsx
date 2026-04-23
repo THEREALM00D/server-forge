@@ -1,9 +1,11 @@
 import { useEffect, useRef } from "react";
 import { Box, Typography, Paper, Button, Stack, Divider } from "@mui/material";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
+import { useTranslation } from "react-i18next";
 import { useServer } from "../../../../context/ServerContext";
 
 export default function Logs() {
+  const { t } = useTranslation();
   const { state, dispatch } = useServer();
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -21,9 +23,9 @@ export default function Logs() {
         sx={{ alignItems: "center", justifyContent: "space-between" }}
       >
         <Box>
-          <Typography variant="h6">Logs serveur</Typography>
+          <Typography variant="h6">{t("logs.title")}</Typography>
           <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
-            {state.logs.length} lignes
+            {t("logs.lines", { count: state.logs.length })}
           </Typography>
         </Box>
         <Button
@@ -32,7 +34,7 @@ export default function Logs() {
           startIcon={<DeleteSweepIcon />}
           onClick={() => dispatch({ type: "CLEAR_LOGS" })}
         >
-          Effacer
+          {t("logs.clear")}
         </Button>
       </Stack>
 
@@ -57,7 +59,7 @@ export default function Logs() {
         >
           {state.logs.length === 0 ? (
             <Typography variant="body2" sx={{ color: "text.disabled" }}>
-              Aucun log — démarrez le serveur pour voir les logs.
+              {t("logs.empty")}
             </Typography>
           ) : (
             state.logs.map((line, i) => (

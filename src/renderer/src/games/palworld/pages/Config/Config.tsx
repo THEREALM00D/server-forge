@@ -12,6 +12,8 @@ import SaveIcon from "@mui/icons-material/Save";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import IconButton from "@mui/material/IconButton";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { useServer } from "../../../../context/ServerContext";
 import { useNotification } from "../../../../context/NotificationContext";
 import { configService } from "../../services/configService";
@@ -20,18 +22,29 @@ import { DIFFICULTY_PRESETS } from "./presets";
 import ConfigGroup from "./components/ConfigGroup";
 import ConfigField from "./components/ConfigField";
 
-function filterGroups(groups: FieldGroup[], query: string): FieldGroup[] {
+function filterGroups(
+  groups: FieldGroup[],
+  query: string,
+  t: TFunction,
+): FieldGroup[] {
   const q = query.trim().toLowerCase();
   if (!q) return groups;
   return groups
     .map((group) => {
-      const groupMatches = group.label.toLowerCase().includes(q);
+      const groupLabel = t(group.labelKey).toLowerCase();
+      const groupMatches = groupLabel.includes(q);
       const fields = group.fields.filter((f) => {
         if (groupMatches) return true;
+        const label = t(`config.fields.${f.key}.label`, {
+          defaultValue: f.key,
+        }).toLowerCase();
+        const description = t(`config.fields.${f.key}.description`, {
+          defaultValue: "",
+        }).toLowerCase();
         return (
-          f.label.toLowerCase().includes(q) ||
+          label.includes(q) ||
           f.key.toLowerCase().includes(q) ||
-          (f.description?.toLowerCase().includes(q) ?? false)
+          description.includes(q)
         );
       });
       return { ...group, fields };
@@ -40,6 +53,7 @@ function filterGroups(groups: FieldGroup[], query: string): FieldGroup[] {
 }
 
 export default function Config() {
+  const { t } = useTranslation();
   const { state } = useServer();
   const { notify } = useNotification();
   const [saved, setSaved] = useState(false);
@@ -53,7 +67,7 @@ export default function Config() {
       if (res.success) {
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
-      } else notify(res.error ?? "Erreur inconnue", "error");
+      } else notify(res.error ?? t("config.unknownError"), "error");
     },
   });
 
@@ -79,8 +93,8 @@ export default function Config() {
   };
 
   const visibleGroups = useMemo(
-    () => filterGroups(FIELD_GROUPS, search),
-    [search],
+    () => filterGroups(FIELD_GROUPS, search, t),
+    [search, t],
   );
 
   if (!state.serverPath) {
@@ -94,7 +108,7 @@ export default function Config() {
         }}
       >
         <Typography sx={{ color: "text.secondary" }}>
-          Configurez le chemin serveur dans Installation.
+          {t("config.noServerPath")}
         </Typography>
       </Box>
     );
@@ -102,21 +116,23 @@ export default function Config() {
 
   if (loading)
     return (
-      <Typography sx={{ color: "text.secondary" }}>Chargement...</Typography>
+      <Typography sx={{ color: "text.secondary" }}>
+        {t("common.loading")}
+      </Typography>
     );
 
   return (
     <Stack spacing={3} sx={{ maxWidth: 680 }}>
       <Box>
-        <Typography variant="h6">Configuration</Typography>
+        <Typography variant="h6">{t("config.title")}</Typography>
         <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
-          PalWorldSettings.ini
+          {t("config.subtitle")}
         </Typography>
       </Box>
 
       <TextField
         size="small"
-        placeholder="Rechercher un paramètre..."
+        placeholder={t("config.search")}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         slotProps={{
@@ -131,7 +147,7 @@ export default function Config() {
                 <IconButton
                   size="small"
                   onClick={() => setSearch("")}
-                  aria-label="Effacer la recherche"
+                  aria-label={t("config.searchClear")}
                 >
                   <ClearIcon fontSize="small" />
                 </IconButton>
@@ -150,12 +166,12 @@ export default function Config() {
         <Stack spacing={2}>
           {visibleGroups.length === 0 && (
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              Aucun paramètre ne correspond à « {search} ».
+              {t("config.noResults", { query: search })}
             </Typography>
           )}
           {visibleGroups.map((group) => (
             <ConfigGroup
-              key={group.label}
+              key={group.labelKey}
               group={group}
               renderField={(field) => (
                 <form.Field name={field.key as never}>
@@ -182,7 +198,7 @@ export default function Config() {
             startIcon={<SaveIcon />}
             color={saved ? "success" : "primary"}
           >
-            {saved ? "Sauvegardé !" : "Sauvegarder la configuration"}
+            {saved ? t("config.saved") : t("config.save")}
           </Button>
         </Stack>
       </form>

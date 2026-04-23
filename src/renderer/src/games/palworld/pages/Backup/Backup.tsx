@@ -19,6 +19,7 @@ import BackupIcon from "@mui/icons-material/Backup";
 import RestoreIcon from "@mui/icons-material/Restore";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
+import { useTranslation } from "react-i18next";
 import { useServer } from "../../../../context/ServerContext";
 import { useNotification } from "../../../../context/NotificationContext";
 import type { BackupEntry, BackupConfig } from "@shared/types";
@@ -31,11 +32,12 @@ function formatSize(bytes: number): string {
   return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
 }
 
-function formatDate(ts: number): string {
-  return new Date(ts).toLocaleString("fr-FR");
+function formatDate(ts: number, locale: string): string {
+  return new Date(ts).toLocaleString(locale === "fr" ? "fr-FR" : "en-US");
 }
 
 export default function Backup() {
+  const { t, i18n } = useTranslation();
   const { state } = useServer();
   const { notify } = useNotification();
   const { status, serverPath } = state;
@@ -58,7 +60,7 @@ export default function Backup() {
       setBackups(list);
       setConfig(cfg);
     } catch {
-      notify("Impossible de charger les sauvegardes");
+      notify(t("backup.notify.cannotLoad"));
     }
   };
 
@@ -70,10 +72,10 @@ export default function Backup() {
     setCreating(true);
     try {
       const entry = await window.api.backup.create();
-      notify(`Sauvegarde créée : ${entry.name}`, "success");
+      notify(t("backup.notify.created", { name: entry.name }), "success");
       await refresh();
     } catch (e) {
-      notify((e as Error).message || "Échec de la sauvegarde");
+      notify((e as Error).message || t("backup.notify.createFailed"));
     } finally {
       setCreating(false);
     }
@@ -81,31 +83,30 @@ export default function Backup() {
 
   const handleRestore = async (entry: BackupEntry) => {
     if (
-      !window.confirm(
-        `Restaurer ${entry.name} ?\nLa sauvegarde actuelle sera écrasée.`,
-      )
+      !window.confirm(t("backup.list.restoreConfirm", { name: entry.name }))
     ) {
       return;
     }
     setRestoring(entry.path);
     try {
       await window.api.backup.restore(entry.path);
-      notify(`Sauvegarde restaurée : ${entry.name}`, "success");
+      notify(t("backup.notify.restored", { name: entry.name }), "success");
     } catch (e) {
-      notify((e as Error).message || "Échec de la restauration");
+      notify((e as Error).message || t("backup.notify.restoreFailed"));
     } finally {
       setRestoring(null);
     }
   };
 
   const handleDelete = async (entry: BackupEntry) => {
-    if (!window.confirm(`Supprimer ${entry.name} ?`)) return;
+    if (!window.confirm(t("backup.list.deleteConfirm", { name: entry.name })))
+      return;
     try {
       await window.api.backup.delete(entry.path);
-      notify("Sauvegarde supprimée", "success");
+      notify(t("backup.notify.deleted"), "success");
       await refresh();
     } catch {
-      notify("Impossible de supprimer la sauvegarde");
+      notify(t("backup.notify.deleteFailed"));
     }
   };
 
@@ -135,56 +136,56 @@ export default function Backup() {
   return (
     <Stack spacing={3}>
       <Box>
-        <Typography variant="h6">Sauvegardes</Typography>
+        <Typography variant="h6">{t("backup.title")}</Typography>
         <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
-          Gérez les sauvegardes du dossier SaveGames
+          {t("backup.subtitle")}
         </Typography>
       </Box>
 
       <Paper sx={{ p: 2.5 }}>
         <Typography variant="subtitle2" sx={{ mb: 1.5 }}>
-          Configuration
+          {t("backup.config.title")}
         </Typography>
         <Stack spacing={2}>
           <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
             <TextField
-              label="Dossier de sauvegarde"
+              label={t("backup.config.dir")}
               size="small"
               value={config.backupDir}
               fullWidth
               slotProps={{ input: { readOnly: true } }}
             />
-            <Tooltip title="Choisir un dossier">
+            <Tooltip title={t("backup.config.dirTooltip")}>
               <IconButton onClick={handleSelectDir}>
                 <FolderOpenIcon />
               </IconButton>
             </Tooltip>
           </Stack>
           <TextField
-            label="Sauvegardes à conserver (rotation)"
+            label={t("backup.config.keep")}
             size="small"
             type="number"
             value={config.backupKeep}
             onChange={(e) => handleKeepChange(e.target.value)}
             sx={{ maxWidth: 280 }}
             slotProps={{ htmlInput: { min: 0 } }}
-            helperText="0 = pas de rotation"
+            helperText={t("backup.config.keepHelper")}
           />
           <FormControl size="small" sx={{ maxWidth: 280 }}>
-            <InputLabel>Sauvegarde automatique</InputLabel>
+            <InputLabel>{t("backup.config.auto")}</InputLabel>
             <Select
-              label="Sauvegarde automatique"
+              label={t("backup.config.auto")}
               value={config.backupIntervalMinutes}
               onChange={(e) => handleIntervalChange(Number(e.target.value))}
             >
-              <MenuItem value={0}>Désactivée</MenuItem>
-              <MenuItem value={15}>Toutes les 15 minutes</MenuItem>
-              <MenuItem value={30}>Toutes les 30 minutes</MenuItem>
-              <MenuItem value={60}>Toutes les heures</MenuItem>
-              <MenuItem value={180}>Toutes les 3 heures</MenuItem>
-              <MenuItem value={360}>Toutes les 6 heures</MenuItem>
-              <MenuItem value={720}>Toutes les 12 heures</MenuItem>
-              <MenuItem value={1440}>Une fois par jour</MenuItem>
+              <MenuItem value={0}>{t("backup.config.autoOff")}</MenuItem>
+              <MenuItem value={15}>{t("backup.config.auto15")}</MenuItem>
+              <MenuItem value={30}>{t("backup.config.auto30")}</MenuItem>
+              <MenuItem value={60}>{t("backup.config.auto60")}</MenuItem>
+              <MenuItem value={180}>{t("backup.config.auto180")}</MenuItem>
+              <MenuItem value={360}>{t("backup.config.auto360")}</MenuItem>
+              <MenuItem value={720}>{t("backup.config.auto720")}</MenuItem>
+              <MenuItem value={1440}>{t("backup.config.auto1440")}</MenuItem>
             </Select>
           </FormControl>
         </Stack>
@@ -200,7 +201,7 @@ export default function Backup() {
           }}
         >
           <Typography variant="subtitle2">
-            Sauvegardes ({backups.length})
+            {t("backup.list.title", { count: backups.length })}
           </Typography>
           <Button
             variant="contained"
@@ -211,13 +212,13 @@ export default function Backup() {
             disabled={!serverPath || creating}
             onClick={handleCreate}
           >
-            {creating ? "Sauvegarde..." : "Créer une sauvegarde"}
+            {creating ? t("backup.list.creating") : t("backup.list.create")}
           </Button>
         </Stack>
         <Divider sx={{ mb: 1 }} />
         {backups.length === 0 ? (
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Aucune sauvegarde
+            {t("backup.list.none")}
           </Typography>
         ) : (
           <Stack spacing={1}>
@@ -239,7 +240,8 @@ export default function Backup() {
                     variant="caption"
                     sx={{ color: "text.secondary" }}
                   >
-                    {formatDate(b.createdAt)} — {formatSize(b.size)}
+                    {formatDate(b.createdAt, i18n.resolvedLanguage ?? "fr")} —{" "}
+                    {formatSize(b.size)}
                   </Typography>
                 </Box>
                 <Stack
@@ -247,7 +249,7 @@ export default function Backup() {
                   spacing={0.5}
                   sx={{ alignItems: "center" }}
                 >
-                  <Tooltip title="Restaurer (serveur arrêté requis)">
+                  <Tooltip title={t("backup.list.restoreTooltip")}>
                     <span>
                       <IconButton
                         size="small"
@@ -263,7 +265,7 @@ export default function Backup() {
                       </IconButton>
                     </span>
                   </Tooltip>
-                  <Tooltip title="Supprimer">
+                  <Tooltip title={t("backup.list.deleteTooltip")}>
                     <IconButton
                       size="small"
                       color="error"

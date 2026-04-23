@@ -22,6 +22,7 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { useTranslation } from "react-i18next";
 import type { FirewallRuleStatus } from "@shared/types";
 import { firewallService } from "../../../services/firewallService";
 import { useNotification } from "../../../../../context/NotificationContext";
@@ -41,6 +42,7 @@ interface Props {
 }
 
 export default function CustomRules({ rules, isAdmin, onRefresh }: Props) {
+  const { t } = useTranslation();
   const { notify } = useNotification();
   const [newName, setNewName] = useState("");
   const [newPort, setNewPort] = useState("");
@@ -51,7 +53,7 @@ export default function CustomRules({ rules, isAdmin, onRefresh }: Props) {
   const handleCreate = async () => {
     const port = parseInt(newPort, 10);
     if (!newName.trim() || isNaN(port) || port < 1 || port > 65535) {
-      notify("Nom et port valide (1-65535) requis", "warning");
+      notify(t("network.custom.invalidInput"), "warning");
       return;
     }
     setCreating(true);
@@ -61,9 +63,9 @@ export default function CustomRules({ rules, isAdmin, onRefresh }: Props) {
       newProtocol,
     );
     if (!res.success) {
-      notify(res.error ?? "Erreur lors de la création", "error");
+      notify(res.error ?? t("network.custom.createErrorFallback"), "error");
     } else {
-      notify(`Règle "${newName.trim()}" créée`, "success");
+      notify(t("network.custom.created", { name: newName.trim() }), "success");
       setNewName("");
       setNewPort("");
       await onRefresh();
@@ -78,8 +80,8 @@ export default function CustomRules({ rules, isAdmin, onRefresh }: Props) {
       rule.protocol,
     );
     if (!res.success)
-      notify(res.error ?? "Erreur lors de la suppression", "error");
-    else notify(`Règle "${rule.name}" supprimée`, "success");
+      notify(res.error ?? t("network.custom.deleteErrorFallback"), "error");
+    else notify(t("network.custom.deleted", { name: rule.name }), "success");
     await onRefresh();
     setDeleting(null);
   };
@@ -95,7 +97,7 @@ export default function CustomRules({ rules, isAdmin, onRefresh }: Props) {
           mb: 2,
         }}
       >
-        Règles personnalisées
+        {t("network.custom.title")}
       </Typography>
 
       <Stack
@@ -104,7 +106,7 @@ export default function CustomRules({ rules, isAdmin, onRefresh }: Props) {
         sx={{ alignItems: "flex-start", mb: 2 }}
       >
         <TextField
-          label="Nom"
+          label={t("network.custom.name")}
           size="small"
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
@@ -112,7 +114,7 @@ export default function CustomRules({ rules, isAdmin, onRefresh }: Props) {
           sx={{ flex: 2 }}
         />
         <TextField
-          label="Port"
+          label={t("network.custom.port")}
           size="small"
           value={newPort}
           onChange={(e) => setNewPort(e.target.value.replace(/\D/g, ""))}
@@ -125,9 +127,9 @@ export default function CustomRules({ rules, isAdmin, onRefresh }: Props) {
           sx={{ minWidth: 90 }}
           disabled={!isAdmin || creating}
         >
-          <InputLabel>Proto</InputLabel>
+          <InputLabel>{t("network.custom.proto")}</InputLabel>
           <Select
-            label="Proto"
+            label={t("network.custom.proto")}
             value={newProtocol}
             onChange={(e) => setNewProtocol(e.target.value as "TCP" | "UDP")}
           >
@@ -149,7 +151,7 @@ export default function CustomRules({ rules, isAdmin, onRefresh }: Props) {
           onClick={handleCreate}
           sx={{ height: 40 }}
         >
-          Créer
+          {t("network.custom.create")}
         </Button>
       </Stack>
 
@@ -159,10 +161,12 @@ export default function CustomRules({ rules, isAdmin, onRefresh }: Props) {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell sx={HEAD_SX}>Nom</TableCell>
-                <TableCell sx={HEAD_SX}>Port</TableCell>
-                <TableCell sx={HEAD_SX}>Proto</TableCell>
-                <TableCell sx={HEAD_SX}>État</TableCell>
+                <TableCell sx={HEAD_SX}>{t("network.custom.name")}</TableCell>
+                <TableCell sx={HEAD_SX}>{t("network.custom.port")}</TableCell>
+                <TableCell sx={HEAD_SX}>{t("network.custom.proto")}</TableCell>
+                <TableCell sx={HEAD_SX}>
+                  {t("network.standard.colState")}
+                </TableCell>
                 <TableCell align="right" />
               </TableRow>
             </TableHead>
@@ -195,7 +199,7 @@ export default function CustomRules({ rules, isAdmin, onRefresh }: Props) {
                     <RuleStatus active={rule.active} />
                   </TableCell>
                   <TableCell align="right">
-                    <Tooltip title="Supprimer">
+                    <Tooltip title={t("network.custom.delete")}>
                       <span>
                         <IconButton
                           size="small"
@@ -219,7 +223,7 @@ export default function CustomRules({ rules, isAdmin, onRefresh }: Props) {
         </>
       ) : (
         <Typography variant="caption" sx={{ color: "text.disabled" }}>
-          Aucune règle personnalisée
+          {t("network.custom.none")}
         </Typography>
       )}
     </Paper>

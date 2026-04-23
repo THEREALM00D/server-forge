@@ -8,8 +8,10 @@ import {
   Typography,
 } from "@mui/material";
 import ShieldIcon from "@mui/icons-material/Shield";
+import { useTranslation } from "react-i18next";
 
 export default function AdminBanner({ isAdmin }: { isAdmin: boolean | null }) {
+  const { t } = useTranslation();
   return (
     <Paper sx={{ p: 2.5 }}>
       <Stack
@@ -22,10 +24,10 @@ export default function AdminBanner({ isAdmin }: { isAdmin: boolean | null }) {
           />
           <Box>
             <Typography variant="subtitle2">
-              Privilèges administrateur
+              {t("network.admin.title")}
             </Typography>
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              Requis pour modifier les règles de pare-feu
+              {t("network.admin.subtitle")}
             </Typography>
           </Box>
         </Stack>
@@ -33,7 +35,9 @@ export default function AdminBanner({ isAdmin }: { isAdmin: boolean | null }) {
           <CircularProgress size={20} />
         ) : (
           <Chip
-            label={isAdmin ? "Administrateur" : "Non-administrateur"}
+            label={
+              isAdmin ? t("network.admin.isAdmin") : t("network.admin.notAdmin")
+            }
             color={isAdmin ? "success" : "warning"}
             size="small"
             variant="outlined"
@@ -42,8 +46,7 @@ export default function AdminBanner({ isAdmin }: { isAdmin: boolean | null }) {
       </Stack>
       {isAdmin === false && (
         <Alert severity="warning" sx={{ mt: 2 }}>
-          Relancez l'application en tant qu'administrateur pour modifier les
-          règles de pare-feu.
+          {t("network.admin.warning")}
         </Alert>
       )}
     </Paper>

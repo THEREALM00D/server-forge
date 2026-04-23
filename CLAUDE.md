@@ -13,6 +13,7 @@ Gestionnaire de serveurs dédiés de jeux vidéo. Actuellement supporte Palworld
 - **TypeScript 6** strict — types partagés dans `src/shared/types.ts`
 - **Vite 5** via **electron-vite**
 - **Yarn** comme gestionnaire de paquets
+- **i18n** : `react-i18next` + `i18next` + `i18next-browser-languagedetector` (FR + EN)
 - Dépendances-clés : `archiver` + `extract-zip` (backups ZIP), `systeminformation` (CPU/RAM, détection de processus), `date-fns`
 
 Pas de tests unitaires configurés dans ce projet — ne pas en chercher ni en ajouter sans demander.
@@ -47,9 +48,10 @@ src/
 │   └── index.d.ts         # Déclare Window.api globalement (importe depuis shared)
 └── renderer/src/
     ├── context/           # ServerContext (useReducer), NotificationContext (toasts)
+    ├── i18n/              # Setup react-i18next + __i18n__/{fr,en}.ts pour strings communs
     ├── games/palworld/    # Tout ce qui est spécifique à Palworld
-    │   └── pages/<Page>/  # Chaque page a Page.tsx + hooks/ + components/
-    └── pages/, components/, services/  # Partagé entre jeux
+    │   └── pages/<Page>/  # Page.tsx + hooks/ + components/ + __i18n__/{fr,en}.ts
+    └── pages/, components/, services/  # Partagé entre jeux (avec __i18n__/ également)
 ```
 
 ### Communication IPC
@@ -77,6 +79,19 @@ Le code spécifique à Palworld est dans `games/palworld/`. Les composants parta
 2. Ajouter les types spécifiques dans `src/shared/types.ts` si ils traversent IPC
 3. Ajouter les handlers IPC dans `src/main/ipc/handlers/<jeu>.ts` et les wirer dans `handlers.ts`
 4. Ajouter l'onglet dans `Sidebar.tsx` et le routage dans `App.tsx`
+5. Créer `__i18n__/{fr,en}.ts` dans chaque page + wirer dans `src/renderer/src/i18n/index.ts`
+
+### Internationalisation (i18n)
+
+- Langues supportées : **FR** (défaut) + **EN**. Détection initiale via navigateur, choix persisté dans `localStorage.locale`.
+- Sélecteur de langue : ToggleButtonGroup FR/EN au bas de la Sidebar.
+- **Chaque page et composant avec du texte a son dossier `__i18n__/` avec `fr.ts` et `en.ts`**. Les fichiers exportent un objet par défaut qui sera mergé dans la ressource globale par `src/renderer/src/i18n/index.ts`.
+- Pour ajouter des strings à une page : éditer `<Page>/__i18n__/fr.ts` ET `en.ts`, puis utiliser `const { t } = useTranslation(); t("page.key")`.
+- Pour ajouter une nouvelle page : créer son `__i18n__/{fr,en}.ts` et l'importer dans `src/renderer/src/i18n/index.ts` (merger dans les objets `fr` et `en`).
+- **Interpolation** : `t("key", { name: "Bob" })` + `"Hello {{name}}"` dans la traduction.
+- **Values vs labels** : les `value` des `<Select>` (ex: `Casual`, `ItemAndEquipment` de `Difficulty`/`DeathPenalty`) restent les valeurs INI brutes — seuls les labels UI sont traduits via `labelKey` dans `SelectOption`.
+- **Config Palworld** : `fields.ts` ne contient plus que les clés + types. Les labels et descriptions sont dans `Config/__i18n__/{fr,en}.ts` sous `config.fields.<Key>.label` / `.description`.
+- Ce qui n'est **pas** traduit : logs du process serveur (viennent du jeu), tokens de coloration de logs (`[Manager]`, `[ERR]`), brand « ServerForge » dans la Titlebar.
 
 ### Adoption d'un processus existant
 
@@ -84,9 +99,9 @@ Au démarrage, `ServerManager.tryAdopt()` scanne les processus via `systeminform
 
 ## Conventions
 
-- **UI en français** (labels, messages, commentaires inclus)
+- **UI bilingue FR/EN** via `react-i18next` — toute string user-facing passe par `t()` (jamais de texte en dur dans les JSX). Commentaires de code en français.
 - **MUI uniquement** — pas de Tailwind, pas de CSS custom sauf `index.css` minimal
-- **Notifications** : `useNotification().notify()` — jamais `alert()` ni état d'erreur local
+- **Notifications** : `useNotification().notify()` avec `t()` — jamais `alert()` ni état d'erreur local
 - **Imports main** : ne jamais importer depuis `src/main/` dans le renderer (passer par IPC)
 - **Fichiers < 200 lignes** : dès qu'une page dépasse, extraire hooks/components/data
 
@@ -122,7 +137,14 @@ Au démarrage, `ServerManager.tryAdopt()` scanne les processus via `systeminform
 - **Format** : `OptionSettings=(key1=val1,key2=val2,...)`
 - **170+ paramètres** avec valeurs par défaut dans `PalConfigParser.ts`
 - Types : string (quoté), int, float (6 décimales), bool, enum (non quoté), array `(val1,val2)`
-- Les définitions d'UI et presets de difficulté sont dans `games/palworld/pages/Config/fields.ts` et `presets.ts`
+- Les définitions d'UI (clés + types) sont dans `games/palworld/pages/Config/fields.ts`, les presets de difficulté dans `presets.ts`, et les labels/descriptions traduits dans `Config/__i18n__/{fr,en}.ts`.
+
+## Arguments de lancement (PalServer.exe)
+
+- Config stockée via electron-store sous `launchArgs: { publicLobby, performanceFlags, customArgs }` (type `LaunchArgsConfig` dans `shared/types.ts`).
+- `buildServerArgs(store)` dans `main/ipc/handlers/server.ts` reconstruit le tableau d'args à chaque `start`/`restart` (y compris dans le scheduler).
+- IPC : `server:getLaunchArgs` / `server:setLaunchArgs`. UI : section « Arguments de lancement » dans Installation.
+- `-publiclobby` active le mode lobby EOS (nécessaire pour le crossplay Xbox — le serveur apparaît dans la liste Communauté sur toutes les plateformes, Lobby ID affiché dans les logs au démarrage).
 
 ## Sauvegardes
 

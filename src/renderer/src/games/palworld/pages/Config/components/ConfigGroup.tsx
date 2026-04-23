@@ -1,4 +1,5 @@
 import { Divider, Paper, Stack, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
 import type { FieldGroup, FieldDef } from "../fields";
 
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export default function ConfigGroup({ group, renderField }: Props) {
+  const { t } = useTranslation();
   return (
     <Paper sx={{ p: 2.5 }}>
       <Typography
@@ -19,7 +21,7 @@ export default function ConfigGroup({ group, renderField }: Props) {
           mb: 2,
         }}
       >
-        {group.label}
+        {t(group.labelKey)}
       </Typography>
       <Stack spacing={1.5}>
         {group.fields.map((field, idx) => (

@@ -18,6 +18,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import UpdateIcon from "@mui/icons-material/Update";
 import SyncIcon from "@mui/icons-material/Sync";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import { useTranslation } from "react-i18next";
 import { useServer } from "../../context/ServerContext";
 import { useNotification } from "../../context/NotificationContext";
 import { steamService } from "../../games/palworld/services/steamService";
@@ -38,6 +39,7 @@ const DEFAULT_LAUNCH_ARGS: LaunchArgsConfig = {
 };
 
 export default function Install() {
+  const { t } = useTranslation();
   const { state, dispatch } = useServer();
   const { notify } = useNotification();
   const [steamInstalled, setSteamInstalled] = useState<boolean | null>(null);
@@ -74,10 +76,7 @@ export default function Install() {
     const next = { ...launchArgs, ...patch };
     setLaunchArgs(next);
     await window.api.server.setLaunchArgs(next);
-    notify(
-      "Arguments de lancement enregistrés. Redémarrez le serveur pour appliquer.",
-      "info",
-    );
+    notify(t("install.launchArgs.saved"), "info");
   };
 
   const addLog = (msg: string) => setLogs((p) => [...p, msg]);
@@ -92,7 +91,7 @@ export default function Install() {
     setLogs([]);
     const res = await steamService.install();
     setSteamInstalled(res.success);
-    if (!res.success) addLog(`Erreur: ${res.error}`);
+    if (!res.success) addLog(t("install.errorPrefix", { msg: res.error }));
     setRunning(false);
   };
 
@@ -105,7 +104,7 @@ export default function Install() {
       dispatch({ type: "SET_SERVER_PATH", payload: installPath });
       setUpdateStatus(null);
     } else {
-      addLog(`Erreur: ${res.error}`);
+      addLog(t("install.errorPrefix", { msg: res.error }));
     }
     setRunning(false);
   };
@@ -115,14 +114,13 @@ export default function Install() {
     setLogs([]);
     const res = await steamService.updatePalworld();
     if (res.success) setUpdateStatus(null);
-    else addLog(`Erreur: ${res.error}`);
+    else addLog(t("install.errorPrefix", { msg: res.error }));
     setRunning(false);
   };
 
   const handleCheckUpdate = async () => {
     setCheckingUpdate(true);
     const result = await steamService.checkForUpdate();
-    console.log("Update check result:", result);
     setUpdateStatus({ checked: true, ...result });
     setCheckingUpdate(false);
   };
@@ -130,9 +128,9 @@ export default function Install() {
   return (
     <Stack spacing={3} sx={{ maxWidth: 640 }}>
       <Box>
-        <Typography variant="h6">Installation</Typography>
+        <Typography variant="h6">{t("install.title")}</Typography>
         <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
-          Installer ou mettre à jour le serveur Palworld via SteamCMD
+          {t("install.subtitle")}
         </Typography>
       </Box>
 
@@ -142,22 +140,24 @@ export default function Install() {
           sx={{ alignItems: "center", justifyContent: "space-between", mb: 2 }}
         >
           <Box>
-            <Typography variant="subtitle2">SteamCMD</Typography>
+            <Typography variant="subtitle2">
+              {t("install.steamcmd.label")}
+            </Typography>
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
               {steamInstalled === null
-                ? "Vérification..."
+                ? t("install.steamcmd.checking")
                 : steamInstalled
-                  ? "Installé"
-                  : "Non installé"}
+                  ? t("install.steamcmd.installed")
+                  : t("install.steamcmd.notInstalled")}
             </Typography>
           </Box>
           <Chip
             label={
               steamInstalled
-                ? "OK"
+                ? t("install.steamcmd.statusOk")
                 : steamInstalled === null
                   ? "..."
-                  : "Manquant"
+                  : t("install.steamcmd.statusMissing")
             }
             color={steamInstalled ? "success" : "default"}
             size="small"
@@ -171,14 +171,14 @@ export default function Install() {
             disabled={running}
             onClick={handleInstallSteam}
           >
-            Installer SteamCMD
+            {t("install.steamcmd.install")}
           </Button>
         )}
       </Paper>
 
       <Paper sx={{ p: 2.5 }}>
         <Typography variant="subtitle2" sx={{ mb: 2 }}>
-          Dossier d'installation
+          {t("install.folder.title")}
         </Typography>
         <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
           <TextField
@@ -194,7 +194,7 @@ export default function Install() {
             startIcon={<FolderOpenIcon />}
             sx={{ whiteSpace: "nowrap" }}
           >
-            Parcourir
+            {t("common.browse")}
           </Button>
         </Stack>
         <Stack direction="row" spacing={1}>
@@ -206,7 +206,9 @@ export default function Install() {
             disabled={running || !steamInstalled}
             onClick={handleInstallPalworld}
           >
-            {running ? "Installation..." : "Installer Palworld"}
+            {running
+              ? t("install.folder.installing")
+              : t("install.folder.installPalworld")}
           </Button>
           <Button
             fullWidth
@@ -215,14 +217,14 @@ export default function Install() {
             disabled={running || !steamInstalled || !state.serverPath}
             onClick={handleUpdate}
           >
-            Mettre à jour
+            {t("install.folder.update")}
           </Button>
         </Stack>
       </Paper>
 
       <Paper sx={{ p: 2.5 }}>
         <Typography variant="subtitle2" sx={{ mb: 2 }}>
-          Arguments de lancement
+          {t("install.launchArgs.title")}
         </Typography>
         <Stack spacing={1.5}>
           <FormControlLabel
@@ -238,12 +240,12 @@ export default function Install() {
             label={
               <Stack direction="row" sx={{ alignItems: "center", gap: 0.5 }}>
                 <Typography variant="body2">
-                  Lobby public (crossplay Xbox / PS)
+                  {t("install.launchArgs.publicLobby")}
                 </Typography>
                 <Tooltip
                   arrow
                   placement="top"
-                  title="Ajoute -publiclobby. Le serveur apparaît dans l'onglet Communauté de Palworld sur toutes les plateformes et est joignable par les joueurs Xbox. Un Lobby ID s'affiche dans les logs au démarrage."
+                  title={t("install.launchArgs.publicLobbyTooltip")}
                 >
                   <InfoOutlinedIcon
                     sx={{
@@ -275,12 +277,12 @@ export default function Install() {
             label={
               <Stack direction="row" sx={{ alignItems: "center", gap: 0.5 }}>
                 <Typography variant="body2">
-                  Flags de performance multi-thread
+                  {t("install.launchArgs.performanceFlags")}
                 </Typography>
                 <Tooltip
                   arrow
                   placement="top"
-                  title="Ajoute -useperfthreads -NoAsyncLoadingThread -UseMultithreadForDS. Recommandé sur un CPU multi-cœurs pour une meilleure stabilité."
+                  title={t("install.launchArgs.performanceFlagsTooltip")}
                 >
                   <InfoOutlinedIcon
                     sx={{
@@ -304,11 +306,13 @@ export default function Install() {
               direction="row"
               sx={{ alignItems: "center", gap: 0.5, minWidth: 200 }}
             >
-              <Typography variant="body2">Arguments personnalisés</Typography>
+              <Typography variant="body2">
+                {t("install.launchArgs.customArgs")}
+              </Typography>
               <Tooltip
                 arrow
                 placement="top"
-                title="Arguments supplémentaires ajoutés à la ligne de commande de PalServer.exe (séparés par des espaces). Avancé."
+                title={t("install.launchArgs.customArgsTooltip")}
               >
                 <InfoOutlinedIcon
                   sx={{
@@ -347,11 +351,13 @@ export default function Install() {
           >
             <Box>
               <Typography variant="subtitle2">
-                Mise à jour disponible ?
+                {t("install.update.title")}
               </Typography>
               {updateStatus?.installedBuild && (
                 <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                  Build installé : {updateStatus.installedBuild}
+                  {t("install.update.installedBuild", {
+                    build: updateStatus.installedBuild,
+                  })}
                 </Typography>
               )}
             </Box>
@@ -362,19 +368,20 @@ export default function Install() {
               disabled={checkingUpdate || running || !steamInstalled}
               onClick={handleCheckUpdate}
             >
-              {checkingUpdate ? "Connexion à Steam..." : "Vérifier"}
+              {checkingUpdate
+                ? t("install.update.checking")
+                : t("install.update.check")}
             </Button>
           </Stack>
 
           {updateStatus?.checked &&
             (updateStatus.upToDate ? (
               <Alert severity="success" sx={{ mt: 0 }}>
-                Le serveur est à jour.
+                {t("install.update.upToDate")}
               </Alert>
             ) : updateStatus.installedBuild === null ? (
               <Alert severity="warning" sx={{ mt: 0 }}>
-                Impossible de lire le build installé — le serveur est-il bien
-                installé dans ce dossier ?
+                {t("install.update.cannotRead")}
               </Alert>
             ) : (
               <Alert
@@ -387,14 +394,15 @@ export default function Install() {
                     disabled={running || !steamInstalled}
                     onClick={handleUpdate}
                   >
-                    Mettre à jour
+                    {t("install.folder.update")}
                   </Button>
                 }
               >
-                Mise à jour disponible
-                {updateStatus.requiredBuild &&
-                  ` (build ${updateStatus.requiredBuild})`}
-                .
+                {updateStatus.requiredBuild
+                  ? t("install.update.availableWithBuild", {
+                      build: updateStatus.requiredBuild,
+                    })
+                  : t("install.update.available")}
               </Alert>
             ))}
         </Paper>
@@ -410,7 +418,7 @@ export default function Install() {
               letterSpacing: 0.8,
             }}
           >
-            Progression
+            {t("install.progress")}
           </Typography>
           <Divider sx={{ my: 1 }} />
           <Box

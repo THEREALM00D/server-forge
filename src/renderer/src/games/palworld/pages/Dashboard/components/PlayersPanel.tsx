@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import PersonRemoveIcon from "@mui/icons-material/PersonRemove";
 import BlockIcon from "@mui/icons-material/Block";
+import { useTranslation } from "react-i18next";
 import type { PalPlayer } from "@shared/types";
 import { useNotification } from "../../../../../context/NotificationContext";
 
@@ -22,26 +23,27 @@ interface Props {
 }
 
 export default function PlayersPanel({ players, setPlayers }: Props) {
+  const { t } = useTranslation();
   const { notify } = useNotification();
   const [unbanId, setUnbanId] = useState("");
 
   const handleKick = async (player: PalPlayer) => {
     try {
       await window.api.palapi.kick(player.userId);
-      notify(`${player.name} expulsé`, "success");
+      notify(t("dashboard.players.kicked", { name: player.name }), "success");
       setPlayers((prev) => prev.filter((p) => p.userId !== player.userId));
     } catch {
-      notify(`Impossible d'expulser ${player.name}`);
+      notify(t("dashboard.players.cannotKick", { name: player.name }));
     }
   };
 
   const handleBan = async (player: PalPlayer) => {
     try {
       await window.api.palapi.ban(player.userId);
-      notify(`${player.name} banni`, "success");
+      notify(t("dashboard.players.banned", { name: player.name }), "success");
       setPlayers((prev) => prev.filter((p) => p.userId !== player.userId));
     } catch {
-      notify(`Impossible de bannir ${player.name}`);
+      notify(t("dashboard.players.cannotBan", { name: player.name }));
     }
   };
 
@@ -50,22 +52,22 @@ export default function PlayersPanel({ players, setPlayers }: Props) {
     if (!id) return;
     try {
       await window.api.palapi.unban(id);
-      notify(`Joueur ${id} débanni`, "success");
+      notify(t("dashboard.players.unbanned", { id }), "success");
       setUnbanId("");
     } catch {
-      notify(`Impossible de débannir ${id}`);
+      notify(t("dashboard.players.cannotUnban", { id }));
     }
   };
 
   return (
     <Paper sx={{ p: 2.5, flex: 1 }}>
       <Typography variant="subtitle2" sx={{ mb: 1 }}>
-        Joueurs connectés ({players.length})
+        {t("dashboard.players.title", { count: players.length })}
       </Typography>
       <Divider sx={{ mb: 1 }} />
       {players.length === 0 ? (
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          Aucun joueur connecté
+          {t("dashboard.players.none")}
         </Typography>
       ) : (
         <Stack spacing={1}>
@@ -84,7 +86,7 @@ export default function PlayersPanel({ players, setPlayers }: Props) {
                   {p.name}
                 </Typography>
                 <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                  Niv. {p.level}
+                  {t("dashboard.players.level", { level: p.level })}
                 </Typography>
               </Box>
               <Stack
@@ -97,7 +99,7 @@ export default function PlayersPanel({ players, setPlayers }: Props) {
                   size="small"
                   variant="outlined"
                 />
-                <Tooltip title="Expulser">
+                <Tooltip title={t("dashboard.players.kick")}>
                   <IconButton
                     size="small"
                     color="warning"
@@ -106,7 +108,7 @@ export default function PlayersPanel({ players, setPlayers }: Props) {
                     <PersonRemoveIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="Bannir">
+                <Tooltip title={t("dashboard.players.ban")}>
                   <IconButton
                     size="small"
                     color="error"
@@ -122,12 +124,12 @@ export default function PlayersPanel({ players, setPlayers }: Props) {
       )}
       <Divider sx={{ my: 1.5 }} />
       <Typography variant="subtitle2" sx={{ mb: 1 }}>
-        Débannir un joueur
+        {t("dashboard.players.unbanTitle")}
       </Typography>
       <Stack direction="row" spacing={1}>
         <TextField
           size="small"
-          placeholder="User ID"
+          placeholder={t("dashboard.players.userId")}
           value={unbanId}
           onChange={(e) => setUnbanId(e.target.value)}
           sx={{ flex: 1 }}
@@ -138,7 +140,7 @@ export default function PlayersPanel({ players, setPlayers }: Props) {
           disabled={!unbanId.trim()}
           onClick={handleUnban}
         >
-          Débannir
+          {t("dashboard.players.unban")}
         </Button>
       </Stack>
     </Paper>

@@ -1,8 +1,10 @@
 import { Stack, Typography } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
+import { useTranslation } from "react-i18next";
 
 export default function RuleStatus({ active }: { active: boolean }) {
+  const { t } = useTranslation();
   if (active) {
     return (
       <Stack
@@ -11,7 +13,9 @@ export default function RuleStatus({ active }: { active: boolean }) {
         sx={{ alignItems: "center", color: "success.main" }}
       >
         <CheckCircleIcon sx={{ fontSize: 16 }} />
-        <Typography variant="caption">Active</Typography>
+        <Typography variant="caption">
+          {t("network.standard.active")}
+        </Typography>
       </Stack>
     );
   }
@@ -22,7 +26,9 @@ export default function RuleStatus({ active }: { active: boolean }) {
       sx={{ alignItems: "center", color: "text.disabled" }}
     >
       <CancelIcon sx={{ fontSize: 16 }} />
-      <Typography variant="caption">Inactive</Typography>
+      <Typography variant="caption">
+        {t("network.standard.inactive")}
+      </Typography>
     </Stack>
   );
 }

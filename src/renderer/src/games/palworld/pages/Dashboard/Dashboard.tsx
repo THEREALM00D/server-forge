@@ -1,4 +1,5 @@
 import { Box, Stack, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { useServer } from "../../../../context/ServerContext";
 import { useServerControls } from "../../hooks/useServerControls";
 import { usePalApi } from "./hooks/usePalApi";
@@ -8,6 +9,7 @@ import ServerInfoPanel from "./components/ServerInfoPanel";
 import PlayersPanel from "./components/PlayersPanel";
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const { state } = useServer();
   const { start, stop, restart, canStart, canStop } = useServerControls();
   const { status, stats, serverPath } = state;
@@ -16,9 +18,9 @@ export default function Dashboard() {
   return (
     <Stack spacing={3}>
       <Box>
-        <Typography variant="h6">Dashboard</Typography>
+        <Typography variant="h6">{t("dashboard.title")}</Typography>
         <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
-          {serverPath || "Aucun chemin serveur — configurez dans Installation"}
+          {serverPath || t("dashboard.noServerPath")}
         </Typography>
       </Box>
 
@@ -35,7 +37,7 @@ export default function Dashboard() {
         <StatsGrid stats={stats} />
       ) : (
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          En attente des statistiques système...
+          {t("dashboard.waitingStats")}
         </Typography>
       )}
 
