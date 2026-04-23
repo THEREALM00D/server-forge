@@ -85,3 +85,10 @@ export interface UpdateCheckResult {
   installedBuild: string | null;
   requiredBuild: string | null;
 }
+
+// --- Launch arguments (PalServer.exe) ---
+export interface LaunchArgsConfig {
+  publicLobby: boolean;
+  performanceFlags: boolean;
+  customArgs: string;
+}

@@ -7,11 +7,11 @@ import type { FirewallManager } from "../firewall/FirewallManager";
 import type { BackupManager } from "../backup/BackupManager";
 import type { RestartScheduler } from "../scheduler/RestartScheduler";
 import type Store from "electron-store";
-import type { RestartConfig } from "../../shared/types";
+import type { RestartConfig, LaunchArgsConfig } from "../../shared/types";
 
 export interface AppStore {
   serverPath: string;
-  serverArgs: string[];
+  launchArgs: LaunchArgsConfig;
   autoRestart: boolean;
   backupDir: string;
   backupKeep: number;

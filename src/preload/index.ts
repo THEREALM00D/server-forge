@@ -32,6 +32,12 @@ const api = {
     stop: () => ipcRenderer.invoke("server:stop"),
     restart: () => ipcRenderer.invoke("server:restart"),
     getStatus: () => ipcRenderer.invoke("server:status"),
+    getLaunchArgs: () => ipcRenderer.invoke("server:getLaunchArgs"),
+    setLaunchArgs: (cfg: {
+      publicLobby: boolean;
+      performanceFlags: boolean;
+      customArgs: string;
+    }) => ipcRenderer.invoke("server:setLaunchArgs", cfg),
     onLog: (cb: (line: string) => void) => {
       ipcRenderer.on("server:log", (_e, line) => cb(line));
       return () => ipcRenderer.removeAllListeners("server:log");

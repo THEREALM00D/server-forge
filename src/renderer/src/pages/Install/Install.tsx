@@ -9,14 +9,20 @@ import {
   Chip,
   Divider,
   Alert,
+  FormControlLabel,
+  Switch,
+  Tooltip,
 } from "@mui/material";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import DownloadIcon from "@mui/icons-material/Download";
 import UpdateIcon from "@mui/icons-material/Update";
 import SyncIcon from "@mui/icons-material/Sync";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { useServer } from "../../context/ServerContext";
+import { useNotification } from "../../context/NotificationContext";
 import { steamService } from "../../games/palworld/services/steamService";
 import { dialogService } from "../../services/dialogService";
+import type { LaunchArgsConfig } from "@shared/types";
 
 interface UpdateStatus {
   checked: boolean;
@@ -25,8 +31,15 @@ interface UpdateStatus {
   requiredBuild: string | null;
 }
 
+const DEFAULT_LAUNCH_ARGS: LaunchArgsConfig = {
+  publicLobby: false,
+  performanceFlags: false,
+  customArgs: "",
+};
+
 export default function Install() {
   const { state, dispatch } = useServer();
+  const { notify } = useNotification();
   const [steamInstalled, setSteamInstalled] = useState<boolean | null>(null);
   const [installPath, setInstallPath] = useState(
     state.serverPath || "C:\\PalworldServer",
@@ -35,12 +48,18 @@ export default function Install() {
   const [running, setRunning] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus | null>(null);
+  const [launchArgs, setLaunchArgs] =
+    useState<LaunchArgsConfig>(DEFAULT_LAUNCH_ARGS);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     steamService.isInstalled().then(setSteamInstalled);
     if (state.serverPath) setInstallPath(state.serverPath);
   }, [state.serverPath]);
+
+  useEffect(() => {
+    window.api.server.getLaunchArgs().then(setLaunchArgs);
+  }, []);
 
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -50,6 +69,16 @@ export default function Install() {
     const unsub = steamService.onProgress((msg) => setLogs((p) => [...p, msg]));
     return unsub;
   }, []);
+
+  const updateLaunchArgs = async (patch: Partial<LaunchArgsConfig>) => {
+    const next = { ...launchArgs, ...patch };
+    setLaunchArgs(next);
+    await window.api.server.setLaunchArgs(next);
+    notify(
+      "Arguments de lancement enregistrés. Redémarrez le serveur pour appliquer.",
+      "info",
+    );
+  };
 
   const addLog = (msg: string) => setLogs((p) => [...p, msg]);
 
@@ -188,6 +217,121 @@ export default function Install() {
           >
             Mettre à jour
           </Button>
+        </Stack>
+      </Paper>
+
+      <Paper sx={{ p: 2.5 }}>
+        <Typography variant="subtitle2" sx={{ mb: 2 }}>
+          Arguments de lancement
+        </Typography>
+        <Stack spacing={1.5}>
+          <FormControlLabel
+            control={
+              <Switch
+                size="small"
+                checked={launchArgs.publicLobby}
+                onChange={(e) =>
+                  updateLaunchArgs({ publicLobby: e.target.checked })
+                }
+              />
+            }
+            label={
+              <Stack direction="row" sx={{ alignItems: "center", gap: 0.5 }}>
+                <Typography variant="body2">
+                  Lobby public (crossplay Xbox / PS)
+                </Typography>
+                <Tooltip
+                  arrow
+                  placement="top"
+                  title="Ajoute -publiclobby. Le serveur apparaît dans l'onglet Communauté de Palworld sur toutes les plateformes et est joignable par les joueurs Xbox. Un Lobby ID s'affiche dans les logs au démarrage."
+                >
+                  <InfoOutlinedIcon
+                    sx={{
+                      fontSize: 16,
+                      color: "text.secondary",
+                      cursor: "help",
+                    }}
+                  />
+                </Tooltip>
+              </Stack>
+            }
+            sx={{
+              justifyContent: "space-between",
+              ml: 0,
+              flexDirection: "row-reverse",
+            }}
+          />
+          <Divider />
+          <FormControlLabel
+            control={
+              <Switch
+                size="small"
+                checked={launchArgs.performanceFlags}
+                onChange={(e) =>
+                  updateLaunchArgs({ performanceFlags: e.target.checked })
+                }
+              />
+            }
+            label={
+              <Stack direction="row" sx={{ alignItems: "center", gap: 0.5 }}>
+                <Typography variant="body2">
+                  Flags de performance multi-thread
+                </Typography>
+                <Tooltip
+                  arrow
+                  placement="top"
+                  title="Ajoute -useperfthreads -NoAsyncLoadingThread -UseMultithreadForDS. Recommandé sur un CPU multi-cœurs pour une meilleure stabilité."
+                >
+                  <InfoOutlinedIcon
+                    sx={{
+                      fontSize: 16,
+                      color: "text.secondary",
+                      cursor: "help",
+                    }}
+                  />
+                </Tooltip>
+              </Stack>
+            }
+            sx={{
+              justifyContent: "space-between",
+              ml: 0,
+              flexDirection: "row-reverse",
+            }}
+          />
+          <Divider />
+          <Stack direction="row" sx={{ alignItems: "center", gap: 2 }}>
+            <Stack
+              direction="row"
+              sx={{ alignItems: "center", gap: 0.5, minWidth: 200 }}
+            >
+              <Typography variant="body2">Arguments personnalisés</Typography>
+              <Tooltip
+                arrow
+                placement="top"
+                title="Arguments supplémentaires ajoutés à la ligne de commande de PalServer.exe (séparés par des espaces). Avancé."
+              >
+                <InfoOutlinedIcon
+                  sx={{
+                    fontSize: 16,
+                    color: "text.secondary",
+                    cursor: "help",
+                  }}
+                />
+              </Tooltip>
+            </Stack>
+            <TextField
+              size="small"
+              placeholder="-log -port=8211"
+              value={launchArgs.customArgs}
+              onChange={(e) =>
+                setLaunchArgs({ ...launchArgs, customArgs: e.target.value })
+              }
+              onBlur={() =>
+                updateLaunchArgs({ customArgs: launchArgs.customArgs })
+              }
+              sx={{ flex: 1 }}
+            />
+          </Stack>
         </Stack>
       </Paper>
 

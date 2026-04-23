@@ -8,6 +8,7 @@ import type {
   RestartConfig,
   FirewallRuleStatus,
   UpdateCheckResult,
+  LaunchArgsConfig,
 } from "../shared/types";
 
 interface API {
@@ -35,6 +36,8 @@ interface API {
     stop: () => Promise<{ success: boolean; error?: string }>;
     restart: () => Promise<{ success: boolean; error?: string }>;
     getStatus: () => Promise<string>;
+    getLaunchArgs: () => Promise<LaunchArgsConfig>;
+    setLaunchArgs: (cfg: LaunchArgsConfig) => Promise<void>;
     onLog: (cb: (line: string) => void) => () => void;
   };
   palconfig: {

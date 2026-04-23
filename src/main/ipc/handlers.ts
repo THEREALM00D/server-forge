@@ -11,7 +11,7 @@ import type { RestartConfig } from "../../shared/types";
 import type { AppStore, IpcContext } from "./context";
 import { registerMiscHandlers } from "./handlers/misc";
 import { registerSteamHandlers } from "./handlers/steam";
-import { registerServerHandlers } from "./handlers/server";
+import { registerServerHandlers, buildServerArgs } from "./handlers/server";
 import { registerPalapiHandlers } from "./handlers/palapi";
 import { registerFirewallHandlers } from "./handlers/firewall";
 import { registerBackupHandlers } from "./handlers/backup";
@@ -91,7 +91,7 @@ export function registerIpcHandlers(): void {
     if (serverManager.getStatus() !== "running") return;
     await serverManager.restart(
       store.get("serverPath", ""),
-      store.get("serverArgs", []),
+      buildServerArgs(store),
       () => {},
       getStopConfigForRestart(),
     );
