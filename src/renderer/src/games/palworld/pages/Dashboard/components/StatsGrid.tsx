@@ -21,7 +21,7 @@ function StatCard({
         ? "warning"
         : "success";
   return (
-    <Paper sx={{ p: 2.5 }}>
+    <Paper sx={{ p: 2.5,height: "100%", display: "flex", flexDirection: "column" }}>
       <Typography
         variant="caption"
         sx={{
