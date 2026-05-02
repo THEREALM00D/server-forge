@@ -34,6 +34,4 @@ portable:
   artifactName: ${name}-${version}-portable.${ext}
 publish:
   provider: github
-  owner: THEREALM00D
-  repo: server-forge
   releaseType: release

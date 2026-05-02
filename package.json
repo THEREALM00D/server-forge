@@ -19,7 +19,6 @@
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "build": "electron-vite build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder",
-    "release": "electron-vite build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --publish always",
     "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
