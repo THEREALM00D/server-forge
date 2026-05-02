@@ -15,6 +15,7 @@ Gestionnaire de serveurs dédiés de jeux vidéo. Actuellement supporte Palworld
 - **Yarn** comme gestionnaire de paquets
 - **i18n** : `react-i18next` + `i18next` + `i18next-browser-languagedetector` (FR + EN)
 - Dépendances-clés : `archiver` + `extract-zip` (backups ZIP), `systeminformation` (CPU/RAM, détection de processus), `date-fns`
+- **Auto-update** : `electron-updater` + `electron-log` — pull GitHub Releases (configuré dans `electron-builder.yml`)
 
 Pas de tests unitaires configurés dans ce projet — ne pas en chercher ni en ajouter sans demander.
 
@@ -43,6 +44,7 @@ src/
 │   │   └── handlers/*.ts  # Un fichier par domaine (server, backup, palapi, etc.)
 │   ├── server/            # ServerManager, PalworldApiClient
 │   ├── players/           # PlayerHistoryTracker (poller API + JSON)
+│   ├── updater/           # AppUpdater (electron-updater wrapper)
 │   ├── backup/, scheduler/, firewall/, monitor/, steamcmd/, config/
 ├── preload/
 │   ├── index.ts           # contextBridge → window.api
@@ -169,3 +171,12 @@ Au démarrage, `ServerManager.tryAdopt()` scanne les processus via `systeminform
 - Chaque entrée trace `firstSeen`, `lastSeen`, `lastIp`, `totalPlaytimeMs`, `sessionCount`, `online`, `currentSessionStart` et un tableau `sessions[]` (cap à 50, plus anciennes éjectées).
 - Le tracker est démarré/arrêté via une boucle de surveillance dans `handlers.ts` qui vérifie `serverManager.getStatus()` toutes les 5s. À l'arrêt il ferme toutes les sessions ouvertes et persiste.
 - IPC : `players:getHistory` / `players:clearHistory` / `players:removeEntry`. UI : page « Joueurs » dans la Sidebar (icône `PeopleIcon`).
+
+## Distribution (proprio, non open-source)
+
+- **Licence** : `package.json` est en `UNLICENSED`. EULA dans [LICENSE.txt](LICENSE.txt) — référencée par NSIS (`nsis.license`) → affichée à l'installation.
+- **Sourcemaps** : désactivés en build (`electron.vite.config.ts` → `sourcemap: false` sur main/preload/renderer) + `!**/*.map` dans `electron-builder.yml`. Le code TS n'est pas reconstructible depuis l'asar.
+- **Code signing** : pas encore en place (`CSC_IDENTITY_AUTO_DISCOVERY=false` dans le script `build`). Quand un certif sera dispo, retirer ce flag et exposer `CSC_LINK` + `CSC_KEY_PASSWORD` via env.
+- **Auto-update** : `AppUpdater` (`src/main/updater/`) wrapping `electron-updater`. Vérification au démarrage uniquement si `app.isPackaged`. Stratégie : `autoDownload = false` (l'utilisateur clique pour télécharger), puis bannière « Redémarrer et installer » via `quitAndInstall`. État exposé via `updater:state` (push) et IPC pull `updater:getState/check/download/install`.
+- **UI** : `UpdateBanner` (Alert MUI) au-dessus du contenu principal dans `App.tsx`. S'auto-affiche selon le state, dismissable.
+- **Publication** : `publish.provider: github` — un workflow CI doit tagger une release avec les `.exe` + `latest.yml`. Repo peut rester privé tant que les binaires de la release sont publiquement téléchargeables.

@@ -12,6 +12,7 @@ import Schedule from "./games/palworld/pages/Schedule/Schedule";
 import Players from "./games/palworld/pages/Players/Players";
 import Titlebar from "./components/Titlebar/Titlebar";
 import Sidebar from "./components/Sidebar/Sidebar";
+import UpdateBanner from "./components/UpdateBanner/UpdateBanner";
 
 export type Page =
   | "dashboard"
@@ -97,6 +98,7 @@ export default function App() {
             }}
           >
             <Titlebar />
+            <UpdateBanner />
             <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
               <Sidebar currentPage={page} onNavigate={setPage} />
               <Box component="main" sx={{ flex: 1, overflow: "auto", p: 3 }}>

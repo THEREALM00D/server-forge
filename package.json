@@ -1,11 +1,14 @@
 {
   "name": "server-forge",
   "version": "1.0.0",
-  "description": "Open-source desktop manager for game dedicated servers",
+  "description": "Desktop manager for game dedicated servers (Palworld and more)",
   "main": "./out/main/index.js",
-  "author": "",
-  "homepage": "https://github.com",
-  "license": "MIT",
+  "author": {
+    "name": "Dominic Bouchard",
+    "email": "doum6661@gmail.com"
+  },
+  "homepage": "https://serverforge.app",
+  "license": "UNLICENSED",
   "scripts": {
     "format": "prettier --write .",
     "fix:prettier": "prettier --write",
@@ -26,7 +29,9 @@
     "@tanstack/react-form": "^0.41.0",
     "archiver": "^7.0.1",
     "date-fns": "^4.1.0",
+    "electron-log": "^5.4.3",
     "electron-store": "^8.2.0",
+    "electron-updater": "^6.8.3",
     "extract-zip": "^2.0.1",
     "i18next": "^26.0.7",
     "i18next-browser-languagedetector": "^8.2.1",

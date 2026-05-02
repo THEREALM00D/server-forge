@@ -1,0 +1,70 @@
+ServerForge - End User License Agreement (EULA)
+
+Copyright (c) 2026 Dominic Bouchard. All rights reserved.
+
+IMPORTANT: PLEASE READ THIS AGREEMENT CAREFULLY BEFORE INSTALLING OR USING
+THIS SOFTWARE. BY INSTALLING OR USING SERVERFORGE ("THE SOFTWARE"), YOU
+AGREE TO BE BOUND BY THE TERMS OF THIS AGREEMENT. IF YOU DO NOT AGREE,
+DO NOT INSTALL OR USE THE SOFTWARE.
+
+1. LICENSE GRANT
+   Subject to the terms of this Agreement, the Author grants you a personal,
+   non-exclusive, non-transferable, revocable license to install and use the
+   Software on any number of computers you own or control, solely for your
+   own personal, non-commercial use of managing dedicated game servers.
+
+2. RESTRICTIONS
+   You may NOT:
+   (a) copy, distribute, sublicense, lease, rent, sell, or otherwise transfer
+       the Software to any third party;
+   (b) reverse engineer, decompile, disassemble, or attempt to derive the
+       source code of the Software, except to the extent that such activity
+       is expressly permitted by applicable law notwithstanding this
+       limitation;
+   (c) modify, adapt, translate, or create derivative works based on the
+       Software;
+   (d) remove or alter any copyright, trademark, or other proprietary notices;
+   (e) use the Software to provide a paid service to third parties without
+       prior written authorization from the Author.
+
+3. OWNERSHIP
+   The Software is licensed, not sold. The Author retains all right, title,
+   and interest in and to the Software, including all intellectual property
+   rights. No rights are granted to you other than as expressly set forth
+   herein.
+
+4. UPDATES
+   The Software may automatically download and install updates from time to
+   time. Updates are subject to the terms of this Agreement.
+
+5. THIRD-PARTY COMPONENTS
+   The Software incorporates open-source components subject to their own
+   licenses. A list of such components and their licenses is available upon
+   request.
+
+6. PRIVACY
+   The Software runs locally on your computer. It may collect anonymous crash
+   reports and usage telemetry to improve quality. You may opt out at any time
+   in the application settings.
+
+7. NO WARRANTY
+   THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+
+8. LIMITATION OF LIABILITY
+   IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING
+   FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+   DEALINGS IN THE SOFTWARE. IN PARTICULAR, THE AUTHOR IS NOT RESPONSIBLE FOR
+   DATA LOSS RESULTING FROM SERVER MANAGEMENT, BACKUP, OR RESTORE OPERATIONS.
+
+9. TERMINATION
+   This Agreement is effective until terminated. It will terminate
+   automatically without notice if you fail to comply with any of its terms.
+   Upon termination, you must destroy all copies of the Software.
+
+10. GOVERNING LAW
+    This Agreement is governed by the laws of the Province of Quebec, Canada.
+
+For inquiries: dominic.bouchard@logicielsfacturation.net

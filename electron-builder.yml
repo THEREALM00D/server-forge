@@ -1,5 +1,6 @@
 appId: com.serverforge.app
 productName: ServerForge
+copyright: Copyright (c) 2026 Dominic Bouchard
 directories:
   buildResources: resources
 files:
@@ -9,6 +10,8 @@ files:
   - "!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}"
   - "!{.env,.env.*,.npmrc,pnpm-lock.yaml}"
   - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
+  - "!**/*.map"
+asar: true
 asarUnpack:
   - resources/**
   - node_modules/node-pty/**
@@ -16,11 +19,17 @@ win:
   executableName: server-forge
   icon: resources/icon.ico
   requestedExecutionLevel: requireAdministrator
+  publisherName: Dominic Bouchard
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
+  license: LICENSE.txt
+  oneClick: false
+  perMachine: true
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
 portable:
   artifactName: ${name}-${version}-portable.${ext}
 publish:
