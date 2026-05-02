@@ -93,24 +93,6 @@ export interface LaunchArgsConfig {
   customArgs: string;
 }
 
-// --- Auto-updater ---
-export type UpdaterStatus =
-  | "idle"
-  | "checking"
-  | "available"
-  | "not-available"
-  | "downloading"
-  | "ready"
-  | "error";
-
-export interface UpdaterState {
-  status: UpdaterStatus;
-  version: string | null;
-  progress: number;
-  message: string | null;
-  currentVersion: string;
-}
-
 // --- Historique des joueurs ---
 export interface PlayerSession {
   joinAt: number;

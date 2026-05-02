@@ -10,7 +10,6 @@ import type {
   UpdateCheckResult,
   LaunchArgsConfig,
   PlayerHistoryEntry,
-  UpdaterState,
 } from "../shared/types";
 
 interface API {
@@ -100,13 +99,6 @@ interface API {
     getHistory: () => Promise<PlayerHistoryEntry[]>;
     clearHistory: () => Promise<void>;
     removeEntry: (userId: string) => Promise<void>;
-  };
-  updater: {
-    getState: () => Promise<UpdaterState>;
-    check: () => Promise<void>;
-    download: () => Promise<void>;
-    install: () => Promise<void>;
-    onState: (cb: (state: UpdaterState) => void) => () => void;
   };
   backup: {
     getConfig: () => Promise<BackupConfig>;

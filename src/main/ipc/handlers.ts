@@ -9,7 +9,6 @@ import { BackupManager } from "../backup/BackupManager";
 import { RestartScheduler } from "../scheduler/RestartScheduler";
 import { PlayerHistoryTracker } from "../players/PlayerHistoryTracker";
 import { PalworldApiClient } from "../server/PalworldApiClient";
-import { AppUpdater } from "../updater/AppUpdater";
 import type { RestartConfig } from "../../shared/types";
 import type { AppStore, IpcContext } from "./context";
 import { registerMiscHandlers } from "./handlers/misc";
@@ -39,9 +38,6 @@ export function registerIpcHandlers(): void {
   const backup = new BackupManager();
   const restartScheduler = new RestartScheduler();
   const playerHistory = new PlayerHistoryTracker(app.getPath("userData"));
-  const updater = new AppUpdater();
-  updater.registerIpc();
-  updater.checkOnStartup();
 
   const broadcastLog = (line: string): void => {
     BrowserWindow.getAllWindows().forEach((w) =>

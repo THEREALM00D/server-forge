@@ -22,8 +22,6 @@ import scheduleFr from "../games/palworld/pages/Schedule/__i18n__/fr";
 import scheduleEn from "../games/palworld/pages/Schedule/__i18n__/en";
 import playersFr from "../games/palworld/pages/Players/__i18n__/fr";
 import playersEn from "../games/palworld/pages/Players/__i18n__/en";
-import updaterFr from "../components/UpdateBanner/__i18n__/fr";
-import updaterEn from "../components/UpdateBanner/__i18n__/en";
 
 const fr = {
   ...commonFr,
@@ -36,7 +34,6 @@ const fr = {
   ...backupFr,
   ...scheduleFr,
   ...playersFr,
-  ...updaterFr,
 };
 
 const en = {
@@ -50,7 +47,6 @@ const en = {
   ...backupEn,
   ...scheduleEn,
   ...playersEn,
-  ...updaterEn,
 };
 
 i18n

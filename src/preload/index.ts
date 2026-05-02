@@ -95,17 +95,6 @@ const api = {
     shutdown: (waittime: number, message?: string) =>
       ipcRenderer.invoke("palapi:shutdown", waittime, message),
   },
-  // App updater
-  updater: {
-    getState: () => ipcRenderer.invoke("updater:getState"),
-    check: () => ipcRenderer.invoke("updater:check"),
-    download: () => ipcRenderer.invoke("updater:download"),
-    install: () => ipcRenderer.invoke("updater:install"),
-    onState: (cb: (state: unknown) => void) => {
-      ipcRenderer.on("updater:state", (_e, state) => cb(state));
-      return () => ipcRenderer.removeAllListeners("updater:state");
-    },
-  },
   // Player history
   players: {
     getHistory: () => ipcRenderer.invoke("players:getHistory"),
