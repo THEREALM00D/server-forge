@@ -7,5 +7,6 @@ export default {
     network: "Network",
     backup: "Backups",
     schedule: "Schedule",
+    players: "Players",
   },
 };

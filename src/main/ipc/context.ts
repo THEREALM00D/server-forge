@@ -6,6 +6,7 @@ import type { SystemMonitor } from "../monitor/SystemMonitor";
 import type { FirewallManager } from "../firewall/FirewallManager";
 import type { BackupManager } from "../backup/BackupManager";
 import type { RestartScheduler } from "../scheduler/RestartScheduler";
+import type { PlayerHistoryTracker } from "../players/PlayerHistoryTracker";
 import type Store from "electron-store";
 import type { RestartConfig, LaunchArgsConfig } from "../../shared/types";
 
@@ -29,6 +30,7 @@ export interface IpcContext {
   firewall: FirewallManager;
   backup: BackupManager;
   restartScheduler: RestartScheduler;
+  playerHistory: PlayerHistoryTracker;
   broadcastLog: (line: string) => void;
   getBackupDir: () => string;
   getRestartConfig: () => RestartConfig;

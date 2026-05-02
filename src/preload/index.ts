@@ -95,6 +95,13 @@ const api = {
     shutdown: (waittime: number, message?: string) =>
       ipcRenderer.invoke("palapi:shutdown", waittime, message),
   },
+  // Player history
+  players: {
+    getHistory: () => ipcRenderer.invoke("players:getHistory"),
+    clearHistory: () => ipcRenderer.invoke("players:clearHistory"),
+    removeEntry: (userId: string) =>
+      ipcRenderer.invoke("players:removeEntry", userId),
+  },
   // Backups
   backup: {
     getConfig: () => ipcRenderer.invoke("backup:getConfig"),

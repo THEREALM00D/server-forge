@@ -42,6 +42,7 @@ src/
 │   │   ├── context.ts     # IpcContext passé aux sous-handlers
 │   │   └── handlers/*.ts  # Un fichier par domaine (server, backup, palapi, etc.)
 │   ├── server/            # ServerManager, PalworldApiClient
+│   ├── players/           # PlayerHistoryTracker (poller API + JSON)
 │   ├── backup/, scheduler/, firewall/, monitor/, steamcmd/, config/
 ├── preload/
 │   ├── index.ts           # contextBridge → window.api
@@ -160,3 +161,11 @@ Au démarrage, `ServerManager.tryAdopt()` scanne les processus via `systeminform
 - Flow : annonce (via `/v1/api/announce`) → attente `warningMinutes` → save → shutdown API
 - Scheduler vérifie toutes les 30 secondes
 - **Requiert l'API REST activée** — sinon l'arrêt est brutal (`taskkill`) sans save
+
+## Historique des joueurs
+
+- `PlayerHistoryTracker` (`src/main/players/`) poll `/v1/api/players` toutes les 30s **uniquement quand le serveur tourne ET que l'API REST est activée**.
+- Stockage : `{userData}/players/history.json` — un fichier JSON unique avec tableau de `PlayerHistoryEntry` (cf. `shared/types.ts`).
+- Chaque entrée trace `firstSeen`, `lastSeen`, `lastIp`, `totalPlaytimeMs`, `sessionCount`, `online`, `currentSessionStart` et un tableau `sessions[]` (cap à 50, plus anciennes éjectées).
+- Le tracker est démarré/arrêté via une boucle de surveillance dans `handlers.ts` qui vérifie `serverManager.getStatus()` toutes les 5s. À l'arrêt il ferme toutes les sessions ouvertes et persiste.
+- IPC : `players:getHistory` / `players:clearHistory` / `players:removeEntry`. UI : page « Joueurs » dans la Sidebar (icône `PeopleIcon`).

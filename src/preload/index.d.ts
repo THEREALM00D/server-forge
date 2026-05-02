@@ -9,6 +9,7 @@ import type {
   FirewallRuleStatus,
   UpdateCheckResult,
   LaunchArgsConfig,
+  PlayerHistoryEntry,
 } from "../shared/types";
 
 interface API {
@@ -93,6 +94,11 @@ interface API {
     ban: (userid: string, message?: string) => Promise<void>;
     unban: (userid: string) => Promise<void>;
     shutdown: (waittime: number, message?: string) => Promise<void>;
+  };
+  players: {
+    getHistory: () => Promise<PlayerHistoryEntry[]>;
+    clearHistory: () => Promise<void>;
+    removeEntry: (userId: string) => Promise<void>;
   };
   backup: {
     getConfig: () => Promise<BackupConfig>;

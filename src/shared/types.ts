@@ -92,3 +92,23 @@ export interface LaunchArgsConfig {
   performanceFlags: boolean;
   customArgs: string;
 }
+
+// --- Historique des joueurs ---
+export interface PlayerSession {
+  joinAt: number;
+  leaveAt: number | null;
+}
+
+export interface PlayerHistoryEntry {
+  userId: string;
+  playerId: string;
+  name: string;
+  firstSeen: number;
+  lastSeen: number;
+  lastIp: string;
+  totalPlaytimeMs: number;
+  sessionCount: number;
+  online: boolean;
+  currentSessionStart: number | null;
+  sessions: PlayerSession[];
+}

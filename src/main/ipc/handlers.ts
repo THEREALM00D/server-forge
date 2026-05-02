@@ -7,6 +7,8 @@ import { SystemMonitor } from "../monitor/SystemMonitor";
 import { FirewallManager } from "../firewall/FirewallManager";
 import { BackupManager } from "../backup/BackupManager";
 import { RestartScheduler } from "../scheduler/RestartScheduler";
+import { PlayerHistoryTracker } from "../players/PlayerHistoryTracker";
+import { PalworldApiClient } from "../server/PalworldApiClient";
 import type { RestartConfig } from "../../shared/types";
 import type { AppStore, IpcContext } from "./context";
 import { registerMiscHandlers } from "./handlers/misc";
@@ -16,6 +18,7 @@ import { registerPalapiHandlers } from "./handlers/palapi";
 import { registerFirewallHandlers } from "./handlers/firewall";
 import { registerBackupHandlers } from "./handlers/backup";
 import { registerScheduleHandlers } from "./handlers/schedule";
+import { registerPlayersHandlers } from "./handlers/players";
 
 const DEFAULT_RESTART_CONFIG: RestartConfig = {
   enabled: false,
@@ -34,6 +37,7 @@ export function registerIpcHandlers(): void {
   const firewall = new FirewallManager();
   const backup = new BackupManager();
   const restartScheduler = new RestartScheduler();
+  const playerHistory = new PlayerHistoryTracker(app.getPath("userData"));
 
   const broadcastLog = (line: string): void => {
     BrowserWindow.getAllWindows().forEach((w) =>
@@ -99,6 +103,35 @@ export function registerIpcHandlers(): void {
 
   applyBackupScheduler();
 
+  // Tracker d'historique : démarre quand l'API REST est dispo, s'arrête sinon
+  const getApiClientForHistory = () => {
+    if (serverManager.getStatus() !== "running") return null;
+    const serverPath = store.get("serverPath", "");
+    if (!serverPath) return null;
+    try {
+      const cfg = configParser.read(serverPath);
+      if (!cfg.RESTAPIEnabled) return null;
+      return new PalworldApiClient(
+        Number(cfg.RESTAPIPort ?? 8212),
+        String(cfg.AdminPassword ?? ""),
+      );
+    } catch {
+      return null;
+    }
+  };
+
+  let lastTrackerActive = false;
+  setInterval(() => {
+    const shouldTrack = serverManager.getStatus() === "running";
+    if (shouldTrack && !lastTrackerActive) {
+      playerHistory.start(getApiClientForHistory);
+      lastTrackerActive = true;
+    } else if (!shouldTrack && lastTrackerActive) {
+      playerHistory.stop();
+      lastTrackerActive = false;
+    }
+  }, 5000);
+
   // Try to adopt an existing PalServer.exe on startup
   serverManager.tryAdopt(broadcastLog).catch(() => {});
 
@@ -112,6 +145,7 @@ export function registerIpcHandlers(): void {
     firewall,
     backup,
     restartScheduler,
+    playerHistory,
     broadcastLog,
     getBackupDir,
     getRestartConfig,
@@ -126,4 +160,5 @@ export function registerIpcHandlers(): void {
   registerFirewallHandlers(ctx);
   registerBackupHandlers(ctx);
   registerScheduleHandlers(ctx);
+  registerPlayersHandlers(ctx);
 }

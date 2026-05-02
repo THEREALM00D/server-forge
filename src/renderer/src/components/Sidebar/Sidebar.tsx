@@ -16,6 +16,7 @@ import ArticleIcon from "@mui/icons-material/Article";
 import RouterIcon from "@mui/icons-material/Router";
 import BackupIcon from "@mui/icons-material/Backup";
 import ScheduleIcon from "@mui/icons-material/Schedule";
+import PeopleIcon from "@mui/icons-material/People";
 import { useTranslation } from "react-i18next";
 import { Page } from "../../App";
 import { useServer } from "../../context/ServerContext";
@@ -66,6 +67,11 @@ const navItems: { id: Page; labelKey: string; icon: React.ReactNode }[] = [
     id: "schedule",
     labelKey: "sidebar.schedule",
     icon: <ScheduleIcon fontSize="small" />,
+  },
+  {
+    id: "players",
+    labelKey: "sidebar.players",
+    icon: <PeopleIcon fontSize="small" />,
   },
 ];
 

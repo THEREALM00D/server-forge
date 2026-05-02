@@ -7,5 +7,6 @@ export default {
     network: "Réseau",
     backup: "Sauvegardes",
     schedule: "Planification",
+    players: "Joueurs",
   },
 };

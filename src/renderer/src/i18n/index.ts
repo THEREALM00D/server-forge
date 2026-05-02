@@ -20,6 +20,8 @@ import backupFr from "../games/palworld/pages/Backup/__i18n__/fr";
 import backupEn from "../games/palworld/pages/Backup/__i18n__/en";
 import scheduleFr from "../games/palworld/pages/Schedule/__i18n__/fr";
 import scheduleEn from "../games/palworld/pages/Schedule/__i18n__/en";
+import playersFr from "../games/palworld/pages/Players/__i18n__/fr";
+import playersEn from "../games/palworld/pages/Players/__i18n__/en";
 
 const fr = {
   ...commonFr,
@@ -31,6 +33,7 @@ const fr = {
   ...networkFr,
   ...backupFr,
   ...scheduleFr,
+  ...playersFr,
 };
 
 const en = {
@@ -43,6 +46,7 @@ const en = {
   ...networkEn,
   ...backupEn,
   ...scheduleEn,
+  ...playersEn,
 };
 
 i18n
