@@ -8,6 +8,7 @@ import type { BackupManager } from "../backup/BackupManager";
 import type { RestartScheduler } from "../scheduler/RestartScheduler";
 import type { ServerManagerRegistry } from "../servers/ServerManagerRegistry";
 import type { PlayerHistoryRegistry } from "../servers/PlayerHistoryRegistry";
+import type { ServerRegistry } from "../servers/ServerRegistry";
 import type Store from "electron-store";
 import type {
   RestartConfig,
@@ -36,6 +37,7 @@ export interface AppStore {
 export interface IpcContext {
   app: App;
   store: Store<AppStore>;
+  servers: ServerRegistry;
   serverManagers: ServerManagerRegistry;
   /**
    * Helper compat : retourne le ServerManager du serveur actif, ou lance si

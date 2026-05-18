@@ -1,6 +1,10 @@
 import { ipcMain } from "electron/main";
 import type { IpcContext } from "../context";
 import type { LaunchArgsConfig, ServerStatus } from "../../../shared/types";
+import {
+  detectPortConflicts,
+  formatConflictsError,
+} from "../../servers/portConflicts";
 
 const PERFORMANCE_FLAGS = [
   "-useperfthreads",
@@ -27,6 +31,18 @@ export function registerServerHandlers(ctx: IpcContext): void {
 
   ipcMain.handle("server:start", async (event, serverId?: string) => {
     const id = resolveId(serverId);
+    // Refuse de démarrer si un autre serveur déjà running utilise les mêmes
+    // ports (game/RCON/REST). Évite que PalServer.exe plante silencieusement
+    // sur EADDRINUSE et laisse l'utilisateur deviner.
+    const conflicts = detectPortConflicts(
+      id,
+      ctx.servers,
+      ctx.serverManagers,
+      ctx.configParser,
+    );
+    if (conflicts.length > 0) {
+      return { success: false, error: formatConflictsError(conflicts) };
+    }
     const serverPath = ctx.getServerPath(id);
     const args = buildServerArgs(ctx.getServerConfig(id).launchArgs);
     return ctx.serverManagers

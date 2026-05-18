@@ -9,7 +9,20 @@ export default {
       name: "Name",
       game: "Game",
       path: "Path",
+      status: "Status",
       actions: "",
+    },
+    status: {
+      running: "Running",
+      starting: "Starting...",
+      stopping: "Stopping...",
+      crashed: "Crashed",
+      stopped: "Stopped",
+    },
+    serverActions: {
+      start: "Start",
+      stop: "Stop",
+      restart: "Restart",
     },
     games: {
       palworld: "Palworld",
@@ -42,6 +55,8 @@ export default {
       activated: '"{{name}}" is now the active server.',
       pathRequired: "Server path is required.",
       nameRequired: "Server name is required.",
+      startFailed: "Start failed: {{error}}",
+      stopFailed: "Stop failed: {{error}}",
     },
   },
 };

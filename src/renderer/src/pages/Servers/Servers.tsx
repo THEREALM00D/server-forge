@@ -20,11 +20,26 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import StopIcon from "@mui/icons-material/Stop";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import { useTranslation } from "react-i18next";
-import type { Server } from "@shared/types";
+import type { Server, ServerStatus } from "@shared/types";
 import { useServer } from "../../context/ServerContext";
 import { useNotification } from "../../context/NotificationContext";
+import { serverService } from "../../games/palworld/services/serverService";
 import ServerDialog, { type ServerFormValues } from "./components/ServerDialog";
+
+const STATUS_COLOR: Record<
+  ServerStatus,
+  "success" | "warning" | "error" | "default"
+> = {
+  running: "success",
+  starting: "warning",
+  stopping: "warning",
+  crashed: "error",
+  stopped: "default",
+};
 
 export default function Servers() {
   const { t } = useTranslation();
@@ -71,6 +86,36 @@ export default function Servers() {
     notify(t("servers.notify.activated", { name: server.name }), "success");
   };
 
+  const handleStart = async (server: Server) => {
+    const res = await serverService.start(server.id);
+    if (!res.success) {
+      notify(
+        t("servers.notify.startFailed", { error: res.error ?? "?" }),
+        "error",
+      );
+    }
+  };
+
+  const handleStop = async (server: Server) => {
+    const res = await serverService.stop(server.id);
+    if (!res.success) {
+      notify(
+        t("servers.notify.stopFailed", { error: res.error ?? "?" }),
+        "error",
+      );
+    }
+  };
+
+  const handleRestart = async (server: Server) => {
+    const res = await serverService.restart(server.id);
+    if (!res.success) {
+      notify(
+        t("servers.notify.startFailed", { error: res.error ?? "?" }),
+        "error",
+      );
+    }
+  };
+
   return (
     <Stack spacing={3}>
       <Box
@@ -106,6 +151,7 @@ export default function Servers() {
                 <TableRow>
                   <TableCell />
                   <TableCell>{t("servers.columns.name")}</TableCell>
+                  <TableCell>{t("servers.columns.status")}</TableCell>
                   <TableCell>{t("servers.columns.game")}</TableCell>
                   <TableCell>{t("servers.columns.path")}</TableCell>
                   <TableCell align="right" />
@@ -114,6 +160,9 @@ export default function Servers() {
               <TableBody>
                 {state.servers.map((srv) => {
                   const isActive = srv.id === state.activeServerId;
+                  const status = state.statuses[srv.id] ?? "stopped";
+                  const canStart = status === "stopped" || status === "crashed";
+                  const canStop = status === "running" || status === "starting";
                   return (
                     <TableRow key={srv.id} hover selected={isActive}>
                       <TableCell sx={{ width: 50 }}>
@@ -157,16 +206,16 @@ export default function Servers() {
                           >
                             {srv.name}
                           </Typography>
-                          {isActive && (
-                            <Chip
-                              label={t("servers.active")}
-                              size="small"
-                              color="success"
-                              variant="outlined"
-                              sx={{ height: 20, fontSize: 10 }}
-                            />
-                          )}
                         </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={t(`servers.status.${status}`)}
+                          size="small"
+                          color={STATUS_COLOR[status]}
+                          variant="outlined"
+                          sx={{ height: 22, fontSize: 11 }}
+                        />
                       </TableCell>
                       <TableCell>
                         <Typography variant="caption">
@@ -185,6 +234,42 @@ export default function Servers() {
                         </Typography>
                       </TableCell>
                       <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
+                        <Tooltip title={t("servers.serverActions.start")}>
+                          <span>
+                            <IconButton
+                              size="small"
+                              color="success"
+                              disabled={!canStart}
+                              onClick={() => handleStart(srv)}
+                            >
+                              <PlayArrowIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                        <Tooltip title={t("servers.serverActions.restart")}>
+                          <span>
+                            <IconButton
+                              size="small"
+                              color="warning"
+                              disabled={status !== "running"}
+                              onClick={() => handleRestart(srv)}
+                            >
+                              <RestartAltIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                        <Tooltip title={t("servers.serverActions.stop")}>
+                          <span>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              disabled={!canStop}
+                              onClick={() => handleStop(srv)}
+                            >
+                              <StopIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
                         <Tooltip title={t("servers.actions.edit")}>
                           <IconButton
                             size="small"

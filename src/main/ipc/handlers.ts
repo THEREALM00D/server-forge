@@ -229,6 +229,7 @@ export function registerIpcHandlers(): void {
   const ctx: IpcContext = {
     app,
     store,
+    servers,
     serverManagers,
     requireActiveManager,
     steamcmd,
