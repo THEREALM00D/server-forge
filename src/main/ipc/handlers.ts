@@ -9,6 +9,7 @@ import { BackupManager } from "../backup/BackupManager";
 import { RestartScheduler } from "../scheduler/RestartScheduler";
 import { PlayerHistoryTracker } from "../players/PlayerHistoryTracker";
 import { PalworldApiClient } from "../server/PalworldApiClient";
+import { ServerRegistry } from "../servers/ServerRegistry";
 import type { RestartConfig } from "../../shared/types";
 import type { AppStore, IpcContext } from "./context";
 import { registerMiscHandlers } from "./handlers/misc";
@@ -19,6 +20,7 @@ import { registerFirewallHandlers } from "./handlers/firewall";
 import { registerBackupHandlers } from "./handlers/backup";
 import { registerScheduleHandlers } from "./handlers/schedule";
 import { registerPlayersHandlers } from "./handlers/players";
+import { registerServersHandlers } from "./handlers/servers";
 
 const DEFAULT_RESTART_CONFIG: RestartConfig = {
   enabled: false,
@@ -29,6 +31,28 @@ const DEFAULT_RESTART_CONFIG: RestartConfig = {
 
 export function registerIpcHandlers(): void {
   const store = new Store<AppStore>();
+  const servers = new ServerRegistry(store);
+  // Phase 1 multi-serveur : migre l'ancien `serverPath` unique en premier
+  // entry de la liste. No-op si déjà migré ou si pas de legacy à migrer.
+  servers.migrateLegacy();
+
+  // Helpers utilisés partout : centralisent la résolution du serveur "actif".
+  // Tant qu'on n'a pas la Phase 2 (handlers paramétrés par serverId), tout le
+  // backend continue de fonctionner sur l'unique serveur actif.
+  const getActiveServer = () => servers.getActive();
+  const getActiveServerPath = (): string => getActiveServer()?.path ?? "";
+  const setActiveServerPath = (path: string): void => {
+    const active = servers.getActive();
+    if (active) {
+      servers.update(active.id, { path });
+    } else {
+      // Premier lancement / app fresh : on crée un serveur avec ce path.
+      servers.create({ name: "", path, gameType: "palworld" });
+    }
+    // On garde aussi `serverPath` en sync pour la rétrocompat (handlers pas
+    // encore migrés, ou versions précédentes installées en dual-boot).
+    store.set("serverPath", path);
+  };
 
   const serverManager = new ServerManager();
   const steamcmd = new SteamCMD();
@@ -54,7 +78,7 @@ export function registerIpcHandlers(): void {
     store.get("restartSchedule", DEFAULT_RESTART_CONFIG);
 
   const getStopConfig = () => {
-    const serverPath = store.get("serverPath", "");
+    const serverPath = getActiveServerPath();
     const cfg = configParser.read(serverPath);
     return {
       restApiEnabled: cfg.RESTAPIEnabled === true,
@@ -82,7 +106,7 @@ export function registerIpcHandlers(): void {
     const minutes = store.get("backupIntervalMinutes", 0);
     backup.startScheduler(minutes, async () => {
       if (serverManager.getStatus() !== "running") return;
-      const serverPath = store.get("serverPath", "");
+      const serverPath = getActiveServerPath();
       if (!serverPath) return;
       const dir = getBackupDir();
       await backup.create(serverPath, dir);
@@ -94,7 +118,7 @@ export function registerIpcHandlers(): void {
   restartScheduler.start(getRestartConfig, async () => {
     if (serverManager.getStatus() !== "running") return;
     await serverManager.restart(
-      store.get("serverPath", ""),
+      getActiveServerPath(),
       buildServerArgs(store),
       () => {},
       getStopConfigForRestart(),
@@ -106,7 +130,7 @@ export function registerIpcHandlers(): void {
   // Tracker d'historique : démarre quand l'API REST est dispo, s'arrête sinon
   const getApiClientForHistory = () => {
     if (serverManager.getStatus() !== "running") return null;
-    const serverPath = store.get("serverPath", "");
+    const serverPath = getActiveServerPath();
     if (!serverPath) return null;
     try {
       const cfg = configParser.read(serverPath);
@@ -151,6 +175,9 @@ export function registerIpcHandlers(): void {
     getRestartConfig,
     applyBackupScheduler,
     getStopConfig,
+    getActiveServer,
+    getActiveServerPath,
+    setActiveServerPath,
   };
 
   registerMiscHandlers(ctx);
@@ -161,4 +188,5 @@ export function registerIpcHandlers(): void {
   registerBackupHandlers(ctx);
   registerScheduleHandlers(ctx);
   registerPlayersHandlers(ctx);
+  registerServersHandlers(ctx, servers);
 }

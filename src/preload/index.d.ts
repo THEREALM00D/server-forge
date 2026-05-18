@@ -10,6 +10,8 @@ import type {
   UpdateCheckResult,
   LaunchArgsConfig,
   PlayerHistoryEntry,
+  Server,
+  GameType,
 } from "../shared/types";
 
 interface API {
@@ -21,6 +23,27 @@ interface API {
   config: {
     getServerPath: () => Promise<string>;
     setServerPath: (path: string) => Promise<void>;
+  };
+  servers: {
+    list: () => Promise<Server[]>;
+    getActive: () => Promise<Server | null>;
+    setActive: (id: string | null) => Promise<void>;
+    create: (input: {
+      name: string;
+      path: string;
+      gameType?: GameType;
+      color?: string | null;
+    }) => Promise<Server>;
+    update: (
+      id: string,
+      patch: Partial<{
+        name: string;
+        path: string;
+        gameType: GameType;
+        color: string | null;
+      }>,
+    ) => Promise<Server>;
+    delete: (id: string) => Promise<void>;
   };
   steamcmd: {
     isInstalled: () => Promise<boolean>;

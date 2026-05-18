@@ -4,7 +4,7 @@ import type { IpcContext } from "../context";
 
 export function registerPalapiHandlers(ctx: IpcContext): void {
   const getClient = (): PalworldApiClient => {
-    const serverPath = ctx.store.get("serverPath", "");
+    const serverPath = ctx.getActiveServerPath();
     const cfg = ctx.configParser.read(serverPath);
     if (!cfg.RESTAPIEnabled) throw new Error("REST API non configurée");
     return new PalworldApiClient(

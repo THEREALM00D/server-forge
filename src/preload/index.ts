@@ -13,6 +13,29 @@ const api = {
     setServerPath: (path: string) =>
       ipcRenderer.invoke("config:setServerPath", path),
   },
+  // Multi-serveur
+  servers: {
+    list: () => ipcRenderer.invoke("servers:list"),
+    getActive: () => ipcRenderer.invoke("servers:getActive"),
+    setActive: (id: string | null) =>
+      ipcRenderer.invoke("servers:setActive", id),
+    create: (input: {
+      name: string;
+      path: string;
+      gameType?: "palworld";
+      color?: string | null;
+    }) => ipcRenderer.invoke("servers:create", input),
+    update: (
+      id: string,
+      patch: Partial<{
+        name: string;
+        path: string;
+        gameType: "palworld";
+        color: string | null;
+      }>,
+    ) => ipcRenderer.invoke("servers:update", id, patch),
+    delete: (id: string) => ipcRenderer.invoke("servers:delete", id),
+  },
   // SteamCMD
   steamcmd: {
     isInstalled: () => ipcRenderer.invoke("steamcmd:isInstalled"),

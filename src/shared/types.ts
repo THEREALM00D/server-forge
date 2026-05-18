@@ -1,6 +1,19 @@
 // Types partagés entre main, preload et renderer.
 // Tout ce qui transite via IPC doit avoir le même type des deux côtés.
 
+// --- Serveurs ---
+// Pour l'instant uniquement "palworld" ; prévu pour s'étendre à d'autres jeux.
+export type GameType = "palworld";
+
+export interface Server {
+  id: string;
+  name: string;
+  gameType: GameType;
+  path: string;
+  color: string | null;
+  createdAt: number;
+}
+
 export interface SystemStats {
   cpu: number; // %
   ram: number; // %

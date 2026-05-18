@@ -32,7 +32,7 @@ export function buildServerArgs(store: Store<AppStore>): string[] {
 
 export function registerServerHandlers(ctx: IpcContext): void {
   ipcMain.handle("server:start", async (event) => {
-    const serverPath = ctx.store.get("serverPath", "");
+    const serverPath = ctx.getActiveServerPath();
     const args = buildServerArgs(ctx.store);
     return ctx.serverManager.start(serverPath, args, (line) => {
       event.sender.send("server:log", line);
@@ -44,7 +44,7 @@ export function registerServerHandlers(ctx: IpcContext): void {
   );
 
   ipcMain.handle("server:restart", async (event) => {
-    const serverPath = ctx.store.get("serverPath", "");
+    const serverPath = ctx.getActiveServerPath();
     const args = buildServerArgs(ctx.store);
     return ctx.serverManager.restart(
       serverPath,
@@ -64,13 +64,13 @@ export function registerServerHandlers(ctx: IpcContext): void {
 
   // Palworld .ini config
   ipcMain.handle("palconfig:read", async () => {
-    const serverPath = ctx.store.get("serverPath", "");
+    const serverPath = ctx.getActiveServerPath();
     return ctx.configParser.read(serverPath);
   });
   ipcMain.handle(
     "palconfig:write",
     async (_, settings: Record<string, string | number | boolean>) => {
-      const serverPath = ctx.store.get("serverPath", "");
+      const serverPath = ctx.getActiveServerPath();
       return ctx.configParser.write(serverPath, settings);
     },
   );
