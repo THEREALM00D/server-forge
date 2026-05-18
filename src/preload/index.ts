@@ -153,6 +153,10 @@ const api = {
       message: string;
     }) => ipcRenderer.invoke("schedule:setRestart", cfg),
   },
+  // Shell
+  shell: {
+    openPath: (path: string) => ipcRenderer.invoke("shell:openPath", path),
+  },
   // Dialog
   dialog: {
     selectFolder: () => ipcRenderer.invoke("dialog:selectFolder"),

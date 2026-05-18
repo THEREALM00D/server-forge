@@ -143,6 +143,9 @@ interface API {
     getRestart: () => Promise<RestartConfig>;
     setRestart: (cfg: RestartConfig) => Promise<void>;
   };
+  shell: {
+    openPath: (path: string) => Promise<void>;
+  };
   dialog: {
     selectFolder: () => Promise<string | null>;
   };

@@ -1,5 +1,11 @@
 import { join } from "path";
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import {
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  mkdirSync,
+  copyFileSync,
+} from "fs";
 import { dirname } from "path";
 
 export type PalSettings = Record<string, string | number | boolean>;
@@ -201,6 +207,9 @@ export class PalConfigParser {
     const iniPath = join(serverPath, CONFIG_REL_PATH);
     try {
       mkdirSync(dirname(iniPath), { recursive: true });
+      if (existsSync(iniPath)) {
+        copyFileSync(iniPath, iniPath + ".backup");
+      }
       writeFileSync(iniPath, this.serializeIni(settings), "utf-8");
       return { success: true };
     } catch (err) {

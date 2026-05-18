@@ -6,11 +6,15 @@ import {
   InputAdornment,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
+import FolderOpenIcon from "@mui/icons-material/FolderOpen";
+import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
+import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import IconButton from "@mui/material/IconButton";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
@@ -59,6 +63,7 @@ export default function Config() {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   const form = useForm<Settings>({
     defaultValues: {},
@@ -97,6 +102,34 @@ export default function Config() {
     [search, t],
   );
 
+  // Auto-expand all groups when search is active
+  useEffect(() => {
+    if (search) {
+      setExpandedGroups(new Set(visibleGroups.map((g) => g.labelKey)));
+    }
+  }, [search, visibleGroups]);
+
+  const allExpanded =
+    visibleGroups.length > 0 &&
+    visibleGroups.every((g) => expandedGroups.has(g.labelKey));
+
+  const toggleAll = () => {
+    if (allExpanded) {
+      setExpandedGroups(new Set());
+    } else {
+      setExpandedGroups(new Set(visibleGroups.map((g) => g.labelKey)));
+    }
+  };
+
+  const toggleGroup = (labelKey: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(labelKey)) next.delete(labelKey);
+      else next.add(labelKey);
+      return next;
+    });
+  };
+
   if (!state.serverPath) {
     return (
       <Box
@@ -125,37 +158,65 @@ export default function Config() {
     <Stack spacing={3} sx={{ maxWidth: 680 }}>
       <Box>
         <Typography variant="h6">{t("config.title")}</Typography>
-        <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
-          {t("config.subtitle")}
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            {t("config.subtitle")}
+          </Typography>
+          <Tooltip title={t("config.openFolder")}>
+            <IconButton
+              size="small"
+              onClick={() =>
+                window.api.shell.openPath(
+                  state.serverPath + "/Pal/Saved/Config/WindowsServer",
+                )
+              }
+            >
+              <FolderOpenIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
+        </Box>
       </Box>
 
-      <TextField
-        size="small"
-        placeholder={t("config.search")}
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        slotProps={{
-          input: {
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-            endAdornment: search ? (
-              <InputAdornment position="end">
-                <IconButton
-                  size="small"
-                  onClick={() => setSearch("")}
-                  aria-label={t("config.searchClear")}
-                >
-                  <ClearIcon fontSize="small" />
-                </IconButton>
-              </InputAdornment>
-            ) : null,
-          },
-        }}
-      />
+      <Box sx={{ display: "flex", gap: 1 }}>
+        <TextField
+          size="small"
+          placeholder={t("config.search")}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ flex: 1 }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+              endAdornment: search ? (
+                <InputAdornment position="end">
+                  <IconButton
+                    size="small"
+                    onClick={() => setSearch("")}
+                    aria-label={t("config.searchClear")}
+                  >
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ) : null,
+            },
+          }}
+        />
+        <Tooltip
+          title={allExpanded ? t("config.collapseAll") : t("config.expandAll")}
+        >
+          <IconButton size="small" onClick={toggleAll}>
+            {allExpanded ? (
+              <UnfoldLessIcon fontSize="small" />
+            ) : (
+              <UnfoldMoreIcon fontSize="small" />
+            )}
+          </IconButton>
+        </Tooltip>
+      </Box>
 
       <form
         onSubmit={(e) => {
@@ -173,6 +234,8 @@ export default function Config() {
             <ConfigGroup
               key={group.labelKey}
               group={group}
+              expanded={expandedGroups.has(group.labelKey)}
+              onToggle={() => toggleGroup(group.labelKey)}
               renderField={(field) => (
                 <form.Field name={field.key as never}>
                   {(f) => (

@@ -1,4 +1,5 @@
 import { ipcMain, BrowserWindow, dialog } from "electron/main";
+import { shell } from "electron";
 import type { IpcContext } from "../context";
 
 export function registerMiscHandlers(ctx: IpcContext): void {
@@ -22,6 +23,9 @@ export function registerMiscHandlers(ctx: IpcContext): void {
     });
     return result.canceled ? null : result.filePaths[0];
   });
+
+  // Shell
+  ipcMain.handle("shell:openPath", (_, path: string) => shell.openPath(path));
 
   // App
   ipcMain.handle("app:getVersion", () => ctx.app.getVersion());
