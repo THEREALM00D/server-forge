@@ -49,28 +49,34 @@ const api = {
       return () => ipcRenderer.removeAllListeners("steamcmd:progress");
     },
   },
-  // Server
+  // Server (tous les handlers acceptent un serverId optionnel — par défaut actif)
   server: {
-    start: () => ipcRenderer.invoke("server:start"),
-    stop: () => ipcRenderer.invoke("server:stop"),
-    restart: () => ipcRenderer.invoke("server:restart"),
+    start: (serverId?: string) => ipcRenderer.invoke("server:start", serverId),
+    stop: (serverId?: string) => ipcRenderer.invoke("server:stop", serverId),
+    restart: (serverId?: string) =>
+      ipcRenderer.invoke("server:restart", serverId),
     getStatus: () => ipcRenderer.invoke("server:status"),
-    getLaunchArgs: () => ipcRenderer.invoke("server:getLaunchArgs"),
-    setLaunchArgs: (cfg: {
-      publicLobby: boolean;
-      performanceFlags: boolean;
-      customArgs: string;
-    }) => ipcRenderer.invoke("server:setLaunchArgs", cfg),
-    onLog: (cb: (line: string) => void) => {
-      ipcRenderer.on("server:log", (_e, line) => cb(line));
+    getStatuses: () => ipcRenderer.invoke("server:statuses"),
+    getLaunchArgs: (serverId?: string) =>
+      ipcRenderer.invoke("server:getLaunchArgs", serverId),
+    setLaunchArgs: (
+      cfg: {
+        publicLobby: boolean;
+        performanceFlags: boolean;
+        customArgs: string;
+      },
+      serverId?: string,
+    ) => ipcRenderer.invoke("server:setLaunchArgs", cfg, serverId),
+    onLog: (cb: (event: { serverId: string; line: string }) => void) => {
+      ipcRenderer.on("server:log", (_e, event) => cb(event));
       return () => ipcRenderer.removeAllListeners("server:log");
     },
   },
-  // Palworld config
+  // Palworld config (serverId optionnel — par défaut actif)
   palconfig: {
-    read: () => ipcRenderer.invoke("palconfig:read"),
-    write: (settings: Record<string, unknown>) =>
-      ipcRenderer.invoke("palconfig:write", settings),
+    read: (serverId?: string) => ipcRenderer.invoke("palconfig:read", serverId),
+    write: (settings: Record<string, unknown>, serverId?: string) =>
+      ipcRenderer.invoke("palconfig:write", settings, serverId),
   },
   // Monitor
   monitor: {

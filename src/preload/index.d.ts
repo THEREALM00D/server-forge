@@ -12,6 +12,8 @@ import type {
   PlayerHistoryEntry,
   Server,
   GameType,
+  ServerStatus,
+  ServerLogEvent,
 } from "../shared/types";
 
 interface API {
@@ -56,18 +58,24 @@ interface API {
     onProgress: (cb: (msg: string) => void) => () => void;
   };
   server: {
-    start: () => Promise<{ success: boolean; error?: string }>;
-    stop: () => Promise<{ success: boolean; error?: string }>;
-    restart: () => Promise<{ success: boolean; error?: string }>;
-    getStatus: () => Promise<string>;
-    getLaunchArgs: () => Promise<LaunchArgsConfig>;
-    setLaunchArgs: (cfg: LaunchArgsConfig) => Promise<void>;
-    onLog: (cb: (line: string) => void) => () => void;
+    start: (serverId?: string) => Promise<{ success: boolean; error?: string }>;
+    stop: (serverId?: string) => Promise<{ success: boolean; error?: string }>;
+    restart: (
+      serverId?: string,
+    ) => Promise<{ success: boolean; error?: string }>;
+    getStatus: () => Promise<ServerStatus>;
+    getStatuses: () => Promise<Record<string, ServerStatus>>;
+    getLaunchArgs: (serverId?: string) => Promise<LaunchArgsConfig>;
+    setLaunchArgs: (cfg: LaunchArgsConfig, serverId?: string) => Promise<void>;
+    onLog: (cb: (event: ServerLogEvent) => void) => () => void;
   };
   palconfig: {
-    read: () => Promise<Record<string, string | number | boolean>>;
+    read: (
+      serverId?: string,
+    ) => Promise<Record<string, string | number | boolean>>;
     write: (
       settings: Record<string, unknown>,
+      serverId?: string,
     ) => Promise<{ success: boolean; error?: string }>;
   };
   monitor: {

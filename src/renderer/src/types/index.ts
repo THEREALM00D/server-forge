@@ -13,6 +13,8 @@ export type {
   Server,
   GameType,
   ServerConfig,
+  ServerLogEvent,
+  PlayerHistoryEntry,
 } from "@shared/types";
 
 // Specific to renderer

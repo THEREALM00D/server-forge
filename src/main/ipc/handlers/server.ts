@@ -1,6 +1,6 @@
 import { ipcMain } from "electron/main";
 import type { IpcContext } from "../context";
-import type { LaunchArgsConfig } from "../../../shared/types";
+import type { LaunchArgsConfig, ServerStatus } from "../../../shared/types";
 
 const PERFORMANCE_FLAGS = [
   "-useperfthreads",
@@ -18,57 +18,79 @@ export function buildServerArgs(cfg: LaunchArgsConfig): string[] {
 }
 
 export function registerServerHandlers(ctx: IpcContext): void {
-  ipcMain.handle("server:start", async (event) => {
-    const serverPath = ctx.getActiveServerPath();
-    const args = buildServerArgs(ctx.getServerConfig().launchArgs);
-    return ctx.requireActiveManager().start(serverPath, args, (line) => {
-      event.sender.send("server:log", line);
-    });
+  // Résout un serverId argumenté en serveur du registre. Fallback : actif.
+  const resolveId = (id: string | undefined): string => {
+    const resolved = id ?? ctx.getActiveServer()?.id ?? null;
+    if (!resolved) throw new Error("Aucun serveur actif configuré");
+    return resolved;
+  };
+
+  ipcMain.handle("server:start", async (event, serverId?: string) => {
+    const id = resolveId(serverId);
+    const serverPath = ctx.getServerPath(id);
+    const args = buildServerArgs(ctx.getServerConfig(id).launchArgs);
+    return ctx.serverManagers
+      .getOrCreate(id)
+      .start(serverPath, args, (line) => {
+        event.sender.send("server:log", { serverId: id, line });
+      });
   });
 
-  ipcMain.handle("server:stop", () =>
-    ctx.requireActiveManager().stop(ctx.getStopConfig()),
-  );
+  ipcMain.handle("server:stop", (_, serverId?: string) => {
+    const id = resolveId(serverId);
+    return ctx.serverManagers.getOrCreate(id).stop(ctx.getStopConfig(id));
+  });
 
-  ipcMain.handle("server:restart", async (event) => {
-    const serverPath = ctx.getActiveServerPath();
-    const args = buildServerArgs(ctx.getServerConfig().launchArgs);
-    return ctx
-      .requireActiveManager()
+  ipcMain.handle("server:restart", async (event, serverId?: string) => {
+    const id = resolveId(serverId);
+    const serverPath = ctx.getServerPath(id);
+    const args = buildServerArgs(ctx.getServerConfig(id).launchArgs);
+    return ctx.serverManagers
+      .getOrCreate(id)
       .restart(
         serverPath,
         args,
-        (line) => event.sender.send("server:log", line),
-        ctx.getStopConfig(),
+        (line) => event.sender.send("server:log", { serverId: id, line }),
+        ctx.getStopConfig(id),
       );
   });
 
-  // Lecture seule : retourne "stopped" si aucun serveur actif (évite de planter
-  // le renderer qui poll status au boot avant qu'un serveur ne soit configuré).
+  // Compat : status du serveur actif. Retourne "stopped" si aucun actif.
   ipcMain.handle(
     "server:status",
     () => ctx.serverManagers.getActive()?.getStatus() ?? "stopped",
   );
 
-  // Launch arguments — désormais stockés par-serveur dans ServerConfig
+  // Phase 5 : statuses agrégés pour tous les serveurs configurés.
+  ipcMain.handle(
+    "server:statuses",
+    (): Record<string, ServerStatus> => ctx.serverManagers.statuses(),
+  );
+
+  // Launch arguments — stockés par-serveur. serverId optionnel = actif.
   ipcMain.handle(
     "server:getLaunchArgs",
-    () => ctx.getServerConfig().launchArgs,
+    (_, serverId?: string) => ctx.getServerConfig(serverId).launchArgs,
   );
-  ipcMain.handle("server:setLaunchArgs", (_, cfg: LaunchArgsConfig) => {
-    ctx.updateServerConfig(undefined, { launchArgs: cfg });
-  });
+  ipcMain.handle(
+    "server:setLaunchArgs",
+    (_, cfg: LaunchArgsConfig, serverId?: string) => {
+      ctx.updateServerConfig(serverId, { launchArgs: cfg });
+    },
+  );
 
   // Palworld .ini config
-  ipcMain.handle("palconfig:read", async () => {
-    const serverPath = ctx.getActiveServerPath();
-    return ctx.configParser.read(serverPath);
+  ipcMain.handle("palconfig:read", async (_, serverId?: string) => {
+    return ctx.configParser.read(ctx.getServerPath(serverId));
   });
   ipcMain.handle(
     "palconfig:write",
-    async (_, settings: Record<string, string | number | boolean>) => {
-      const serverPath = ctx.getActiveServerPath();
-      return ctx.configParser.write(serverPath, settings);
+    async (
+      _,
+      settings: Record<string, string | number | boolean>,
+      serverId?: string,
+    ) => {
+      return ctx.configParser.write(ctx.getServerPath(serverId), settings);
     },
   );
 }

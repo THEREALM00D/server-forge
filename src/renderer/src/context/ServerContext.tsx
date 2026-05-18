@@ -15,27 +15,42 @@ interface ServerState {
   activeServer: Server | null;
   /** Legacy compat : path du serveur actif (= activeServer?.path) */
   serverPath: string;
+
+  /** Statuses agrégés : un par serveur configuré. */
+  statuses: Record<string, ServerStatus>;
+  /** Compat : status du serveur actif (= statuses[activeServerId]). */
   status: ServerStatus;
-  stats: SystemStats | null;
+
+  /** Logs séparés par serveur, capés à 500 lignes chacun. */
+  logsByServer: Record<string, string[]>;
+  /** Compat : logs du serveur actif (= logsByServer[activeServerId] ?? []). */
   logs: string[];
+
+  stats: SystemStats | null;
 }
 
 type Action =
   | { type: "SET_SERVERS"; payload: Server[] }
   | { type: "SET_ACTIVE"; payload: { id: string | null; servers?: Server[] } }
-  | { type: "SET_STATUS"; payload: ServerStatus }
+  | { type: "SET_STATUSES"; payload: Record<string, ServerStatus> }
+  | {
+      type: "SET_SERVER_STATUS";
+      payload: { serverId: string; status: ServerStatus };
+    }
   | { type: "SET_STATS"; payload: SystemStats }
-  | { type: "ADD_LOG"; payload: string }
-  | { type: "CLEAR_LOGS" };
+  | { type: "ADD_LOG"; payload: { serverId: string; line: string } }
+  | { type: "CLEAR_LOGS"; payload?: { serverId?: string } };
 
 const initialState: ServerState = {
   servers: [],
   activeServerId: null,
   activeServer: null,
   serverPath: "",
+  statuses: {},
   status: "stopped",
-  stats: null,
+  logsByServer: {},
   logs: [],
+  stats: null,
 };
 
 function resolveActive(
@@ -44,6 +59,20 @@ function resolveActive(
 ): { activeServer: Server | null; serverPath: string } {
   const active = id ? (servers.find((s) => s.id === id) ?? null) : null;
   return { activeServer: active, serverPath: active?.path ?? "" };
+}
+
+function statusForActive(
+  statuses: Record<string, ServerStatus>,
+  id: string | null,
+): ServerStatus {
+  return (id && statuses[id]) || "stopped";
+}
+
+function logsForActive(
+  logsByServer: Record<string, string[]>,
+  id: string | null,
+): string[] {
+  return (id && logsByServer[id]) || [];
 }
 
 function reducer(state: ServerState, action: Action): ServerState {
@@ -61,26 +90,56 @@ function reducer(state: ServerState, action: Action): ServerState {
         servers,
         action.payload.id,
       );
-      // Changement de serveur : on flush logs + status pour ne pas afficher
-      // des données stales de l'ancien serveur.
       return {
         ...state,
         servers,
         activeServerId: action.payload.id,
         activeServer,
         serverPath,
-        status: "stopped",
-        logs: [],
+        status: statusForActive(state.statuses, action.payload.id),
+        logs: logsForActive(state.logsByServer, action.payload.id),
       };
     }
-    case "SET_STATUS":
-      return { ...state, status: action.payload };
+    case "SET_STATUSES":
+      return {
+        ...state,
+        statuses: action.payload,
+        status: statusForActive(action.payload, state.activeServerId),
+      };
+    case "SET_SERVER_STATUS": {
+      const statuses = {
+        ...state.statuses,
+        [action.payload.serverId]: action.payload.status,
+      };
+      return {
+        ...state,
+        statuses,
+        status: statusForActive(statuses, state.activeServerId),
+      };
+    }
     case "SET_STATS":
       return { ...state, stats: action.payload };
-    case "ADD_LOG":
-      return { ...state, logs: [...state.logs.slice(-499), action.payload] };
-    case "CLEAR_LOGS":
-      return { ...state, logs: [] };
+    case "ADD_LOG": {
+      const { serverId, line } = action.payload;
+      const prev = state.logsByServer[serverId] ?? [];
+      const nextLogs = [...prev.slice(-499), line];
+      const logsByServer = { ...state.logsByServer, [serverId]: nextLogs };
+      return {
+        ...state,
+        logsByServer,
+        logs: serverId === state.activeServerId ? nextLogs : state.logs,
+      };
+    }
+    case "CLEAR_LOGS": {
+      const targetId = action.payload?.serverId ?? state.activeServerId;
+      if (!targetId) return state;
+      const logsByServer = { ...state.logsByServer, [targetId]: [] };
+      return {
+        ...state,
+        logsByServer,
+        logs: targetId === state.activeServerId ? [] : state.logs,
+      };
+    }
     default:
       return state;
   }
@@ -124,13 +183,21 @@ export function ServerProvider({ children }: { children: ReactNode }) {
       dispatch({ type: "SET_STATS", payload: stats });
     });
 
-    const stopLogs = serverService.onLog((line) => {
-      dispatch({ type: "ADD_LOG", payload: line });
+    // Logs : on dispatch avec le serverId, le reducer route vers le bon
+    // bucket et expose les logs du serveur actif via `state.logs`.
+    const stopLogs = serverService.onLog((event) => {
+      dispatch({ type: "ADD_LOG", payload: event });
     });
 
+    // Polling des statuses agrégés (3s) : récupère le status de tous les
+    // serveurs en une seule IPC call.
     const statusInterval = setInterval(async () => {
-      const status = await serverService.getStatus();
-      dispatch({ type: "SET_STATUS", payload: status });
+      try {
+        const statuses = await serverService.getStatuses();
+        dispatch({ type: "SET_STATUSES", payload: statuses });
+      } catch {
+        // ignore — main peut être indisponible au boot
+      }
     }, 3000);
 
     return () => {

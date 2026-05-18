@@ -54,13 +54,19 @@ export interface IpcContext {
   getBackupDir: () => string;
   getRestartConfig: () => RestartConfig;
   applyBackupScheduler: () => void;
-  getStopConfig: () => {
+  /**
+   * Lit la config d'arrêt (REST API + creds) pour un serveur donné.
+   * `serverId` est optionnel : par défaut, le serveur actif.
+   */
+  getStopConfig: (serverId?: string) => {
     restApiEnabled: boolean;
     restApiPort: number;
     adminPassword: string;
     shutdownWaittime: number;
     shutdownMessage: string;
   };
+  /** Path d'un serveur par son id (par défaut : serveur actif). */
+  getServerPath: (serverId?: string) => string;
   // Multi-serveur : helpers pour récupérer le serveur actif. Tous les handlers
   // qui parlent "du serveur" doivent passer par ces helpers, jamais lire
   // serverPath directement du store.

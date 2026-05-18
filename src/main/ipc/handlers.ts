@@ -127,8 +127,13 @@ export function registerIpcHandlers(): void {
     return serverConfigs.get(active.id).restart;
   };
 
-  const getStopConfig = () => {
-    const serverPath = getActiveServerPath();
+  const getServerPath = (id?: string): string => {
+    if (!id) return getActiveServerPath();
+    return servers.list().find((s) => s.id === id)?.path ?? "";
+  };
+
+  const getStopConfig = (serverId?: string) => {
+    const serverPath = getServerPath(serverId);
     const cfg = configParser.read(serverPath);
     return {
       restApiEnabled: cfg.RESTAPIEnabled === true,
@@ -244,6 +249,7 @@ export function registerIpcHandlers(): void {
     getServerConfig,
     updateServerConfig,
     removeServerConfig,
+    getServerPath,
   };
 
   registerMiscHandlers(ctx);

@@ -23,6 +23,14 @@ export interface ServerConfig {
   restart: RestartConfig;
 }
 
+// Payload émis par le main vers le renderer pour chaque ligne de log
+// produite par un serveur. Inclut le `serverId` pour permettre au renderer
+// de filtrer/agréger les logs multi-serveurs (Phase 5).
+export interface ServerLogEvent {
+  serverId: string;
+  line: string;
+}
+
 export interface SystemStats {
   cpu: number; // %
   ram: number; // %
