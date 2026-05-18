@@ -14,6 +14,15 @@ export interface Server {
   createdAt: number;
 }
 
+// Configuration par-serveur (launch args, backup, restart) — stockée séparément
+// de `Server` pour garder le type Server simple et pouvoir hot-reload la config
+// sans toucher au serveur lui-même.
+export interface ServerConfig {
+  launchArgs: LaunchArgsConfig;
+  backup: BackupConfig;
+  restart: RestartConfig;
+}
+
 export interface SystemStats {
   cpu: number; // %
   ram: number; // %

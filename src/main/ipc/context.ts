@@ -12,23 +12,24 @@ import type {
   RestartConfig,
   LaunchArgsConfig,
   Server,
+  ServerConfig,
 } from "../../shared/types";
 
 export interface AppStore {
-  // Legacy : utilisé pour la migration vers `servers`. Ne plus lire/écrire directement —
-  // passer par getActiveServer() / getActiveServerPath() dans IpcContext.
+  // Legacy globaux (Phase 1) : utilisés pour la migration vers serversConfig.
+  // Plus lus directement après migration — passer par ctx.getServerConfig().
   serverPath?: string;
+  launchArgs?: LaunchArgsConfig;
+  autoRestart?: boolean;
+  backupDir?: string;
+  backupKeep?: number;
+  backupIntervalMinutes?: number;
+  restartSchedule?: RestartConfig;
 
-  // Multi-serveur (Phase 1) : liste + serveur actif
+  // Multi-serveur : liste + serveur actif + config par-serveur (Phase 2a)
   servers: Server[];
   activeServerId: string | null;
-
-  launchArgs: LaunchArgsConfig;
-  autoRestart: boolean;
-  backupDir: string;
-  backupKeep: number;
-  backupIntervalMinutes: number;
-  restartSchedule: RestartConfig;
+  serversConfig: Record<string, ServerConfig>;
 }
 
 export interface IpcContext {
@@ -61,6 +62,14 @@ export interface IpcContext {
   // Met à jour le path du serveur actif (legacy compat : steamcmd/misc setServerPath).
   // Si aucun serveur n'existe encore, en crée un avec ce path.
   setActiveServerPath: (path: string) => void;
+
+  // Accès à la config par-serveur (Phase 2a).
+  // `serverId` est optionnel : par défaut, le serveur actif.
+  getServerConfig: (serverId?: string) => ServerConfig;
+  updateServerConfig: (
+    serverId: string | undefined,
+    patch: Partial<ServerConfig>,
+  ) => ServerConfig;
 }
 
 export type BrowserWindowModule = typeof BrowserWindow;

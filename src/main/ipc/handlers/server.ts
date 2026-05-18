@@ -1,8 +1,6 @@
 import { ipcMain } from "electron/main";
 import type { IpcContext } from "../context";
 import type { LaunchArgsConfig } from "../../../shared/types";
-import type Store from "electron-store";
-import type { AppStore } from "../context";
 
 const PERFORMANCE_FLAGS = [
   "-useperfthreads",
@@ -10,18 +8,7 @@ const PERFORMANCE_FLAGS = [
   "-UseMultithreadForDS",
 ];
 
-const DEFAULT_LAUNCH_ARGS: LaunchArgsConfig = {
-  publicLobby: false,
-  performanceFlags: false,
-  customArgs: "",
-};
-
-export function getLaunchArgs(store: Store<AppStore>): LaunchArgsConfig {
-  return store.get("launchArgs", DEFAULT_LAUNCH_ARGS);
-}
-
-export function buildServerArgs(store: Store<AppStore>): string[] {
-  const cfg = getLaunchArgs(store);
+export function buildServerArgs(cfg: LaunchArgsConfig): string[] {
   const args: string[] = [];
   if (cfg.publicLobby) args.push("-publiclobby");
   if (cfg.performanceFlags) args.push(...PERFORMANCE_FLAGS);
@@ -33,7 +20,7 @@ export function buildServerArgs(store: Store<AppStore>): string[] {
 export function registerServerHandlers(ctx: IpcContext): void {
   ipcMain.handle("server:start", async (event) => {
     const serverPath = ctx.getActiveServerPath();
-    const args = buildServerArgs(ctx.store);
+    const args = buildServerArgs(ctx.getServerConfig().launchArgs);
     return ctx.serverManager.start(serverPath, args, (line) => {
       event.sender.send("server:log", line);
     });
@@ -45,7 +32,7 @@ export function registerServerHandlers(ctx: IpcContext): void {
 
   ipcMain.handle("server:restart", async (event) => {
     const serverPath = ctx.getActiveServerPath();
-    const args = buildServerArgs(ctx.store);
+    const args = buildServerArgs(ctx.getServerConfig().launchArgs);
     return ctx.serverManager.restart(
       serverPath,
       args,
@@ -56,10 +43,13 @@ export function registerServerHandlers(ctx: IpcContext): void {
 
   ipcMain.handle("server:status", () => ctx.serverManager.getStatus());
 
-  // Launch arguments
-  ipcMain.handle("server:getLaunchArgs", () => getLaunchArgs(ctx.store));
+  // Launch arguments — désormais stockés par-serveur dans ServerConfig
+  ipcMain.handle(
+    "server:getLaunchArgs",
+    () => ctx.getServerConfig().launchArgs,
+  );
   ipcMain.handle("server:setLaunchArgs", (_, cfg: LaunchArgsConfig) => {
-    ctx.store.set("launchArgs", cfg);
+    ctx.updateServerConfig(undefined, { launchArgs: cfg });
   });
 
   // Palworld .ini config

@@ -10,6 +10,7 @@ import { RestartScheduler } from "../scheduler/RestartScheduler";
 import { PlayerHistoryTracker } from "../players/PlayerHistoryTracker";
 import { PalworldApiClient } from "../server/PalworldApiClient";
 import { ServerRegistry } from "../servers/ServerRegistry";
+import { ServerConfigStore } from "../servers/ServerConfigStore";
 import type { RestartConfig } from "../../shared/types";
 import type { AppStore, IpcContext } from "./context";
 import { registerMiscHandlers } from "./handlers/misc";
@@ -32,9 +33,15 @@ const DEFAULT_RESTART_CONFIG: RestartConfig = {
 export function registerIpcHandlers(): void {
   const store = new Store<AppStore>();
   const servers = new ServerRegistry(store);
+  const serverConfigs = new ServerConfigStore(store);
+
   // Phase 1 multi-serveur : migre l'ancien `serverPath` unique en premier
   // entry de la liste. No-op si déjà migré ou si pas de legacy à migrer.
-  servers.migrateLegacy();
+  const migrated = servers.migrateLegacy();
+  // Phase 2a : migre les anciennes configs globales (launchArgs / backup* /
+  // restartSchedule) vers la config du premier serveur. Idempotent.
+  const firstServer = migrated ?? servers.list()[0];
+  if (firstServer) serverConfigs.migrateLegacy(firstServer.id);
 
   // Helpers utilisés partout : centralisent la résolution du serveur "actif".
   // Tant qu'on n'a pas la Phase 2 (handlers paramétrés par serverId), tout le
@@ -54,6 +61,19 @@ export function registerIpcHandlers(): void {
     store.set("serverPath", path);
   };
 
+  // Phase 2a : helpers pour la config par-serveur.
+  const resolveServerId = (id: string | undefined): string => {
+    const resolved = id ?? servers.getActiveId();
+    if (!resolved) throw new Error("Aucun serveur actif configuré");
+    return resolved;
+  };
+  const getServerConfig = (id?: string) =>
+    serverConfigs.get(resolveServerId(id));
+  const updateServerConfig = (
+    id: string | undefined,
+    patch: Parameters<typeof serverConfigs.update>[1],
+  ) => serverConfigs.update(resolveServerId(id), patch);
+
   const serverManager = new ServerManager();
   const steamcmd = new SteamCMD();
   const configParser = new PalConfigParser();
@@ -70,12 +90,20 @@ export function registerIpcHandlers(): void {
   };
 
   const getBackupDir = (): string => {
-    const stored = store.get("backupDir", "");
-    return stored || backup.getDefaultBackupDir(app.getPath("userData"));
+    const active = servers.getActive();
+    if (!active) return backup.getDefaultBackupDir(app.getPath("userData"));
+    const stored = serverConfigs.get(active.id).backup.backupDir;
+    return (
+      stored ||
+      backup.getDefaultBackupDirForServer(app.getPath("userData"), active.id)
+    );
   };
 
-  const getRestartConfig = (): RestartConfig =>
-    store.get("restartSchedule", DEFAULT_RESTART_CONFIG);
+  const getRestartConfig = (): RestartConfig => {
+    const active = servers.getActive();
+    if (!active) return DEFAULT_RESTART_CONFIG;
+    return serverConfigs.get(active.id).restart;
+  };
 
   const getStopConfig = () => {
     const serverPath = getActiveServerPath();
@@ -103,23 +131,29 @@ export function registerIpcHandlers(): void {
   };
 
   const applyBackupScheduler = (): void => {
-    const minutes = store.get("backupIntervalMinutes", 0);
+    const active = servers.getActive();
+    const cfg = active ? serverConfigs.get(active.id).backup : null;
+    const minutes = cfg?.backupIntervalMinutes ?? 0;
     backup.startScheduler(minutes, async () => {
       if (serverManager.getStatus() !== "running") return;
       const serverPath = getActiveServerPath();
       if (!serverPath) return;
       const dir = getBackupDir();
       await backup.create(serverPath, dir);
-      backup.rotate(dir, store.get("backupKeep", 10));
+      backup.rotate(dir, cfg?.backupKeep ?? 10);
     });
   };
 
   // Start daily restart scheduler
   restartScheduler.start(getRestartConfig, async () => {
     if (serverManager.getStatus() !== "running") return;
+    const active = servers.getActive();
+    const launchArgs = active
+      ? serverConfigs.get(active.id).launchArgs
+      : { publicLobby: false, performanceFlags: false, customArgs: "" };
     await serverManager.restart(
       getActiveServerPath(),
-      buildServerArgs(store),
+      buildServerArgs(launchArgs),
       () => {},
       getStopConfigForRestart(),
     );
@@ -178,6 +212,8 @@ export function registerIpcHandlers(): void {
     getActiveServer,
     getActiveServerPath,
     setActiveServerPath,
+    getServerConfig,
+    updateServerConfig,
   };
 
   registerMiscHandlers(ctx);

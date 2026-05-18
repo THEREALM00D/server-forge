@@ -5,6 +5,6 @@ import type { RestartConfig } from "../../../shared/types";
 export function registerScheduleHandlers(ctx: IpcContext): void {
   ipcMain.handle("schedule:getRestart", () => ctx.getRestartConfig());
   ipcMain.handle("schedule:setRestart", (_, cfg: RestartConfig) => {
-    ctx.store.set("restartSchedule", cfg);
+    ctx.updateServerConfig(undefined, { restart: cfg });
   });
 }

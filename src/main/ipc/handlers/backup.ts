@@ -8,16 +8,17 @@ interface BackupCfgInput {
 }
 
 export function registerBackupHandlers(ctx: IpcContext): void {
-  ipcMain.handle("backup:getConfig", () => ({
-    backupDir: ctx.getBackupDir(),
-    backupKeep: ctx.store.get("backupKeep", 10),
-    backupIntervalMinutes: ctx.store.get("backupIntervalMinutes", 0),
-  }));
+  ipcMain.handle("backup:getConfig", () => {
+    const cfg = ctx.getServerConfig().backup;
+    return {
+      backupDir: ctx.getBackupDir(),
+      backupKeep: cfg.backupKeep,
+      backupIntervalMinutes: cfg.backupIntervalMinutes,
+    };
+  });
 
   ipcMain.handle("backup:setConfig", (_, cfg: BackupCfgInput) => {
-    ctx.store.set("backupDir", cfg.backupDir);
-    ctx.store.set("backupKeep", cfg.backupKeep);
-    ctx.store.set("backupIntervalMinutes", cfg.backupIntervalMinutes);
+    ctx.updateServerConfig(undefined, { backup: cfg });
     ctx.applyBackupScheduler();
   });
 
@@ -28,7 +29,7 @@ export function registerBackupHandlers(ctx: IpcContext): void {
     if (!serverPath) throw new Error("Aucun chemin serveur configuré");
     const dir = ctx.getBackupDir();
     const entry = await ctx.backup.create(serverPath, dir);
-    ctx.backup.rotate(dir, ctx.store.get("backupKeep", 10));
+    ctx.backup.rotate(dir, ctx.getServerConfig().backup.backupKeep);
     return entry;
   });
 
