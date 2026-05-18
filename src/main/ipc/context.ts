@@ -7,6 +7,7 @@ import type { FirewallManager } from "../firewall/FirewallManager";
 import type { BackupManager } from "../backup/BackupManager";
 import type { RestartScheduler } from "../scheduler/RestartScheduler";
 import type { PlayerHistoryTracker } from "../players/PlayerHistoryTracker";
+import type { ServerManagerRegistry } from "../servers/ServerManagerRegistry";
 import type Store from "electron-store";
 import type {
   RestartConfig,
@@ -35,7 +36,13 @@ export interface AppStore {
 export interface IpcContext {
   app: App;
   store: Store<AppStore>;
-  serverManager: ServerManager;
+  serverManagers: ServerManagerRegistry;
+  /**
+   * Helper compat : retourne le ServerManager du serveur actif, ou lance si
+   * aucun serveur n'est sélectionné. Évite de mettre `null` partout dans les
+   * handlers qui supposaient déjà un serveur unique.
+   */
+  requireActiveManager: () => ServerManager;
   steamcmd: SteamCMD;
   configParser: PalConfigParser;
   systemMonitor: SystemMonitor;

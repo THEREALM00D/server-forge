@@ -21,27 +21,34 @@ export function registerServerHandlers(ctx: IpcContext): void {
   ipcMain.handle("server:start", async (event) => {
     const serverPath = ctx.getActiveServerPath();
     const args = buildServerArgs(ctx.getServerConfig().launchArgs);
-    return ctx.serverManager.start(serverPath, args, (line) => {
+    return ctx.requireActiveManager().start(serverPath, args, (line) => {
       event.sender.send("server:log", line);
     });
   });
 
   ipcMain.handle("server:stop", () =>
-    ctx.serverManager.stop(ctx.getStopConfig()),
+    ctx.requireActiveManager().stop(ctx.getStopConfig()),
   );
 
   ipcMain.handle("server:restart", async (event) => {
     const serverPath = ctx.getActiveServerPath();
     const args = buildServerArgs(ctx.getServerConfig().launchArgs);
-    return ctx.serverManager.restart(
-      serverPath,
-      args,
-      (line) => event.sender.send("server:log", line),
-      ctx.getStopConfig(),
-    );
+    return ctx
+      .requireActiveManager()
+      .restart(
+        serverPath,
+        args,
+        (line) => event.sender.send("server:log", line),
+        ctx.getStopConfig(),
+      );
   });
 
-  ipcMain.handle("server:status", () => ctx.serverManager.getStatus());
+  // Lecture seule : retourne "stopped" si aucun serveur actif (évite de planter
+  // le renderer qui poll status au boot avant qu'un serveur ne soit configuré).
+  ipcMain.handle(
+    "server:status",
+    () => ctx.serverManagers.getActive()?.getStatus() ?? "stopped",
+  );
 
   // Launch arguments — désormais stockés par-serveur dans ServerConfig
   ipcMain.handle(

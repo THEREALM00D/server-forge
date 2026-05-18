@@ -1,6 +1,5 @@
 import { BrowserWindow, app } from "electron/main";
 import Store from "electron-store";
-import { ServerManager } from "../server/ServerManager";
 import { SteamCMD } from "../steamcmd/SteamCMD";
 import { PalConfigParser } from "../config/PalConfigParser";
 import { SystemMonitor } from "../monitor/SystemMonitor";
@@ -11,6 +10,7 @@ import { PlayerHistoryTracker } from "../players/PlayerHistoryTracker";
 import { PalworldApiClient } from "../server/PalworldApiClient";
 import { ServerRegistry } from "../servers/ServerRegistry";
 import { ServerConfigStore } from "../servers/ServerConfigStore";
+import { ServerManagerRegistry } from "../servers/ServerManagerRegistry";
 import type { RestartConfig } from "../../shared/types";
 import type { AppStore, IpcContext } from "./context";
 import { registerMiscHandlers } from "./handlers/misc";
@@ -74,7 +74,17 @@ export function registerIpcHandlers(): void {
     patch: Parameters<typeof serverConfigs.update>[1],
   ) => serverConfigs.update(resolveServerId(id), patch);
 
-  const serverManager = new ServerManager();
+  const serverManagers = new ServerManagerRegistry(servers);
+  const requireActiveManager = () => {
+    const mgr = serverManagers.getActive();
+    if (!mgr) throw new Error("Aucun serveur actif configuré");
+    return mgr;
+  };
+  // Helper local pour les boucles internes : retourne le manager actif ou
+  // null (sans throw). Utilisé par les schedulers / poller qui doivent juste
+  // skipper si aucun serveur n'est sélectionné.
+  const activeManagerOrNull = () => serverManagers.getActive();
+
   const steamcmd = new SteamCMD();
   const configParser = new PalConfigParser();
   const systemMonitor = new SystemMonitor();
@@ -135,7 +145,8 @@ export function registerIpcHandlers(): void {
     const cfg = active ? serverConfigs.get(active.id).backup : null;
     const minutes = cfg?.backupIntervalMinutes ?? 0;
     backup.startScheduler(minutes, async () => {
-      if (serverManager.getStatus() !== "running") return;
+      const mgr = activeManagerOrNull();
+      if (!mgr || mgr.getStatus() !== "running") return;
       const serverPath = getActiveServerPath();
       if (!serverPath) return;
       const dir = getBackupDir();
@@ -146,12 +157,13 @@ export function registerIpcHandlers(): void {
 
   // Start daily restart scheduler
   restartScheduler.start(getRestartConfig, async () => {
-    if (serverManager.getStatus() !== "running") return;
+    const mgr = activeManagerOrNull();
+    if (!mgr || mgr.getStatus() !== "running") return;
     const active = servers.getActive();
     const launchArgs = active
       ? serverConfigs.get(active.id).launchArgs
       : { publicLobby: false, performanceFlags: false, customArgs: "" };
-    await serverManager.restart(
+    await mgr.restart(
       getActiveServerPath(),
       buildServerArgs(launchArgs),
       () => {},
@@ -163,7 +175,8 @@ export function registerIpcHandlers(): void {
 
   // Tracker d'historique : démarre quand l'API REST est dispo, s'arrête sinon
   const getApiClientForHistory = () => {
-    if (serverManager.getStatus() !== "running") return null;
+    const mgr = activeManagerOrNull();
+    if (!mgr || mgr.getStatus() !== "running") return null;
     const serverPath = getActiveServerPath();
     if (!serverPath) return null;
     try {
@@ -180,7 +193,8 @@ export function registerIpcHandlers(): void {
 
   let lastTrackerActive = false;
   setInterval(() => {
-    const shouldTrack = serverManager.getStatus() === "running";
+    const mgr = activeManagerOrNull();
+    const shouldTrack = !!mgr && mgr.getStatus() === "running";
     if (shouldTrack && !lastTrackerActive) {
       playerHistory.start(getApiClientForHistory);
       lastTrackerActive = true;
@@ -190,13 +204,15 @@ export function registerIpcHandlers(): void {
     }
   }, 5000);
 
-  // Try to adopt an existing PalServer.exe on startup
-  serverManager.tryAdopt(broadcastLog).catch(() => {});
+  // Try to adopt any existing PalServer.exe processes on startup, matching
+  // each running process to a configured server by executable path.
+  serverManagers.tryAdoptAll(broadcastLog).catch(() => {});
 
   const ctx: IpcContext = {
     app,
     store,
-    serverManager,
+    serverManagers,
+    requireActiveManager,
     steamcmd,
     configParser,
     systemMonitor,

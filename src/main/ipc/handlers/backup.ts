@@ -36,7 +36,7 @@ export function registerBackupHandlers(ctx: IpcContext): void {
   ipcMain.handle("backup:restore", async (_, backupPath: string) => {
     const serverPath = ctx.getActiveServerPath();
     if (!serverPath) throw new Error("Aucun chemin serveur configuré");
-    if (ctx.serverManager.getStatus() === "running") {
+    if (ctx.serverManagers.getActive()?.getStatus() === "running") {
       throw new Error("Arrêtez le serveur avant de restaurer une sauvegarde");
     }
     await ctx.backup.restore(serverPath, backupPath);
