@@ -2,11 +2,16 @@ import { ipcMain } from "electron/main";
 import type { IpcContext } from "../context";
 
 export function registerPlayersHandlers(ctx: IpcContext): void {
-  ipcMain.handle("players:getHistory", () => ctx.playerHistory.list());
+  // Renvoie l'historique du serveur actif. Si aucun serveur sélectionné,
+  // retourne une liste vide plutôt que de lever (l'UI charge dès l'ouverture).
+  ipcMain.handle(
+    "players:getHistory",
+    () => ctx.playerHistories.getActive()?.list() ?? [],
+  );
   ipcMain.handle("players:clearHistory", () => {
-    ctx.playerHistory.clear();
+    ctx.playerHistories.getActive()?.clear();
   });
   ipcMain.handle("players:removeEntry", (_, userId: string) => {
-    ctx.playerHistory.remove(userId);
+    ctx.playerHistories.getActive()?.remove(userId);
   });
 }

@@ -6,11 +6,11 @@ import { SystemMonitor } from "../monitor/SystemMonitor";
 import { FirewallManager } from "../firewall/FirewallManager";
 import { BackupManager } from "../backup/BackupManager";
 import { RestartScheduler } from "../scheduler/RestartScheduler";
-import { PlayerHistoryTracker } from "../players/PlayerHistoryTracker";
 import { PalworldApiClient } from "../server/PalworldApiClient";
 import { ServerRegistry } from "../servers/ServerRegistry";
 import { ServerConfigStore } from "../servers/ServerConfigStore";
 import { ServerManagerRegistry } from "../servers/ServerManagerRegistry";
+import { PlayerHistoryRegistry } from "../servers/PlayerHistoryRegistry";
 import type { RestartConfig } from "../../shared/types";
 import type { AppStore, IpcContext } from "./context";
 import { registerMiscHandlers } from "./handlers/misc";
@@ -91,7 +91,12 @@ export function registerIpcHandlers(): void {
   const firewall = new FirewallManager();
   const backup = new BackupManager();
   const restartScheduler = new RestartScheduler();
-  const playerHistory = new PlayerHistoryTracker(app.getPath("userData"));
+  const playerHistories = new PlayerHistoryRegistry(
+    app.getPath("userData"),
+    servers,
+  );
+  // Phase 2c : migre l'ancien history.json partagé vers le premier serveur
+  if (firstServer) playerHistories.migrateLegacy(firstServer.id);
 
   const broadcastLog = (line: string): void => {
     BrowserWindow.getAllWindows().forEach((w) =>
@@ -194,12 +199,13 @@ export function registerIpcHandlers(): void {
   let lastTrackerActive = false;
   setInterval(() => {
     const mgr = activeManagerOrNull();
-    const shouldTrack = !!mgr && mgr.getStatus() === "running";
+    const tracker = playerHistories.getActive();
+    const shouldTrack = !!mgr && !!tracker && mgr.getStatus() === "running";
     if (shouldTrack && !lastTrackerActive) {
-      playerHistory.start(getApiClientForHistory);
+      tracker!.start(getApiClientForHistory);
       lastTrackerActive = true;
     } else if (!shouldTrack && lastTrackerActive) {
-      playerHistory.stop();
+      playerHistories.stopAll();
       lastTrackerActive = false;
     }
   }, 5000);
@@ -219,7 +225,7 @@ export function registerIpcHandlers(): void {
     firewall,
     backup,
     restartScheduler,
-    playerHistory,
+    playerHistories,
     broadcastLog,
     getBackupDir,
     getRestartConfig,
