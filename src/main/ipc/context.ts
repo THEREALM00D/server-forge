@@ -77,6 +77,8 @@ export interface IpcContext {
     serverId: string | undefined,
     patch: Partial<ServerConfig>,
   ) => ServerConfig;
+  /** Supprime la config stockée d'un serveur (sans toucher au filesystem). */
+  removeServerConfig: (serverId: string) => void;
 }
 
 export type BrowserWindowModule = typeof BrowserWindow;

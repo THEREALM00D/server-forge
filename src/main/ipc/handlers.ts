@@ -1,4 +1,5 @@
 import { BrowserWindow, app } from "electron/main";
+import { join } from "path";
 import Store from "electron-store";
 import { SteamCMD } from "../steamcmd/SteamCMD";
 import { PalConfigParser } from "../config/PalConfigParser";
@@ -40,8 +41,13 @@ export function registerIpcHandlers(): void {
   const migrated = servers.migrateLegacy();
   // Phase 2a : migre les anciennes configs globales (launchArgs / backup* /
   // restartSchedule) vers la config du premier serveur. Idempotent.
+  // Phase 4 : on passe aussi l'ancien default backup dir partagé pour
+  // préserver l'accès aux .zip existants après migration.
   const firstServer = migrated ?? servers.list()[0];
-  if (firstServer) serverConfigs.migrateLegacy(firstServer.id);
+  if (firstServer) {
+    const legacyBackupDefault = join(app.getPath("userData"), "backups");
+    serverConfigs.migrateLegacy(firstServer.id, legacyBackupDefault);
+  }
 
   // Helpers utilisés partout : centralisent la résolution du serveur "actif".
   // Tant qu'on n'a pas la Phase 2 (handlers paramétrés par serverId), tout le
@@ -73,6 +79,7 @@ export function registerIpcHandlers(): void {
     id: string | undefined,
     patch: Parameters<typeof serverConfigs.update>[1],
   ) => serverConfigs.update(resolveServerId(id), patch);
+  const removeServerConfig = (id: string) => serverConfigs.remove(id);
 
   const serverManagers = new ServerManagerRegistry(servers);
   const requireActiveManager = () => {
@@ -236,6 +243,7 @@ export function registerIpcHandlers(): void {
     setActiveServerPath,
     getServerConfig,
     updateServerConfig,
+    removeServerConfig,
   };
 
   registerMiscHandlers(ctx);

@@ -31,8 +31,10 @@ export function registerServersHandlers(
   );
   ipcMain.handle("servers:delete", (_, id: string) => {
     registry.delete(id);
+    // Nettoie la config stockée du serveur (sans toucher au filesystem :
+    // les .zip de backup et le history.json restent dans
+    // {userData}/servers/<id>/ — l'utilisateur peut les supprimer manuellement
+    // s'il veut, ou les récupérer en cas de suppression accidentelle).
+    ctx.removeServerConfig(id);
   });
-  // Garde-fou pour empêcher le linter de râler sur ctx non utilisé : on
-  // pourra s'en servir si on doit broadcaster un changement de serveur actif.
-  void ctx;
 }
