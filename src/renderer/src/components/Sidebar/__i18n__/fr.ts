@@ -8,5 +8,9 @@ export default {
     backup: "Sauvegardes",
     schedule: "Planification",
     players: "Joueurs",
+    servers: "Serveurs",
+    noServer: "Aucun serveur",
+    noServers: "Aucun serveur configuré",
+    manageServers: "Gérer les serveurs",
   },
 };

@@ -13,8 +13,13 @@ export class PlayerHistoryTracker {
   private onJoin?: (entry: PlayerHistoryEntry) => void;
   private onLeave?: (entry: PlayerHistoryEntry) => void;
 
-  constructor(userDataPath: string) {
-    const dir = join(userDataPath, "players");
+  constructor(userDataPath: string, serverId?: string) {
+    // Phase 2c : storage par-serveur dans {userDataPath}/servers/<id>/players.
+    // Si `serverId` est omis, on retombe sur l'ancien path partagé pour rester
+    // rétrocompatible (pas de migration cassante pendant une mise à jour).
+    const dir = serverId
+      ? join(userDataPath, "servers", serverId, "players")
+      : join(userDataPath, "players");
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
     this.filePath = join(dir, "history.json");
     this.load();

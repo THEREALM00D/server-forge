@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ThemeProvider, createTheme, CssBaseline, Box } from "@mui/material";
-import { ServerProvider } from "./context/ServerContext";
+import { ServerProvider, useServer } from "./context/ServerContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import Dashboard from "./games/palworld/pages/Dashboard/Dashboard";
 import Install from "./pages/Install/Install";
@@ -10,6 +10,7 @@ import Network from "./games/palworld/pages/Network/Network";
 import Backup from "./games/palworld/pages/Backup/Backup";
 import Schedule from "./games/palworld/pages/Schedule/Schedule";
 import Players from "./games/palworld/pages/Players/Players";
+import Servers from "./pages/Servers/Servers";
 import Titlebar from "./components/Titlebar/Titlebar";
 import Sidebar from "./components/Sidebar/Sidebar";
 
@@ -21,7 +22,8 @@ export type Page =
   | "network"
   | "backup"
   | "schedule"
-  | "players";
+  | "players"
+  | "servers";
 
 const darkTheme = createTheme({
   palette: {
@@ -59,8 +61,9 @@ const darkTheme = createTheme({
   },
 });
 
-export default function App() {
+function AppShell() {
   const [page, setPage] = useState<Page>("dashboard");
+  const { state } = useServer();
 
   const renderPage = () => {
     switch (page) {
@@ -80,30 +83,46 @@ export default function App() {
         return <Schedule />;
       case "players":
         return <Players />;
+      case "servers":
+        return <Servers />;
     }
   };
 
+  // Clé composée : changement de page OU de serveur actif → re-mount complet,
+  // donc tous les useEffect/state des pages se réinitialisent avec les bonnes
+  // données du nouveau serveur. Sauf pour la page "servers" qui est globale.
+  const pageKey =
+    page === "servers"
+      ? "servers"
+      : `${page}:${state.activeServerId ?? "none"}`;
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        bgcolor: "background.default",
+      }}
+    >
+      <Titlebar />
+      <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
+        <Sidebar currentPage={page} onNavigate={setPage} />
+        <Box component="main" sx={{ flex: 1, overflow: "auto", p: 3 }}>
+          <Box key={pageKey}>{renderPage()}</Box>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+export default function App() {
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
       <NotificationProvider>
         <ServerProvider>
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              height: "100vh",
-              bgcolor: "background.default",
-            }}
-          >
-            <Titlebar />
-            <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
-              <Sidebar currentPage={page} onNavigate={setPage} />
-              <Box component="main" sx={{ flex: 1, overflow: "auto", p: 3 }}>
-                {renderPage()}
-              </Box>
-            </Box>
-          </Box>
+          <AppShell />
         </ServerProvider>
       </NotificationProvider>
     </ThemeProvider>

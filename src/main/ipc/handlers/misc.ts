@@ -26,11 +26,11 @@ export function registerMiscHandlers(ctx: IpcContext): void {
   // App
   ipcMain.handle("app:getVersion", () => ctx.app.getVersion());
 
-  // Persistent config
-  ipcMain.handle("config:getServerPath", () => ctx.store.get("serverPath", ""));
-  ipcMain.handle("config:setServerPath", (_, path: string) =>
-    ctx.store.set("serverPath", path),
-  );
+  // Persistent config (legacy compat : retourne/configure le serveur actif)
+  ipcMain.handle("config:getServerPath", () => ctx.getActiveServerPath());
+  ipcMain.handle("config:setServerPath", (_, path: string) => {
+    ctx.setActiveServerPath(path);
+  });
 
   // System monitoring
   ipcMain.handle("monitor:getStats", () => ctx.systemMonitor.getStats());

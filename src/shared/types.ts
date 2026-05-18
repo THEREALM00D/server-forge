@@ -1,6 +1,36 @@
 // Types partagés entre main, preload et renderer.
 // Tout ce qui transite via IPC doit avoir le même type des deux côtés.
 
+// --- Serveurs ---
+// Pour l'instant uniquement "palworld" ; prévu pour s'étendre à d'autres jeux.
+export type GameType = "palworld";
+
+export interface Server {
+  id: string;
+  name: string;
+  gameType: GameType;
+  path: string;
+  color: string | null;
+  createdAt: number;
+}
+
+// Configuration par-serveur (launch args, backup, restart) — stockée séparément
+// de `Server` pour garder le type Server simple et pouvoir hot-reload la config
+// sans toucher au serveur lui-même.
+export interface ServerConfig {
+  launchArgs: LaunchArgsConfig;
+  backup: BackupConfig;
+  restart: RestartConfig;
+}
+
+// Payload émis par le main vers le renderer pour chaque ligne de log
+// produite par un serveur. Inclut le `serverId` pour permettre au renderer
+// de filtrer/agréger les logs multi-serveurs (Phase 5).
+export interface ServerLogEvent {
+  serverId: string;
+  line: string;
+}
+
 export interface SystemStats {
   cpu: number; // %
   ram: number; // %

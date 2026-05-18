@@ -1,10 +1,18 @@
-import type { OperationResult, ServerStatus } from "../../../types";
+import type {
+  OperationResult,
+  ServerStatus,
+  ServerLogEvent,
+} from "../../../types";
 
 export const serverService = {
-  start: (): Promise<OperationResult> => window.api.server.start(),
-  stop: (): Promise<OperationResult> => window.api.server.stop(),
-  restart: (): Promise<OperationResult> => window.api.server.restart(),
-  getStatus: (): Promise<ServerStatus> =>
-    window.api.server.getStatus() as Promise<ServerStatus>,
-  onLog: (cb: (line: string) => void) => window.api.server.onLog(cb),
+  start: (serverId?: string): Promise<OperationResult> =>
+    window.api.server.start(serverId),
+  stop: (serverId?: string): Promise<OperationResult> =>
+    window.api.server.stop(serverId),
+  restart: (serverId?: string): Promise<OperationResult> =>
+    window.api.server.restart(serverId),
+  getStatus: (): Promise<ServerStatus> => window.api.server.getStatus(),
+  getStatuses: (): Promise<Record<string, ServerStatus>> =>
+    window.api.server.getStatuses(),
+  onLog: (cb: (event: ServerLogEvent) => void) => window.api.server.onLog(cb),
 };

@@ -13,7 +13,7 @@ export function registerSteamHandlers(ctx: IpcContext): void {
   ipcMain.handle(
     "steamcmd:installPalworld",
     async (event, installPath: string) => {
-      ctx.store.set("serverPath", installPath);
+      ctx.setActiveServerPath(installPath);
       return ctx.steamcmd.installPalworld(installPath, (progress) => {
         event.sender.send("steamcmd:progress", progress);
       });
@@ -21,14 +21,14 @@ export function registerSteamHandlers(ctx: IpcContext): void {
   );
 
   ipcMain.handle("steamcmd:updatePalworld", async (event) => {
-    const installPath = ctx.store.get("serverPath", "");
+    const installPath = ctx.getActiveServerPath();
     return ctx.steamcmd.installPalworld(installPath, (progress) => {
       event.sender.send("steamcmd:progress", progress);
     });
   });
 
   ipcMain.handle("steamcmd:checkForUpdate", async () => {
-    const installPath = ctx.store.get("serverPath", "");
+    const installPath = ctx.getActiveServerPath();
     return ctx.steamcmd.checkForUpdate(installPath);
   });
 }
