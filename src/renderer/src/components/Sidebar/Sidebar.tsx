@@ -17,9 +17,11 @@ import RouterIcon from "@mui/icons-material/Router";
 import BackupIcon from "@mui/icons-material/Backup";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import PeopleIcon from "@mui/icons-material/People";
+import StorageIcon from "@mui/icons-material/Storage";
 import { useTranslation } from "react-i18next";
 import { Page } from "../../App";
 import { useServer } from "../../context/ServerContext";
+import ServerSwitcher from "./ServerSwitcher";
 
 const STATUS_COLOR: Record<
   string,
@@ -73,6 +75,11 @@ const navItems: { id: Page; labelKey: string; icon: React.ReactNode }[] = [
     labelKey: "sidebar.players",
     icon: <PeopleIcon fontSize="small" />,
   },
+  {
+    id: "servers",
+    labelKey: "sidebar.servers",
+    icon: <StorageIcon fontSize="small" />,
+  },
 ];
 
 interface SidebarProps {
@@ -103,6 +110,8 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
         borderColor: "divider",
       }}
     >
+      <ServerSwitcher onManage={onNavigate} />
+      <Divider sx={{ mx: 1.5, mb: 1 }} />
       <List dense sx={{ py: 1, px: 1 }}>
         {navItems.map(({ id, labelKey, icon }) => (
           <ListItemButton

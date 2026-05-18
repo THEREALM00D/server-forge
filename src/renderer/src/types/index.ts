@@ -10,6 +10,9 @@ export type {
   BackupConfig,
   RestartConfig,
   UpdateCheckResult,
+  Server,
+  GameType,
+  ServerConfig,
 } from "@shared/types";
 
 // Specific to renderer

@@ -40,7 +40,7 @@ const DEFAULT_LAUNCH_ARGS: LaunchArgsConfig = {
 
 export default function Install() {
   const { t } = useTranslation();
-  const { state, dispatch } = useServer();
+  const { state, refreshServers } = useServer();
   const { notify } = useNotification();
   const [steamInstalled, setSteamInstalled] = useState<boolean | null>(null);
   const [installPath, setInstallPath] = useState(
@@ -101,7 +101,7 @@ export default function Install() {
     setLogs([]);
     const res = await steamService.installPalworld(installPath);
     if (res.success) {
-      dispatch({ type: "SET_SERVER_PATH", payload: installPath });
+      await refreshServers();
       setUpdateStatus(null);
     } else {
       addLog(t("install.errorPrefix", { msg: res.error }));
