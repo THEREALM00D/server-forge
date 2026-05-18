@@ -12,6 +12,9 @@ release/
 .env
 .env.*
 
+# Local notes
+BACKLOG.md
+
 # Editor
 .vscode/
 .idea/
