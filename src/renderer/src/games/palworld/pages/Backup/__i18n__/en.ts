@@ -6,6 +6,7 @@ export default {
       title: "Configuration",
       dir: "Backup folder",
       dirTooltip: "Choose a folder",
+      dirOpen: "Open in explorer",
       keep: "Backups to keep (rotation)",
       keepHelper: "0 = no rotation",
       auto: "Automatic backup",

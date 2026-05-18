@@ -94,6 +94,18 @@ export class BackupManager {
 
       this.ensureBackupDir(backupDir);
 
+      // Supprime les .tmp.zip orphelins laissés par un crash précédent
+      try {
+        readdirSync(backupDir)
+          .filter((f) => f.endsWith(".tmp.zip"))
+          .forEach((f) => unlinkSync(join(backupDir, f)));
+      } catch {
+        // ignore — non bloquant
+        console.warn(
+          `Impossible de nettoyer les fichiers temporaires dans ${backupDir}`,
+        );
+      }
+
       const ts = new Date()
         .toISOString()
         .replace(/[:.]/g, "-")
@@ -117,31 +129,60 @@ export class BackupManager {
       const output = createWriteStream(tempPath);
       const archive = archiver("zip", { zlib: { level: 9 } });
 
-      output.on("close", () => {
-        try {
-          renameSync(tempPath, outputPath);
-        } catch (err) {
-          cleanup();
-          reject(err as Error);
-          return;
-        }
-        const s = statSync(outputPath);
-        resolve({
-          name: filename,
-          path: outputPath,
-          size: s.size,
-          createdAt: s.mtimeMs,
-        });
-      });
+      let settled = false;
+      const settle = (fn: () => void) => {
+        if (settled) return;
+        settled = true;
+        fn();
+      };
 
-      output.on("error", (err) => {
-        cleanup();
-        reject(err);
-      });
-      archive.on("error", (err) => {
-        cleanup();
-        reject(err);
-      });
+      // Watchdog : si ni finish ni error ne sont émis après 10 min, on abandonne
+      const watchdog = setTimeout(
+        () => {
+          settle(() => {
+            cleanup();
+            reject(
+              new Error(
+                "Timeout : la sauvegarde a pris trop longtemps (fichiers verrouillés ?)",
+              ),
+            );
+          });
+        },
+        10 * 60 * 1000,
+      );
+
+      const done = () => {
+        clearTimeout(watchdog);
+        settle(() => {
+          try {
+            renameSync(tempPath, outputPath);
+          } catch (err) {
+            cleanup();
+            reject(err as Error);
+            return;
+          }
+          const s = statSync(outputPath);
+          resolve({
+            name: filename,
+            path: outputPath,
+            size: s.size,
+            createdAt: s.mtimeMs,
+          });
+        });
+      };
+
+      const fail = (err: Error) => {
+        clearTimeout(watchdog);
+        settle(() => {
+          cleanup();
+          reject(err);
+        });
+      };
+
+      // "finish" est plus fiable que "close" sur Windows
+      output.on("finish", done);
+      output.on("error", fail);
+      archive.on("error", fail);
       archive.pipe(output);
       archive.directory(sourceDir, false);
       archive.finalize();

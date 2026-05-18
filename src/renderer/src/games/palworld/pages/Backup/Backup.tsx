@@ -19,6 +19,7 @@ import BackupIcon from "@mui/icons-material/Backup";
 import RestoreIcon from "@mui/icons-material/Restore";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
+import LaunchIcon from "@mui/icons-material/Launch";
 import { useTranslation } from "react-i18next";
 import { useServer } from "../../../../context/ServerContext";
 import { useNotification } from "../../../../context/NotificationContext";
@@ -159,6 +160,16 @@ export default function Backup() {
               <IconButton onClick={handleSelectDir}>
                 <FolderOpenIcon />
               </IconButton>
+            </Tooltip>
+            <Tooltip title={t("backup.config.dirOpen")}>
+              <span>
+                <IconButton
+                  disabled={!config.backupDir}
+                  onClick={() => window.api.shell.openPath(config.backupDir)}
+                >
+                  <LaunchIcon />
+                </IconButton>
+              </span>
             </Tooltip>
           </Stack>
           <TextField

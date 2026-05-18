@@ -6,6 +6,7 @@ export default {
       title: "Configuration",
       dir: "Dossier de sauvegarde",
       dirTooltip: "Choisir un dossier",
+      dirOpen: "Ouvrir dans l'explorateur",
       keep: "Sauvegardes à conserver (rotation)",
       keepHelper: "0 = pas de rotation",
       auto: "Sauvegarde automatique",
