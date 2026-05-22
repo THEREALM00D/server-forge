@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron/main";
+import { app, BrowserWindow, session } from "electron/main";
 import { shell } from "electron";
 import { join } from "path";
 import { registerIpcHandlers } from "./ipc/handlers";
@@ -16,7 +16,8 @@ function createWindow(): void {
     backgroundColor: "#0f172a",
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
-      sandbox: false,
+      sandbox: false, // requis par electron-vite (preload bundlé en CJS)
+      contextIsolation: true,
     },
   });
 
@@ -41,6 +42,20 @@ function createWindow(): void {
 app.whenReady().then(() => {
   if (process.platform === "win32") {
     app.setAppUserModelId("com.palworld.manager");
+  }
+
+  // CSP en production uniquement (dev : Vite HMR utilise eval)
+  if (app.isPackaged) {
+    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          "Content-Security-Policy": [
+            "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:",
+          ],
+        },
+      });
+    });
   }
 
   registerIpcHandlers();
