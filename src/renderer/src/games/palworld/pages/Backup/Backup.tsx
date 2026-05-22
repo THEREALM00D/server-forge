@@ -1,296 +1,50 @@
-import { useEffect, useState } from "react";
-import {
-  Box,
-  Typography,
-  Paper,
-  Button,
-  Stack,
-  Divider,
-  TextField,
-  IconButton,
-  Tooltip,
-  CircularProgress,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from "@mui/material";
-import BackupIcon from "@mui/icons-material/Backup";
-import RestoreIcon from "@mui/icons-material/Restore";
-import DeleteIcon from "@mui/icons-material/Delete";
-import FolderOpenIcon from "@mui/icons-material/FolderOpen";
-import LaunchIcon from "@mui/icons-material/Launch";
+import { Stack, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { useServer } from "../../../../context/ServerContext";
-import { useNotification } from "../../../../context/NotificationContext";
-import type { BackupEntry, BackupConfig } from "@shared/types";
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  if (bytes < 1024 * 1024 * 1024)
-    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-  return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
-}
-
-function formatDate(ts: number, locale: string): string {
-  return new Date(ts).toLocaleString(locale === "fr" ? "fr-FR" : "en-US");
-}
+import { useBackup } from "./hooks/useBackup";
+import BackupConfigPanel from "./components/BackupConfig";
+import BackupList from "./components/BackupList";
 
 export default function Backup() {
-  const { t, i18n } = useTranslation();
-  const { state } = useServer();
-  const { notify } = useNotification();
-  const { status, serverPath } = state;
-
-  const [backups, setBackups] = useState<BackupEntry[]>([]);
-  const [config, setConfig] = useState<BackupConfig>({
-    backupDir: "",
-    backupKeep: 10,
-    backupIntervalMinutes: 0,
-  });
-  const [creating, setCreating] = useState(false);
-  const [restoring, setRestoring] = useState<string | null>(null);
-
-  const refresh = async () => {
-    try {
-      const [list, cfg] = await Promise.all([
-        window.api.backup.list(),
-        window.api.backup.getConfig(),
-      ]);
-      setBackups(list);
-      setConfig(cfg);
-    } catch {
-      notify(t("backup.notify.cannotLoad"));
-    }
-  };
-
-  useEffect(() => {
-    refresh();
-  }, []);
-
-  const handleCreate = async () => {
-    setCreating(true);
-    try {
-      const entry = await window.api.backup.create();
-      notify(t("backup.notify.created", { name: entry.name }), "success");
-      await refresh();
-    } catch (e) {
-      notify((e as Error).message || t("backup.notify.createFailed"));
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const handleRestore = async (entry: BackupEntry) => {
-    if (
-      !window.confirm(t("backup.list.restoreConfirm", { name: entry.name }))
-    ) {
-      return;
-    }
-    setRestoring(entry.path);
-    try {
-      await window.api.backup.restore(entry.path);
-      notify(t("backup.notify.restored", { name: entry.name }), "success");
-    } catch (e) {
-      notify((e as Error).message || t("backup.notify.restoreFailed"));
-    } finally {
-      setRestoring(null);
-    }
-  };
-
-  const handleDelete = async (entry: BackupEntry) => {
-    if (!window.confirm(t("backup.list.deleteConfirm", { name: entry.name })))
-      return;
-    try {
-      await window.api.backup.delete(entry.path);
-      notify(t("backup.notify.deleted"), "success");
-      await refresh();
-    } catch {
-      notify(t("backup.notify.deleteFailed"));
-    }
-  };
-
-  const handleSelectDir = async () => {
-    const dir = await window.api.dialog.selectFolder();
-    if (dir) {
-      const next = { ...config, backupDir: dir };
-      setConfig(next);
-      await window.api.backup.setConfig(next);
-      await refresh();
-    }
-  };
-
-  const handleKeepChange = async (value: string) => {
-    const n = Math.max(0, parseInt(value, 10) || 0);
-    const next = { ...config, backupKeep: n };
-    setConfig(next);
-    await window.api.backup.setConfig(next);
-  };
-
-  const handleIntervalChange = async (value: number) => {
-    const next = { ...config, backupIntervalMinutes: value };
-    setConfig(next);
-    await window.api.backup.setConfig(next);
-  };
+  const { t } = useTranslation();
+  const {
+    backups,
+    config,
+    creating,
+    restoring,
+    serverPath,
+    status,
+    handleCreate,
+    handleRestore,
+    handleDelete,
+    handleSelectDir,
+    handleConfigChange,
+  } = useBackup();
 
   return (
     <Stack spacing={3}>
-      <Box>
+      <div>
         <Typography variant="h6">{t("backup.title")}</Typography>
         <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
           {t("backup.subtitle")}
         </Typography>
-      </Box>
+      </div>
 
-      <Paper sx={{ p: 2.5 }}>
-        <Typography variant="subtitle2" sx={{ mb: 1.5 }}>
-          {t("backup.config.title")}
-        </Typography>
-        <Stack spacing={2}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <TextField
-              label={t("backup.config.dir")}
-              size="small"
-              value={config.backupDir}
-              fullWidth
-              slotProps={{ input: { readOnly: true } }}
-            />
-            <Tooltip title={t("backup.config.dirTooltip")}>
-              <IconButton onClick={handleSelectDir}>
-                <FolderOpenIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title={t("backup.config.dirOpen")}>
-              <span>
-                <IconButton
-                  disabled={!config.backupDir}
-                  onClick={() => window.api.shell.openPath(config.backupDir)}
-                >
-                  <LaunchIcon />
-                </IconButton>
-              </span>
-            </Tooltip>
-          </Stack>
-          <TextField
-            label={t("backup.config.keep")}
-            size="small"
-            type="number"
-            value={config.backupKeep}
-            onChange={(e) => handleKeepChange(e.target.value)}
-            sx={{ maxWidth: 280 }}
-            slotProps={{ htmlInput: { min: 0 } }}
-            helperText={t("backup.config.keepHelper")}
-          />
-          <FormControl size="small" sx={{ maxWidth: 280 }}>
-            <InputLabel>{t("backup.config.auto")}</InputLabel>
-            <Select
-              label={t("backup.config.auto")}
-              value={config.backupIntervalMinutes}
-              onChange={(e) => handleIntervalChange(Number(e.target.value))}
-            >
-              <MenuItem value={0}>{t("backup.config.autoOff")}</MenuItem>
-              <MenuItem value={15}>{t("backup.config.auto15")}</MenuItem>
-              <MenuItem value={30}>{t("backup.config.auto30")}</MenuItem>
-              <MenuItem value={60}>{t("backup.config.auto60")}</MenuItem>
-              <MenuItem value={180}>{t("backup.config.auto180")}</MenuItem>
-              <MenuItem value={360}>{t("backup.config.auto360")}</MenuItem>
-              <MenuItem value={720}>{t("backup.config.auto720")}</MenuItem>
-              <MenuItem value={1440}>{t("backup.config.auto1440")}</MenuItem>
-            </Select>
-          </FormControl>
-        </Stack>
-      </Paper>
+      <BackupConfigPanel
+        config={config}
+        onSelectDir={handleSelectDir}
+        onConfigChange={handleConfigChange}
+      />
 
-      <Paper sx={{ p: 2.5 }}>
-        <Stack
-          direction="row"
-          sx={{
-            alignItems: "center",
-            justifyContent: "space-between",
-            mb: 1.5,
-          }}
-        >
-          <Typography variant="subtitle2">
-            {t("backup.list.title", { count: backups.length })}
-          </Typography>
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={
-              creating ? <CircularProgress size={14} /> : <BackupIcon />
-            }
-            disabled={!serverPath || creating}
-            onClick={handleCreate}
-          >
-            {creating ? t("backup.list.creating") : t("backup.list.create")}
-          </Button>
-        </Stack>
-        <Divider sx={{ mb: 1 }} />
-        {backups.length === 0 ? (
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            {t("backup.list.none")}
-          </Typography>
-        ) : (
-          <Stack spacing={1}>
-            {backups.map((b) => (
-              <Box
-                key={b.path}
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  py: 0.75,
-                }}
-              >
-                <Box sx={{ minWidth: 0, flex: 1 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    {b.name}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: "text.secondary" }}
-                  >
-                    {formatDate(b.createdAt, i18n.resolvedLanguage ?? "fr")} —{" "}
-                    {formatSize(b.size)}
-                  </Typography>
-                </Box>
-                <Stack
-                  direction="row"
-                  spacing={0.5}
-                  sx={{ alignItems: "center" }}
-                >
-                  <Tooltip title={t("backup.list.restoreTooltip")}>
-                    <span>
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        disabled={status === "running" || restoring !== null}
-                        onClick={() => handleRestore(b)}
-                      >
-                        {restoring === b.path ? (
-                          <CircularProgress size={18} />
-                        ) : (
-                          <RestoreIcon fontSize="small" />
-                        )}
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                  <Tooltip title={t("backup.list.deleteTooltip")}>
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleDelete(b)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </Stack>
-              </Box>
-            ))}
-          </Stack>
-        )}
-      </Paper>
+      <BackupList
+        backups={backups}
+        creating={creating}
+        restoring={restoring}
+        serverPath={serverPath}
+        status={status}
+        onCreate={handleCreate}
+        onRestore={handleRestore}
+        onDelete={handleDelete}
+      />
     </Stack>
   );
 }

@@ -21,18 +21,8 @@ import StorageIcon from "@mui/icons-material/Storage";
 import { useTranslation } from "react-i18next";
 import { Page } from "../../App";
 import { useServer } from "../../context/ServerContext";
+import { STATUS_COLOR } from "../../utils/status";
 import ServerSwitcher from "./ServerSwitcher";
-
-const STATUS_COLOR: Record<
-  string,
-  "success" | "warning" | "error" | "default"
-> = {
-  running: "success",
-  starting: "warning",
-  stopping: "warning",
-  crashed: "error",
-  stopped: "default",
-};
 
 const navItems: { id: Page; labelKey: string; icon: React.ReactNode }[] = [
   {

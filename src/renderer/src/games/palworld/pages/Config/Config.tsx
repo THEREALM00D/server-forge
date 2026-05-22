@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "@tanstack/react-form";
 import {
   Box,
@@ -17,44 +17,14 @@ import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import IconButton from "@mui/material/IconButton";
 import { useTranslation } from "react-i18next";
-import type { TFunction } from "i18next";
 import { useServer } from "../../../../context/ServerContext";
 import { useNotification } from "../../../../context/NotificationContext";
 import { configService } from "../../services/configService";
-import { FIELD_GROUPS, type Settings, type FieldGroup } from "./fields";
 import { DIFFICULTY_PRESETS } from "./presets";
+import { useConfigGroups } from "./hooks/useConfigGroups";
 import ConfigGroup from "./components/ConfigGroup";
 import ConfigField from "./components/ConfigField";
-
-function filterGroups(
-  groups: FieldGroup[],
-  query: string,
-  t: TFunction,
-): FieldGroup[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return groups;
-  return groups
-    .map((group) => {
-      const groupLabel = t(group.labelKey).toLowerCase();
-      const groupMatches = groupLabel.includes(q);
-      const fields = group.fields.filter((f) => {
-        if (groupMatches) return true;
-        const label = t(`config.fields.${f.key}.label`, {
-          defaultValue: f.key,
-        }).toLowerCase();
-        const description = t(`config.fields.${f.key}.description`, {
-          defaultValue: "",
-        }).toLowerCase();
-        return (
-          label.includes(q) ||
-          f.key.toLowerCase().includes(q) ||
-          description.includes(q)
-        );
-      });
-      return { ...group, fields };
-    })
-    .filter((g) => g.fields.length > 0);
-}
+import type { Settings } from "./fields";
 
 export default function Config() {
   const { t } = useTranslation();
@@ -62,8 +32,16 @@ export default function Config() {
   const { notify } = useNotification();
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+  const {
+    search,
+    setSearch,
+    visibleGroups,
+    expandedGroups,
+    allExpanded,
+    toggleAll,
+    toggleGroup,
+  } = useConfigGroups();
 
   const form = useForm<Settings>({
     defaultValues: {},
@@ -95,39 +73,6 @@ export default function Config() {
     Object.entries(preset).forEach(([k, v]) =>
       form.setFieldValue(k as never, v as never),
     );
-  };
-
-  const visibleGroups = useMemo(
-    () => filterGroups(FIELD_GROUPS, search, t),
-    [search, t],
-  );
-
-  // Auto-expand all groups when search is active
-  useEffect(() => {
-    if (search) {
-      setExpandedGroups(new Set(visibleGroups.map((g) => g.labelKey)));
-    }
-  }, [search, visibleGroups]);
-
-  const allExpanded =
-    visibleGroups.length > 0 &&
-    visibleGroups.every((g) => expandedGroups.has(g.labelKey));
-
-  const toggleAll = () => {
-    if (allExpanded) {
-      setExpandedGroups(new Set());
-    } else {
-      setExpandedGroups(new Set(visibleGroups.map((g) => g.labelKey)));
-    }
-  };
-
-  const toggleGroup = (labelKey: string) => {
-    setExpandedGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(labelKey)) next.delete(labelKey);
-      else next.add(labelKey);
-      return next;
-    });
   };
 
   if (!state.serverPath) {
@@ -253,7 +198,6 @@ export default function Config() {
               )}
             />
           ))}
-
           <Button
             type="submit"
             variant="contained"
