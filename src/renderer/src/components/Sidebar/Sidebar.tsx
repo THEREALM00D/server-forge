@@ -1,13 +1,16 @@
+import { useState } from "react";
 import {
   Box,
+  Chip,
+  Divider,
+  IconButton,
   List,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Divider,
-  Chip,
-  ToggleButtonGroup,
   ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
 } from "@mui/material";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -18,11 +21,16 @@ import BackupIcon from "@mui/icons-material/Backup";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import PeopleIcon from "@mui/icons-material/People";
 import StorageIcon from "@mui/icons-material/Storage";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { useTranslation } from "react-i18next";
 import { Page } from "../../App";
 import { useServer } from "../../context/ServerContext";
 import { STATUS_COLOR } from "../../utils/status";
 import ServerSwitcher from "./ServerSwitcher";
+
+const EXPANDED_WIDTH = 220;
+const COLLAPSED_WIDTH = 56;
 
 const navItems: { id: Page; labelKey: string; icon: React.ReactNode }[] = [
   {
@@ -80,6 +88,7 @@ interface SidebarProps {
 export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
   const { state } = useServer();
   const { t, i18n } = useTranslation();
+  const [collapsed, setCollapsed] = useState(false);
 
   const handleLanguageChange = (
     _: React.MouseEvent<HTMLElement>,
@@ -91,79 +100,142 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
   return (
     <Box
       sx={{
-        width: 220,
+        width: collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH,
         flexShrink: 0,
         bgcolor: "#020617",
         display: "flex",
         flexDirection: "column",
         borderRight: "1px solid",
         borderColor: "divider",
+        overflow: "hidden",
+        transition: "width 0.2s ease",
       }}
     >
-      <ServerSwitcher onManage={onNavigate} />
-      <Divider sx={{ mx: 1.5, mb: 1 }} />
-      <List dense sx={{ py: 1, px: 1 }}>
-        {navItems.map(({ id, labelKey, icon }) => (
-          <ListItemButton
-            key={id}
-            selected={currentPage === id}
-            onClick={() => onNavigate(id)}
-            sx={{
-              borderRadius: 2,
-              mb: 0.5,
-              "&.Mui-selected": {
-                bgcolor: "action.selected",
-                "&:hover": { bgcolor: "action.selected" },
-              },
-            }}
-          >
-            <ListItemIcon
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: collapsed ? "center" : "flex-end",
+          px: 0.5,
+          pt: 0.5,
+        }}
+      >
+        <Tooltip
+          title={collapsed ? t("sidebar.expand") : t("sidebar.collapse")}
+          placement="right"
+        >
+          <IconButton size="small" onClick={() => setCollapsed((v) => !v)}>
+            {collapsed ? (
+              <ChevronRightIcon fontSize="small" />
+            ) : (
+              <ChevronLeftIcon fontSize="small" />
+            )}
+          </IconButton>
+        </Tooltip>
+      </Box>
+
+      <ServerSwitcher onManage={onNavigate} collapsed={collapsed} />
+
+      <Divider sx={{ mx: collapsed ? 0.5 : 1.5, mb: 1 }} />
+
+      <List dense sx={{ py: 1, px: collapsed ? 0.5 : 1 }}>
+        {navItems.map(({ id, labelKey, icon }) => {
+          const isActive = currentPage === id;
+          if (collapsed) {
+            return (
+              <Tooltip key={id} title={t(labelKey)} placement="right">
+                <ListItemButton
+                  selected={isActive}
+                  onClick={() => onNavigate(id)}
+                  sx={{
+                    borderRadius: 2,
+                    mb: 0.5,
+                    justifyContent: "center",
+                    px: 0,
+                    minHeight: 36,
+                    "&.Mui-selected": {
+                      bgcolor: "action.selected",
+                      "&:hover": { bgcolor: "action.selected" },
+                    },
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 0,
+                      color: isActive ? "primary.main" : "text.secondary",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {icon}
+                  </ListItemIcon>
+                </ListItemButton>
+              </Tooltip>
+            );
+          }
+          return (
+            <ListItemButton
+              key={id}
+              selected={isActive}
+              onClick={() => onNavigate(id)}
               sx={{
-                minWidth: 36,
-                color: currentPage === id ? "primary.main" : "text.secondary",
-              }}
-            >
-              {icon}
-            </ListItemIcon>
-            <ListItemText
-              primary={t(labelKey)}
-              slotProps={{
-                primary: {
-                  sx: {
-                    fontSize: 13,
-                    fontWeight: currentPage === id ? 600 : 400,
-                  },
+                borderRadius: 2,
+                mb: 0.5,
+                "&.Mui-selected": {
+                  bgcolor: "action.selected",
+                  "&:hover": { bgcolor: "action.selected" },
                 },
               }}
-            />
-          </ListItemButton>
-        ))}
+            >
+              <ListItemIcon
+                sx={{
+                  minWidth: 36,
+                  color: isActive ? "primary.main" : "text.secondary",
+                }}
+              >
+                {icon}
+              </ListItemIcon>
+              <ListItemText
+                primary={t(labelKey)}
+                slotProps={{
+                  primary: {
+                    sx: { fontSize: 13, fontWeight: isActive ? 600 : 400 },
+                  },
+                }}
+              />
+            </ListItemButton>
+          );
+        })}
       </List>
 
-      <Box sx={{ mt: "auto", p: 2 }}>
-        <ToggleButtonGroup
-          value={i18n.resolvedLanguage ?? "fr"}
-          exclusive
-          onChange={handleLanguageChange}
-          size="small"
-          fullWidth
-          sx={{ mb: 1.5 }}
-        >
-          <ToggleButton value="fr" sx={{ fontSize: 11, py: 0.25 }}>
-            FR
-          </ToggleButton>
-          <ToggleButton value="en" sx={{ fontSize: 11, py: 0.25 }}>
-            EN
-          </ToggleButton>
-        </ToggleButtonGroup>
-        <Divider sx={{ mb: 1.5 }} />
-        <Chip
-          label={t(`status.${state.status}`, { defaultValue: state.status })}
-          color={STATUS_COLOR[state.status] ?? "default"}
-          size="small"
-          variant="outlined"
-          sx={{ width: "100%", fontSize: 11 }}
-        />
+      <Box sx={{ mt: "auto", p: collapsed ? 0.5 : 2 }}>
+        {!collapsed && (
+          <>
+            <ToggleButtonGroup
+              value={i18n.resolvedLanguage ?? "fr"}
+              exclusive
+              onChange={handleLanguageChange}
+              size="small"
+              fullWidth
+              sx={{ mb: 1.5 }}
+            >
+              <ToggleButton value="fr" sx={{ fontSize: 11, py: 0.25 }}>
+                FR
+              </ToggleButton>
+              <ToggleButton value="en" sx={{ fontSize: 11, py: 0.25 }}>
+                EN
+              </ToggleButton>
+            </ToggleButtonGroup>
+            <Divider sx={{ mb: 1.5 }} />
+            <Chip
+              label={t(`status.${state.status}`, {
+                defaultValue: state.status,
+              })}
+              color={STATUS_COLOR[state.status] ?? "default"}
+              size="small"
+              variant="outlined"
+              sx={{ width: "100%", fontSize: 11, mb: 1 }}
+            />
+          </>
+        )}
       </Box>
     </Box>
   );

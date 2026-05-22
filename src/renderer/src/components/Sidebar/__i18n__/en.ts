@@ -12,5 +12,7 @@ export default {
     noServer: "No server",
     noServers: "No server configured",
     manageServers: "Manage servers",
+    collapse: "Collapse",
+    expand: "Expand",
   },
 };

@@ -2,16 +2,16 @@ import { useState } from "react";
 import {
   Box,
   Button,
-  Menu,
-  MenuItem,
-  Typography,
   Divider,
   ListItemIcon,
   ListItemText,
+  Menu,
+  MenuItem,
+  Tooltip,
+  Typography,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CheckIcon from "@mui/icons-material/Check";
-import StorageIcon from "@mui/icons-material/Storage";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { useTranslation } from "react-i18next";
 import { useServer } from "../../context/ServerContext";
@@ -19,9 +19,10 @@ import type { Page } from "../../App";
 
 interface Props {
   onManage: (page: Page) => void;
+  collapsed?: boolean;
 }
 
-export default function ServerSwitcher({ onManage }: Props) {
+export default function ServerSwitcher({ onManage, collapsed }: Props) {
   const { state, switchActive } = useServer();
   const { t } = useTranslation();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
@@ -45,6 +46,85 @@ export default function ServerSwitcher({ onManage }: Props) {
   const activeName = state.activeServer?.name ?? t("sidebar.noServer");
   const activeColor = state.activeServer?.color ?? "#64748b";
 
+  const colorDot = (
+    <Box
+      sx={{
+        width: 10,
+        height: 10,
+        borderRadius: "50%",
+        bgcolor: activeColor,
+        flexShrink: 0,
+      }}
+    />
+  );
+
+  const menu = (
+    <Menu
+      anchorEl={anchor}
+      open={open}
+      onClose={handleClose}
+      slotProps={{ paper: { sx: { minWidth: 200 } } }}
+    >
+      {state.servers.length === 0 && (
+        <MenuItem disabled>
+          <ListItemText primary={t("sidebar.noServers")} />
+        </MenuItem>
+      )}
+      {state.servers.map((srv) => (
+        <MenuItem
+          key={srv.id}
+          selected={srv.id === state.activeServerId}
+          onClick={() => handleSelect(srv.id)}
+        >
+          <ListItemIcon>
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: "50%",
+                bgcolor: srv.color ?? "#64748b",
+              }}
+            />
+          </ListItemIcon>
+          <ListItemText primary={srv.name} />
+          {srv.id === state.activeServerId && (
+            <CheckIcon fontSize="small" sx={{ ml: 1, color: "primary.main" }} />
+          )}
+        </MenuItem>
+      ))}
+      <Divider />
+      <MenuItem onClick={handleManage}>
+        <ListItemIcon>
+          <SettingsIcon fontSize="small" />
+        </ListItemIcon>
+        <ListItemText primary={t("sidebar.manageServers")} />
+      </MenuItem>
+    </Menu>
+  );
+
+  if (collapsed) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", py: 1.5 }}>
+        <Tooltip title={activeName} placement="right">
+          <Box
+            onClick={handleOpen}
+            sx={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              bgcolor: activeColor,
+              cursor: "pointer",
+              border: "2px solid",
+              borderColor: "divider",
+              "&:hover": { opacity: 0.85 },
+            }}
+          />
+        </Tooltip>
+        {menu}
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ p: 1.5 }}>
       <Button
@@ -65,15 +145,7 @@ export default function ServerSwitcher({ onManage }: Props) {
         <Box
           sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}
         >
-          <Box
-            sx={{
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              bgcolor: activeColor,
-              flexShrink: 0,
-            }}
-          />
+          {colorDot}
           <Typography
             variant="body2"
             sx={{
@@ -87,58 +159,7 @@ export default function ServerSwitcher({ onManage }: Props) {
           </Typography>
         </Box>
       </Button>
-
-      <Menu
-        anchorEl={anchor}
-        open={open}
-        onClose={handleClose}
-        slotProps={{ paper: { sx: { minWidth: 200 } } }}
-      >
-        {state.servers.length === 0 && (
-          <MenuItem disabled>
-            <ListItemText primary={t("sidebar.noServers")} />
-          </MenuItem>
-        )}
-        {state.servers.map((srv) => (
-          <MenuItem
-            key={srv.id}
-            selected={srv.id === state.activeServerId}
-            onClick={() => handleSelect(srv.id)}
-          >
-            <ListItemIcon>
-              <Box
-                sx={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: "50%",
-                  bgcolor: srv.color ?? "#64748b",
-                }}
-              />
-            </ListItemIcon>
-            <ListItemText primary={srv.name} />
-            {srv.id === state.activeServerId && (
-              <CheckIcon
-                fontSize="small"
-                sx={{ ml: 1, color: "primary.main" }}
-              />
-            )}
-          </MenuItem>
-        ))}
-        <Divider />
-        <MenuItem onClick={handleManage}>
-          <ListItemIcon>
-            <SettingsIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText primary={t("sidebar.manageServers")} />
-        </MenuItem>
-      </Menu>
-      {state.servers.length === 0 && (
-        <Box sx={{ mt: 1, display: "flex", justifyContent: "center" }}>
-          <StorageIcon
-            sx={{ fontSize: 14, color: "text.secondary", opacity: 0.5 }}
-          />
-        </Box>
-      )}
+      {menu}
     </Box>
   );
 }
