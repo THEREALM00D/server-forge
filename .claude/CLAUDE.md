@@ -1,0 +1,28 @@
+# Instructions Claude
+
+## Langue de Communication
+- Parle-moi toujours en français
+- Réponds à toutes les questions en français
+- Explique ton code et tes décisions en français
+
+## Commits
+- Écris les messages de commit en français
+- Sois clair et concis dans la description des changements
+- Utilise l'impératif: "Ajouter", "Corriger", "Mettre à jour", etc.
+
+## Pull Requests
+- Rédige les descriptions de PR en français
+- Explique les modifications apportées en français
+- Fournis un contexte clair sur pourquoi les changements sont nécessaires
+
+## Regles de developpement
+- Chaque page gere l'affichage le plus possible, les components gere la logique.
+- On evite la dupplication
+- Preferer les components reutilisable au lieu de dupliquer les choses
+- Toujours ajuster CLAUDE.md a la fin du travail pour avoir la meilleur doc possible
+
+## Use the mui-mcp server to answer any MUI questions --  
+- 1. call the "useMuiDocs" tool to fetch the docs of the package relevant in the question 
+- 2. call the "fetchDocs" tool to fetch any additional docs if needed using ONLY the URLs present in the returned content. 
+- 3. repeat steps 1-2 until you have fetched all relevant docs for the given question 
+- 4. use the fetched content to answer the question
