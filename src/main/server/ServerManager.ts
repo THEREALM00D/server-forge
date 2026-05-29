@@ -2,7 +2,7 @@ import { spawn, ChildProcess, exec } from "child_process";
 import { join } from "path";
 import { existsSync } from "fs";
 import si from "systeminformation";
-import { PalworldApiClient } from "./PalworldApiClient";
+import { PalworldApiClient } from "../games/palworld/PalworldApiClient";
 import type { ServerStatus } from "../../shared/types";
 
 export interface StopConfig {
@@ -27,19 +27,22 @@ export class ServerManager {
     return this.process?.pid ?? this.adoptedPid ?? null;
   }
 
-  async tryAdopt(onLog: (line: string) => void): Promise<boolean> {
+  async tryAdopt(
+    onLog: (line: string) => void,
+    processNamePrefix = "palserver",
+  ): Promise<boolean> {
     if (this.process || this.adoptedPid) return false;
     try {
       const procs = await si.processes();
-      const palProc = procs.list.find((p) =>
-        p.name.toLowerCase().startsWith("palserver"),
+      const proc = procs.list.find((p) =>
+        p.name.toLowerCase().startsWith(processNamePrefix),
       );
-      if (!palProc) return false;
+      if (!proc) return false;
 
-      this.adoptedPid = palProc.pid;
+      this.adoptedPid = proc.pid;
       this.status = "running";
       this.onLog = onLog;
-      onLog(`[Manager] Processus existant détecté (PID ${palProc.pid}).`);
+      onLog(`[Manager] Processus existant détecté (PID ${proc.pid}).`);
       this.startAdoptedPoll();
       return true;
     } catch {
@@ -94,6 +97,7 @@ export class ServerManager {
 
   async start(
     serverPath: string,
+    exeName: string,
     args: string[],
     onLog: (line: string) => void,
   ): Promise<{ success: boolean; error?: string }> {
@@ -101,14 +105,14 @@ export class ServerManager {
       return { success: false, error: "Server is already running" };
     }
 
-    const exe = join(serverPath, "PalServer.exe");
+    const exe = join(serverPath, exeName);
     if (!existsSync(exe)) {
-      return { success: false, error: `PalServer.exe not found at: ${exe}` };
+      return { success: false, error: `${exeName} not found at: ${exe}` };
     }
 
     this.onLog = onLog;
     this.status = "starting";
-    onLog("[Manager] Starting Palworld server...");
+    onLog(`[Manager] Starting server (${exeName})...`);
 
     try {
       this.process = spawn(exe, args, {
@@ -153,7 +157,7 @@ export class ServerManager {
           onLog(
             `[Manager] Auto-restarting... (attempt ${this.restartCount}/${this.maxRestarts})`,
           );
-          setTimeout(() => this.start(serverPath, args, onLog), 5000);
+          setTimeout(() => this.start(serverPath, exeName, args, onLog), 5000);
         }
       });
 
@@ -271,6 +275,7 @@ export class ServerManager {
 
   async restart(
     serverPath: string,
+    exeName: string,
     args: string[],
     onLog: (line: string) => void,
     cfg?: StopConfig,
@@ -280,7 +285,7 @@ export class ServerManager {
       await new Promise((r) => setTimeout(r, 1500));
     }
     this.restartCount = 0;
-    return this.start(serverPath, args, onLog);
+    return this.start(serverPath, exeName, args, onLog);
   }
 
   getStatus(): ServerStatus {

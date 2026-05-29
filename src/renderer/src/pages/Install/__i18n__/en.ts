@@ -14,6 +14,7 @@ export default {
     folder: {
       title: "Installation folder",
       installPalworld: "Install Palworld",
+      installValheim: "Install Valheim",
       installing: "Installing...",
       update: "Update",
     },

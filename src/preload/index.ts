@@ -22,7 +22,7 @@ const api = {
     create: (input: {
       name: string;
       path: string;
-      gameType?: "palworld";
+      gameType?: "palworld" | "valheim";
       color?: string | null;
     }) => ipcRenderer.invoke("servers:create", input),
     update: (
@@ -30,7 +30,7 @@ const api = {
       patch: Partial<{
         name: string;
         path: string;
-        gameType: "palworld";
+        gameType: "palworld" | "valheim";
         color: string | null;
       }>,
     ) => ipcRenderer.invoke("servers:update", id, patch),
@@ -43,6 +43,9 @@ const api = {
     installPalworld: (path: string) =>
       ipcRenderer.invoke("steamcmd:installPalworld", path),
     updatePalworld: () => ipcRenderer.invoke("steamcmd:updatePalworld"),
+    installValheim: (path: string) =>
+      ipcRenderer.invoke("steamcmd:installValheim", path),
+    updateValheim: () => ipcRenderer.invoke("steamcmd:updateValheim"),
     checkForUpdate: () => ipcRenderer.invoke("steamcmd:checkForUpdate"),
     onProgress: (cb: (msg: string) => void) => {
       ipcRenderer.on("steamcmd:progress", (_e, msg) => cb(msg));
@@ -103,6 +106,11 @@ const api = {
     applyAll: (gamePort: number, rconPort: number, restApiPort: number) =>
       ipcRenderer.invoke("firewall:applyAll", gamePort, rconPort, restApiPort),
     removeAll: () => ipcRenderer.invoke("firewall:removeAll"),
+    checkRule: (name: string) => ipcRenderer.invoke("firewall:checkRule", name),
+    enableNamedRule: (name: string, port: number, protocol: "TCP" | "UDP") =>
+      ipcRenderer.invoke("firewall:enableNamedRule", name, port, protocol),
+    disableNamedRule: (name: string, protocol?: "TCP" | "UDP") =>
+      ipcRenderer.invoke("firewall:disableNamedRule", name, protocol),
     listCustomRules: () => ipcRenderer.invoke("firewall:listCustomRules"),
     createCustomRule: (name: string, port: number, protocol: "TCP" | "UDP") =>
       ipcRenderer.invoke("firewall:createCustomRule", name, port, protocol),
@@ -160,6 +168,15 @@ const api = {
   // Dialog
   dialog: {
     selectFolder: () => ipcRenderer.invoke("dialog:selectFolder"),
+  },
+  // Valheim config (serverId optionnel — par défaut actif)
+  valheim: {
+    getConfig: (serverId?: string) =>
+      ipcRenderer.invoke("valheim:getConfig", serverId),
+    setConfig: (cfg: Record<string, unknown>, serverId?: string) =>
+      ipcRenderer.invoke("valheim:setConfig", cfg, serverId),
+    openSaveFolder: (customSavedir: string) =>
+      ipcRenderer.invoke("valheim:openSaveFolder", customSavedir),
   },
   // App
   app: {

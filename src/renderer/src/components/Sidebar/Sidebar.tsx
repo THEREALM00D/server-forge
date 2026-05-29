@@ -26,6 +26,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { useTranslation } from "react-i18next";
 import { Page } from "../../App";
 import { useServer } from "../../context/ServerContext";
+import { getGamePlugin } from "../../games/registry";
 import { STATUS_COLOR } from "../../utils/status";
 import ServerSwitcher from "./ServerSwitcher";
 
@@ -88,6 +89,7 @@ interface SidebarProps {
 export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
   const { state } = useServer();
   const { t, i18n } = useTranslation();
+  const plugin = getGamePlugin(state.activeServer?.gameType ?? "palworld");
   const [collapsed, setCollapsed] = useState(false);
 
   const handleLanguageChange = (
@@ -138,72 +140,76 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
       <Divider sx={{ mx: collapsed ? 0.5 : 1.5, mb: 1 }} />
 
       <List dense sx={{ py: 1, px: collapsed ? 0.5 : 1 }}>
-        {navItems.map(({ id, labelKey, icon }) => {
-          const isActive = currentPage === id;
-          if (collapsed) {
-            return (
-              <Tooltip key={id} title={t(labelKey)} placement="right">
-                <ListItemButton
-                  selected={isActive}
-                  onClick={() => onNavigate(id)}
-                  sx={{
-                    borderRadius: 2,
-                    mb: 0.5,
-                    justifyContent: "center",
-                    px: 0,
-                    minHeight: 36,
-                    "&.Mui-selected": {
-                      bgcolor: "action.selected",
-                      "&:hover": { bgcolor: "action.selected" },
-                    },
-                  }}
-                >
-                  <ListItemIcon
+        {navItems
+          .filter(
+            ({ id }) => id === "servers" || plugin?.supportedPages.includes(id),
+          )
+          .map(({ id, labelKey, icon }) => {
+            const isActive = currentPage === id;
+            if (collapsed) {
+              return (
+                <Tooltip key={id} title={t(labelKey)} placement="right">
+                  <ListItemButton
+                    selected={isActive}
+                    onClick={() => onNavigate(id)}
                     sx={{
-                      minWidth: 0,
-                      color: isActive ? "primary.main" : "text.secondary",
+                      borderRadius: 2,
+                      mb: 0.5,
                       justifyContent: "center",
+                      px: 0,
+                      minHeight: 36,
+                      "&.Mui-selected": {
+                        bgcolor: "action.selected",
+                        "&:hover": { bgcolor: "action.selected" },
+                      },
                     }}
                   >
-                    {icon}
-                  </ListItemIcon>
-                </ListItemButton>
-              </Tooltip>
-            );
-          }
-          return (
-            <ListItemButton
-              key={id}
-              selected={isActive}
-              onClick={() => onNavigate(id)}
-              sx={{
-                borderRadius: 2,
-                mb: 0.5,
-                "&.Mui-selected": {
-                  bgcolor: "action.selected",
-                  "&:hover": { bgcolor: "action.selected" },
-                },
-              }}
-            >
-              <ListItemIcon
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 0,
+                        color: isActive ? "primary.main" : "text.secondary",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {icon}
+                    </ListItemIcon>
+                  </ListItemButton>
+                </Tooltip>
+              );
+            }
+            return (
+              <ListItemButton
+                key={id}
+                selected={isActive}
+                onClick={() => onNavigate(id)}
                 sx={{
-                  minWidth: 36,
-                  color: isActive ? "primary.main" : "text.secondary",
-                }}
-              >
-                {icon}
-              </ListItemIcon>
-              <ListItemText
-                primary={t(labelKey)}
-                slotProps={{
-                  primary: {
-                    sx: { fontSize: 13, fontWeight: isActive ? 600 : 400 },
+                  borderRadius: 2,
+                  mb: 0.5,
+                  "&.Mui-selected": {
+                    bgcolor: "action.selected",
+                    "&:hover": { bgcolor: "action.selected" },
                   },
                 }}
-              />
-            </ListItemButton>
-          );
-        })}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 36,
+                    color: isActive ? "primary.main" : "text.secondary",
+                  }}
+                >
+                  {icon}
+                </ListItemIcon>
+                <ListItemText
+                  primary={t(labelKey)}
+                  slotProps={{
+                    primary: {
+                      sx: { fontSize: 13, fontWeight: isActive ? 600 : 400 },
+                    },
+                  }}
+                />
+              </ListItemButton>
+            );
+          })}
       </List>
 
       <Box sx={{ mt: "auto", p: collapsed ? 0.5 : 2 }}>

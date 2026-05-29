@@ -26,6 +26,7 @@ export default {
     },
     games: {
       palworld: "Palworld",
+      valheim: "Valheim",
     },
     actions: {
       activate: "Activate",

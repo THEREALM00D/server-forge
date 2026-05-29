@@ -1,4 +1,4 @@
-import type { PalConfigParser } from "../config/PalConfigParser";
+import type { PalConfigParser } from "../games/palworld/PalConfigParser";
 import type { ServerRegistry } from "./ServerRegistry";
 import type { ServerManagerRegistry } from "./ServerManagerRegistry";
 

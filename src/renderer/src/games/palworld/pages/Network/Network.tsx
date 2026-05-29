@@ -2,15 +2,23 @@ import { Box, Stack, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { useServer } from "../../../../context/ServerContext";
 import { useFirewall } from "./hooks/useFirewall";
-import AdminBanner from "./components/AdminBanner";
-import StandardRules from "./components/StandardRules";
-import CustomRules from "./components/CustomRules";
+import AdminBanner from "../../../../components/firewall/AdminBanner";
+import StandardRules from "../../../../components/firewall/StandardRules";
+import CustomRules from "../../../../components/firewall/CustomRules";
 
 export default function Network() {
   const { t } = useTranslation();
   const { state } = useServer();
-  const { isAdmin, rules, customRules, loading, refresh, getPorts } =
-    useFirewall(state.serverPath);
+  const {
+    isAdmin,
+    rules,
+    customRules,
+    loading,
+    refresh,
+    onToggle,
+    onApplyAll,
+    onRemoveAll,
+  } = useFirewall(state.serverPath);
 
   return (
     <Stack spacing={3} sx={{ maxWidth: 680 }}>
@@ -28,7 +36,9 @@ export default function Network() {
         loading={loading}
         isAdmin={isAdmin}
         onRefresh={refresh}
-        getPorts={getPorts}
+        onToggle={onToggle}
+        onApplyAll={onApplyAll}
+        onRemoveAll={onRemoveAll}
       />
 
       <CustomRules rules={customRules} isAdmin={isAdmin} onRefresh={refresh} />

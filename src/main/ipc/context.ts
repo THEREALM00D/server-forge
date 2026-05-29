@@ -1,7 +1,7 @@
 import type { BrowserWindow, App } from "electron";
 import type { ServerManager } from "../server/ServerManager";
 import type { SteamCMD } from "../steamcmd/SteamCMD";
-import type { PalConfigParser } from "../config/PalConfigParser";
+import type { PalConfigParser } from "../games/palworld/PalConfigParser";
 import type { SystemMonitor } from "../monitor/SystemMonitor";
 import type { FirewallManager } from "../firewall/FirewallManager";
 import type { BackupManager } from "../backup/BackupManager";
@@ -15,6 +15,7 @@ import type {
   LaunchArgsConfig,
   Server,
   ServerConfig,
+  ValheimLaunchConfig,
 } from "../../shared/types";
 
 export interface AppStore {
@@ -87,6 +88,13 @@ export interface IpcContext {
   ) => ServerConfig;
   /** Supprime la config stockée d'un serveur (sans toucher au filesystem). */
   removeServerConfig: (serverId: string) => void;
+
+  // Config Valheim par-serveur (launch args spécifiques à Valheim)
+  getValheimConfig: (serverId?: string) => ValheimLaunchConfig;
+  updateValheimConfig: (
+    serverId: string | undefined,
+    patch: Partial<ValheimLaunchConfig>,
+  ) => void;
 }
 
 export type BrowserWindowModule = typeof BrowserWindow;

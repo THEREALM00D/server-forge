@@ -84,9 +84,13 @@ export class BackupManager {
       .sort((a, b) => b.createdAt - a.createdAt);
   }
 
-  create(serverPath: string, backupDir: string): Promise<BackupEntry> {
+  create(
+    serverPath: string,
+    backupDir: string,
+    sourcePath?: string,
+  ): Promise<BackupEntry> {
     return new Promise((resolve, reject) => {
-      const sourceDir = this.getSavePath(serverPath);
+      const sourceDir = sourcePath ?? this.getSavePath(serverPath);
       if (!existsSync(sourceDir)) {
         reject(new Error(`Dossier de sauvegarde introuvable : ${sourceDir}`));
         return;

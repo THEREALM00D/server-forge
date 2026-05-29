@@ -2,27 +2,33 @@ import { BrowserWindow, app } from "electron/main";
 import { join } from "path";
 import Store from "electron-store";
 import { SteamCMD } from "../steamcmd/SteamCMD";
-import { PalConfigParser } from "../config/PalConfigParser";
+import { PalConfigParser } from "../games/palworld/PalConfigParser";
 import { SystemMonitor } from "../monitor/SystemMonitor";
 import { FirewallManager } from "../firewall/FirewallManager";
 import { BackupManager } from "../backup/BackupManager";
 import { RestartScheduler } from "../scheduler/RestartScheduler";
-import { PalworldApiClient } from "../server/PalworldApiClient";
+import { PalworldApiClient } from "../games/palworld/PalworldApiClient";
 import { ServerRegistry } from "../servers/ServerRegistry";
 import { ServerConfigStore } from "../servers/ServerConfigStore";
 import { ServerManagerRegistry } from "../servers/ServerManagerRegistry";
 import { PlayerHistoryRegistry } from "../servers/PlayerHistoryRegistry";
-import type { RestartConfig } from "../../shared/types";
+import type { RestartConfig, ValheimLaunchConfig } from "../../shared/types";
 import type { AppStore, IpcContext } from "./context";
 import { registerMiscHandlers } from "./handlers/misc";
 import { registerSteamHandlers } from "./handlers/steam";
-import { registerServerHandlers, buildServerArgs } from "./handlers/server";
-import { registerPalapiHandlers } from "./handlers/palapi";
+import { registerServerHandlers } from "./handlers/server";
 import { registerFirewallHandlers } from "./handlers/firewall";
 import { registerBackupHandlers } from "./handlers/backup";
 import { registerScheduleHandlers } from "./handlers/schedule";
-import { registerPlayersHandlers } from "./handlers/players";
 import { registerServersHandlers } from "./handlers/servers";
+import { registerPalapiHandlers } from "../games/palworld/handlers/palapi";
+import { registerPlayersHandlers } from "../games/palworld/handlers/players";
+import { registerValheimHandlers } from "../games/valheim/handlers/config";
+import {
+  getGameServerConfig,
+  buildGameArgs,
+  getGameStopConfig,
+} from "../games/registry";
 
 const DEFAULT_RESTART_CONFIG: RestartConfig = {
   enabled: false,
@@ -80,6 +86,15 @@ export function registerIpcHandlers(): void {
     patch: Parameters<typeof serverConfigs.update>[1],
   ) => serverConfigs.update(resolveServerId(id), patch);
   const removeServerConfig = (id: string) => serverConfigs.remove(id);
+  const getValheimConfig = (id?: string) =>
+    serverConfigs.get(resolveServerId(id)).valheimConfig;
+  const updateValheimConfig = (
+    id: string | undefined,
+    patch: Partial<ValheimLaunchConfig>,
+  ) =>
+    serverConfigs.update(resolveServerId(id), {
+      valheimConfig: patch as ValheimLaunchConfig,
+    });
 
   const serverManagers = new ServerManagerRegistry(servers);
   const requireActiveManager = () => {
@@ -133,15 +148,11 @@ export function registerIpcHandlers(): void {
   };
 
   const getStopConfig = (serverId?: string) => {
-    const serverPath = getServerPath(serverId);
-    const cfg = configParser.read(serverPath);
-    return {
-      restApiEnabled: cfg.RESTAPIEnabled === true,
-      restApiPort: Number(cfg.RESTAPIPort ?? 8212),
-      adminPassword: String(cfg.AdminPassword ?? ""),
-      shutdownWaittime: 0,
-      shutdownMessage: "",
-    };
+    const server = serverId
+      ? servers.list().find((s) => s.id === serverId)
+      : servers.getActive();
+    const gameType = server?.gameType ?? "palworld";
+    return getGameStopConfig(gameType, getServerPath(serverId), configParser);
   };
 
   const getStopConfigForRestart = () => {
@@ -177,12 +188,34 @@ export function registerIpcHandlers(): void {
     const mgr = activeManagerOrNull();
     if (!mgr || mgr.getStatus() !== "running") return;
     const active = servers.getActive();
-    const launchArgs = active
-      ? serverConfigs.get(active.id).launchArgs
-      : { publicLobby: false, performanceFlags: false, customArgs: "" };
+    const gameType = active?.gameType ?? "palworld";
+    const serverCfg = active
+      ? serverConfigs.get(active.id)
+      : {
+          launchArgs: {
+            publicLobby: false,
+            performanceFlags: false,
+            customArgs: "",
+          },
+          valheimConfig: {
+            name: "",
+            world: "Dedicated",
+            password: "",
+            port: 2456,
+            public: true,
+            savedir: "",
+            crossplay: false,
+            logFile: "",
+            customArgs: "",
+          } satisfies ValheimLaunchConfig,
+          backup: { backupDir: "", backupIntervalMinutes: 0, backupKeep: 10 },
+          restart: getRestartConfig(),
+        };
+    const args = buildGameArgs(gameType, serverCfg);
     await mgr.restart(
       getActiveServerPath(),
-      buildServerArgs(launchArgs),
+      getGameServerConfig(gameType).exeName,
+      args,
       () => {},
       getStopConfigForRestart(),
     );
@@ -251,6 +284,8 @@ export function registerIpcHandlers(): void {
     updateServerConfig,
     removeServerConfig,
     getServerPath,
+    getValheimConfig,
+    updateValheimConfig,
   };
 
   registerMiscHandlers(ctx);
@@ -262,4 +297,5 @@ export function registerIpcHandlers(): void {
   registerScheduleHandlers(ctx);
   registerPlayersHandlers(ctx);
   registerServersHandlers(ctx, servers);
+  registerValheimHandlers(ctx);
 }

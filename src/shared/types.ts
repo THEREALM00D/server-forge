@@ -2,8 +2,7 @@
 // Tout ce qui transite via IPC doit avoir le même type des deux côtés.
 
 // --- Serveurs ---
-// Pour l'instant uniquement "palworld" ; prévu pour s'étendre à d'autres jeux.
-export type GameType = "palworld";
+export type GameType = "palworld" | "valheim";
 
 export interface Server {
   id: string;
@@ -19,6 +18,7 @@ export interface Server {
 // sans toucher au serveur lui-même.
 export interface ServerConfig {
   launchArgs: LaunchArgsConfig;
+  valheimConfig: ValheimLaunchConfig;
   backup: BackupConfig;
   restart: RestartConfig;
 }
@@ -120,6 +120,19 @@ export interface UpdateCheckResult {
 export interface LaunchArgsConfig {
   publicLobby: boolean;
   performanceFlags: boolean;
+  customArgs: string;
+}
+
+// --- Launch arguments (valheim_server.exe) ---
+export interface ValheimLaunchConfig {
+  name: string;
+  world: string;
+  password: string;
+  port: number;
+  public: boolean;
+  savedir: string;
+  crossplay: boolean;
+  logFile: string;
   customArgs: string;
 }
 

@@ -14,6 +14,7 @@ export default {
     folder: {
       title: "Dossier d'installation",
       installPalworld: "Installer Palworld",
+      installValheim: "Installer Valheim",
       installing: "Installation...",
       update: "Mettre à jour",
     },

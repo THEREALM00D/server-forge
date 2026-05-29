@@ -8,49 +8,24 @@ import sidebarFr from "../components/Sidebar/__i18n__/fr";
 import sidebarEn from "../components/Sidebar/__i18n__/en";
 import installFr from "../pages/Install/__i18n__/fr";
 import installEn from "../pages/Install/__i18n__/en";
-import dashboardFr from "../games/palworld/pages/Dashboard/__i18n__/fr";
-import dashboardEn from "../games/palworld/pages/Dashboard/__i18n__/en";
-import configFr from "../games/palworld/pages/Config/__i18n__/fr";
-import configEn from "../games/palworld/pages/Config/__i18n__/en";
-import logsFr from "../games/palworld/pages/Logs/__i18n__/fr";
-import logsEn from "../games/palworld/pages/Logs/__i18n__/en";
-import networkFr from "../games/palworld/pages/Network/__i18n__/fr";
-import networkEn from "../games/palworld/pages/Network/__i18n__/en";
-import backupFr from "../games/palworld/pages/Backup/__i18n__/fr";
-import backupEn from "../games/palworld/pages/Backup/__i18n__/en";
-import scheduleFr from "../games/palworld/pages/Schedule/__i18n__/fr";
-import scheduleEn from "../games/palworld/pages/Schedule/__i18n__/en";
-import playersFr from "../games/palworld/pages/Players/__i18n__/fr";
-import playersEn from "../games/palworld/pages/Players/__i18n__/en";
 import serversFr from "../pages/Servers/__i18n__/fr";
 import serversEn from "../pages/Servers/__i18n__/en";
+import { GAMES } from "../games/registry";
 
 const fr = {
   ...commonFr,
   ...sidebarFr,
   ...installFr,
-  ...dashboardFr,
-  ...configFr,
-  ...logsFr,
-  ...networkFr,
-  ...backupFr,
-  ...scheduleFr,
-  ...playersFr,
   ...serversFr,
+  ...GAMES.reduce((acc, g) => ({ ...acc, ...g.i18n.fr }), {}),
 };
 
 const en = {
   ...commonEn,
   ...sidebarEn,
   ...installEn,
-  ...dashboardEn,
-  ...configEn,
-  ...logsEn,
-  ...networkEn,
-  ...backupEn,
-  ...scheduleEn,
-  ...playersEn,
   ...serversEn,
+  ...GAMES.reduce((acc, g) => ({ ...acc, ...g.i18n.en }), {}),
 };
 
 i18n

@@ -9,6 +9,7 @@ import type {
   FirewallRuleStatus,
   UpdateCheckResult,
   LaunchArgsConfig,
+  ValheimLaunchConfig,
   PlayerHistoryEntry,
   Server,
   GameType,
@@ -54,6 +55,10 @@ interface API {
       path: string,
     ) => Promise<{ success: boolean; error?: string }>;
     updatePalworld: () => Promise<{ success: boolean; error?: string }>;
+    installValheim: (
+      path: string,
+    ) => Promise<{ success: boolean; error?: string }>;
+    updateValheim: () => Promise<{ success: boolean; error?: string }>;
     checkForUpdate: () => Promise<UpdateCheckResult>;
     onProgress: (cb: (msg: string) => void) => () => void;
   };
@@ -105,6 +110,16 @@ interface API {
       restApiPort: number,
     ) => Promise<{ success: boolean; errors: string[] }>;
     removeAll: () => Promise<void>;
+    checkRule: (name: string) => Promise<boolean>;
+    enableNamedRule: (
+      name: string,
+      port: number,
+      protocol: "TCP" | "UDP",
+    ) => Promise<{ success: boolean; error?: string }>;
+    disableNamedRule: (
+      name: string,
+      protocol?: "TCP" | "UDP",
+    ) => Promise<{ success: boolean; error?: string }>;
     listCustomRules: () => Promise<FirewallRuleStatus[]>;
     createCustomRule: (
       name: string,
@@ -148,6 +163,14 @@ interface API {
   };
   dialog: {
     selectFolder: () => Promise<string | null>;
+  };
+  valheim: {
+    getConfig: (serverId?: string) => Promise<ValheimLaunchConfig>;
+    setConfig: (
+      cfg: Partial<ValheimLaunchConfig>,
+      serverId?: string,
+    ) => Promise<void>;
+    openSaveFolder: (customSavedir: string) => Promise<void>;
   };
   app: {
     getVersion: () => Promise<string>;

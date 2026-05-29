@@ -1,6 +1,11 @@
 import { ipcMain } from "electron/main";
 import type { IpcContext } from "../context";
-import type { LaunchArgsConfig, ServerStatus } from "../../../shared/types";
+import type {
+  GameType,
+  LaunchArgsConfig,
+  ServerStatus,
+  ValheimLaunchConfig,
+} from "../../../shared/types";
 import {
   detectPortConflicts,
   formatConflictsError,
@@ -12,10 +17,29 @@ const PERFORMANCE_FLAGS = [
   "-UseMultithreadForDS",
 ];
 
+const EXE_NAMES: Record<GameType, string> = {
+  palworld: "PalServer.exe",
+  valheim: "valheim_server.exe",
+};
+
 export function buildServerArgs(cfg: LaunchArgsConfig): string[] {
   const args: string[] = [];
   if (cfg.publicLobby) args.push("-publiclobby");
   if (cfg.performanceFlags) args.push(...PERFORMANCE_FLAGS);
+  const custom = cfg.customArgs.trim();
+  if (custom) args.push(...custom.split(/\s+/));
+  return args;
+}
+
+export function buildValheimArgs(cfg: ValheimLaunchConfig): string[] {
+  const args = ["-nographics", "-batchmode"];
+  args.push("-name", cfg.name, "-world", cfg.world);
+  args.push("-port", String(cfg.port));
+  args.push("-public", cfg.public ? "1" : "0");
+  if (cfg.password) args.push("-password", cfg.password);
+  if (cfg.savedir) args.push("-savedir", cfg.savedir);
+  if (cfg.crossplay) args.push("-crossplay");
+  if (cfg.logFile) args.push("-logFile", cfg.logFile);
   const custom = cfg.customArgs.trim();
   if (custom) args.push(...custom.split(/\s+/));
   return args;
@@ -31,23 +55,34 @@ export function registerServerHandlers(ctx: IpcContext): void {
 
   ipcMain.handle("server:start", async (event, serverId?: string) => {
     const id = resolveId(serverId);
+    const server = ctx.servers.list().find((s) => s.id === id);
+    const gameType = server?.gameType ?? "palworld";
+
     // Refuse de démarrer si un autre serveur déjà running utilise les mêmes
     // ports (game/RCON/REST). Évite que PalServer.exe plante silencieusement
     // sur EADDRINUSE et laisse l'utilisateur deviner.
-    const conflicts = detectPortConflicts(
-      id,
-      ctx.servers,
-      ctx.serverManagers,
-      ctx.configParser,
-    );
-    if (conflicts.length > 0) {
-      return { success: false, error: formatConflictsError(conflicts) };
+    if (gameType === "palworld") {
+      const conflicts = detectPortConflicts(
+        id,
+        ctx.servers,
+        ctx.serverManagers,
+        ctx.configParser,
+      );
+      if (conflicts.length > 0) {
+        return { success: false, error: formatConflictsError(conflicts) };
+      }
     }
+
     const serverPath = ctx.getServerPath(id);
-    const args = buildServerArgs(ctx.getServerConfig(id).launchArgs);
+    const exeName = EXE_NAMES[gameType];
+    const args =
+      gameType === "valheim"
+        ? buildValheimArgs(ctx.getValheimConfig(id))
+        : buildServerArgs(ctx.getServerConfig(id).launchArgs);
+
     return ctx.serverManagers
       .getOrCreate(id)
-      .start(serverPath, args, (line) => {
+      .start(serverPath, exeName, args, (line) => {
         event.sender.send("server:log", { serverId: id, line });
       });
   });
@@ -59,12 +94,19 @@ export function registerServerHandlers(ctx: IpcContext): void {
 
   ipcMain.handle("server:restart", async (event, serverId?: string) => {
     const id = resolveId(serverId);
+    const server = ctx.servers.list().find((s) => s.id === id);
+    const gameType = server?.gameType ?? "palworld";
     const serverPath = ctx.getServerPath(id);
-    const args = buildServerArgs(ctx.getServerConfig(id).launchArgs);
+    const exeName = EXE_NAMES[gameType];
+    const args =
+      gameType === "valheim"
+        ? buildValheimArgs(ctx.getValheimConfig(id))
+        : buildServerArgs(ctx.getServerConfig(id).launchArgs);
     return ctx.serverManagers
       .getOrCreate(id)
       .restart(
         serverPath,
+        exeName,
         args,
         (line) => event.sender.send("server:log", { serverId: id, line }),
         ctx.getStopConfig(id),

@@ -4,7 +4,6 @@ import type { IpcContext } from "../context";
 type RuleKey = "game" | "rcon" | "restapi";
 type Protocol = "TCP" | "UDP";
 
-
 export function registerFirewallHandlers(ctx: IpcContext): void {
   ipcMain.handle("firewall:isAdmin", () => ctx.firewall.isAdmin());
 
@@ -31,6 +30,22 @@ export function registerFirewallHandlers(ctx: IpcContext): void {
   );
 
   ipcMain.handle("firewall:removeAll", () => ctx.firewall.removeAll());
+
+  ipcMain.handle("firewall:checkRule", (_, name: string) =>
+    ctx.firewall.checkRule(name),
+  );
+
+  ipcMain.handle(
+    "firewall:enableNamedRule",
+    (_, name: string, port: number, protocol: Protocol) =>
+      ctx.firewall.enableNamedRule(name, port, protocol),
+  );
+
+  ipcMain.handle(
+    "firewall:disableNamedRule",
+    (_, name: string, protocol?: Protocol) =>
+      ctx.firewall.disableNamedRule(name, protocol),
+  );
   ipcMain.handle("firewall:listCustomRules", () =>
     ctx.firewall.listCustomRules(),
   );

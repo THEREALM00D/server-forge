@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## ServerForge
 
-Gestionnaire de serveurs dédiés de jeux vidéo. Actuellement supporte Palworld.
+Gestionnaire de serveurs dédiés de jeux vidéo. Supporte Palworld et Valheim.
 
 ## Stack
 
@@ -37,22 +37,42 @@ Un hook PostToolUse (`.claude/settings.local.json`) lance automatiquement `fix:p
 src/
 ├── shared/types.ts        # Source unique des types qui traversent IPC
 ├── main/                  # Process Node.js
+│   ├── games/
+│   │   ├── palworld/      # Code Palworld : PalworldApiClient, PalConfigParser,
+│   │   │   ├── handlers/  #   handlers IPC (palapi, players), serverConfig
+│   │   │   └── ...
+│   │   ├── valheim/       # Code Valheim : handlers IPC (config), serverConfig
+│   │   └── registry.ts    # getGameServerConfig, buildGameArgs, getGameStopConfig
 │   ├── ipc/
 │   │   ├── handlers.ts    # Setup : instancie les services, construit IpcContext
 │   │   ├── context.ts     # IpcContext passé aux sous-handlers
-│   │   └── handlers/*.ts  # Un fichier par domaine (server, backup, palapi, etc.)
-│   ├── server/            # ServerManager, PalworldApiClient
-│   ├── players/           # PlayerHistoryTracker (poller API + JSON)
-│   ├── backup/, scheduler/, firewall/, monitor/, steamcmd/, config/
+│   │   └── handlers/*.ts  # Domaines partagés (server, backup, firewall, etc.)
+│   ├── server/            # ServerManager (générique, tous jeux)
+│   ├── players/           # PlayerHistoryTracker (poller API Palworld + JSON)
+│   ├── backup/, scheduler/, firewall/, monitor/, steamcmd/
 ├── preload/
 │   ├── index.ts           # contextBridge → window.api
 │   └── index.d.ts         # Déclare Window.api globalement (importe depuis shared)
 └── renderer/src/
     ├── context/           # ServerContext (useReducer), NotificationContext (toasts)
-    ├── i18n/              # Setup react-i18next + __i18n__/{fr,en}.ts pour strings communs
-    ├── games/palworld/    # Tout ce qui est spécifique à Palworld
-    │   └── pages/<Page>/  # Page.tsx + hooks/ + components/ + __i18n__/{fr,en}.ts
-    └── pages/, components/, services/  # Partagé entre jeux (avec __i18n__/ également)
+    ├── i18n/              # Setup react-i18next — ne plus éditer manuellement,
+    │                      #   les strings sont chargées depuis games/*/index.ts
+    ├── hooks/             # useServerControls (partagé entre jeux)
+    ├── components/
+    │   ├── firewall/      # AdminBanner, StandardRules, CustomRules, RuleStatus
+    │   ├── server/        # ServerControls, StatsGrid
+    │   ├── Sidebar/       # Sidebar + ServerSwitcher
+    │   └── Titlebar/
+    ├── games/
+    │   ├── types.ts       # Interface GamePlugin
+    │   ├── registry.ts    # GAMES[], getGamePlugin() — point d'entrée pour le shell
+    │   ├── palworld/
+    │   │   ├── index.ts   # Manifest Palworld (pages, supportedPages, i18n)
+    │   │   └── pages/<Page>/  # Page.tsx + hooks/ + components/ + __i18n__/{fr,en}.ts
+    │   └── valheim/
+    │       ├── index.ts   # Manifest Valheim
+    │       └── pages/<Page>/
+    └── pages/, services/  # Pages globales (Install, Servers) + services partagés
 ```
 
 ### Communication IPC
@@ -72,27 +92,29 @@ Les services du main (`ServerManager`, `BackupManager`, etc.) sont instanciés *
 - **renderer** : `import type { ... } from "@shared/types"` (alias vite + tsconfig)
 - **preload/index.d.ts** : importe et déclare `Window.api` globalement
 
-### Structure multi-jeux
+### Pattern GamePlugin (multi-jeux)
 
-Le code spécifique à Palworld est dans `games/palworld/`. Les composants partagés (Sidebar, Titlebar) et services communs (dialog, monitor) restent à la racine. Pour ajouter un jeu :
+Chaque jeu expose un manifest typé dans `games/<jeu>/index.ts`. Le shell consomme la liste via le registry — **App.tsx, Sidebar.tsx et i18n/index.ts ne contiennent aucun nom de jeu en dur**.
 
-1. Créer `src/renderer/src/games/<jeu>/` avec la même structure (pages, hooks, services)
-2. Ajouter les types spécifiques dans `src/shared/types.ts` si ils traversent IPC
-3. Ajouter les handlers IPC dans `src/main/ipc/handlers/<jeu>.ts` et les wirer dans `handlers.ts`
-4. Ajouter l'onglet dans `Sidebar.tsx` et le routage dans `App.tsx`
-5. Créer `__i18n__/{fr,en}.ts` dans chaque page + wirer dans `src/renderer/src/i18n/index.ts`
+**Pour ajouter un jeu :**
+
+1. Créer `src/renderer/src/games/<jeu>/` avec la même structure (pages, i18n, `index.ts`)
+2. Créer `src/main/games/<jeu>/` avec `serverConfig.ts` et `handlers/`
+3. Exporter le manifest `GamePlugin` depuis `games/<jeu>/index.ts` et l'ajouter dans `games/registry.ts` (renderer) et `main/games/registry.ts` (main)
+4. Ajouter les types spécifiques dans `src/shared/types.ts` s'ils traversent IPC
+5. Wirer les handlers IPC dans `src/main/ipc/handlers.ts`
+
+**Composants partagés entre jeux** → `src/renderer/src/components/firewall/` et `components/server/`. Ne jamais importer depuis `games/<autre-jeu>/`.
 
 ### Internationalisation (i18n)
 
 - Langues supportées : **FR** (défaut) + **EN**. Détection initiale via navigateur, choix persisté dans `localStorage.locale`.
 - Sélecteur de langue : ToggleButtonGroup FR/EN au bas de la Sidebar.
-- **Chaque page et composant avec du texte a son dossier `__i18n__/` avec `fr.ts` et `en.ts`**. Les fichiers exportent un objet par défaut qui sera mergé dans la ressource globale par `src/renderer/src/i18n/index.ts`.
+- **Chaque page a son dossier `__i18n__/` avec `fr.ts` et `en.ts`**. Ces fichiers sont regroupés dans le manifest `games/<jeu>/index.ts` — **ne pas les importer directement dans `i18n/index.ts`**.
 - Pour ajouter des strings à une page : éditer `<Page>/__i18n__/fr.ts` ET `en.ts`, puis utiliser `const { t } = useTranslation(); t("page.key")`.
-- Pour ajouter une nouvelle page : créer son `__i18n__/{fr,en}.ts` et l'importer dans `src/renderer/src/i18n/index.ts` (merger dans les objets `fr` et `en`).
 - **Interpolation** : `t("key", { name: "Bob" })` + `"Hello {{name}}"` dans la traduction.
-- **Values vs labels** : les `value` des `<Select>` (ex: `Casual`, `ItemAndEquipment` de `Difficulty`/`DeathPenalty`) restent les valeurs INI brutes — seuls les labels UI sont traduits via `labelKey` dans `SelectOption`.
-- **Config Palworld** : `fields.ts` ne contient plus que les clés + types. Les labels et descriptions sont dans `Config/__i18n__/{fr,en}.ts` sous `config.fields.<Key>.label` / `.description`.
-- Ce qui n'est **pas** traduit : logs du process serveur (viennent du jeu), tokens de coloration de logs (`[Manager]`, `[ERR]`), brand « ServerForge » dans la Titlebar.
+- **Values vs labels** : les `value` des `<Select>` (ex: `Casual`, `ItemAndEquipment` de `Difficulty`/`DeathPenalty`) restent les valeurs INI brutes — seuls les labels UI sont traduits.
+- Ce qui n'est **pas** traduit : logs du process serveur, tokens de coloration de logs (`[Manager]`, `[ERR]`), brand « ServerForge » dans la Titlebar.
 
 ### Adoption d'un processus existant
 
@@ -114,6 +136,7 @@ Au démarrage, `ServerManager.tryAdopt()` scanne les processus via `systeminform
 - **Port** : `RESTAPIPort` (défaut 8212)
 - **Auth** : HTTP Basic — `admin:{AdminPassword}` (depuis `PalWorldSettings.ini`)
 - **Timeout** : 8 secondes
+- **Fichier** : `src/main/games/palworld/PalworldApiClient.ts`
 
 ### Endpoints utilisés
 
@@ -136,16 +159,16 @@ Au démarrage, `ServerManager.tryAdopt()` scanne les processus via `systeminform
 - **Chemin** : `{serverPath}/Pal/Saved/Config/WindowsServer/PalWorldSettings.ini`
 - **Section** : `[/Script/Pal.PalGameWorldSettings]`
 - **Format** : `OptionSettings=(key1=val1,key2=val2,...)`
-- **170+ paramètres** avec valeurs par défaut dans `PalConfigParser.ts`
+- **170+ paramètres** avec valeurs par défaut dans `src/main/games/palworld/PalConfigParser.ts`
 - Types : string (quoté), int, float (6 décimales), bool, enum (non quoté), array `(val1,val2)`
 - Les définitions d'UI (clés + types) sont dans `games/palworld/pages/Config/fields.ts`, les presets de difficulté dans `presets.ts`, et les labels/descriptions traduits dans `Config/__i18n__/{fr,en}.ts`.
 
-## Arguments de lancement (PalServer.exe)
+## Arguments de lancement
 
-- Config stockée via electron-store sous `launchArgs: { publicLobby, performanceFlags, customArgs }` (type `LaunchArgsConfig` dans `shared/types.ts`).
-- `buildServerArgs(store)` dans `main/ipc/handlers/server.ts` reconstruit le tableau d'args à chaque `start`/`restart` (y compris dans le scheduler).
+- **Palworld** : config `launchArgs: { publicLobby, performanceFlags, customArgs }` (type `LaunchArgsConfig`). `buildArgs` dans `src/main/games/palworld/serverConfig.ts`.
+- **Valheim** : config `valheimConfig: ValheimLaunchConfig`. `buildArgs` dans `src/main/games/valheim/serverConfig.ts`.
 - IPC : `server:getLaunchArgs` / `server:setLaunchArgs`. UI : section « Arguments de lancement » dans Installation.
-- `-publiclobby` active le mode lobby EOS (nécessaire pour le crossplay Xbox — le serveur apparaît dans la liste Communauté sur toutes les plateformes, Lobby ID affiché dans les logs au démarrage).
+- `-publiclobby` active le mode lobby EOS Palworld (crossplay Xbox).
 
 ## Sauvegardes
 

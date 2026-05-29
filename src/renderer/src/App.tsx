@@ -2,17 +2,11 @@ import { useState } from "react";
 import { ThemeProvider, createTheme, CssBaseline, Box } from "@mui/material";
 import { ServerProvider, useServer } from "./context/ServerContext";
 import { NotificationProvider } from "./context/NotificationContext";
-import Dashboard from "./games/palworld/pages/Dashboard/Dashboard";
 import Install from "./pages/Install/Install";
-import Config from "./games/palworld/pages/Config/Config";
-import Logs from "./games/palworld/pages/Logs/Logs";
-import Network from "./games/palworld/pages/Network/Network";
-import Backup from "./games/palworld/pages/Backup/Backup";
-import Schedule from "./games/palworld/pages/Schedule/Schedule";
-import Players from "./games/palworld/pages/Players/Players";
 import Servers from "./pages/Servers/Servers";
 import Titlebar from "./components/Titlebar/Titlebar";
 import Sidebar from "./components/Sidebar/Sidebar";
+import { getGamePlugin } from "./games/registry";
 
 export type Page =
   | "dashboard"
@@ -65,27 +59,13 @@ function AppShell() {
   const [page, setPage] = useState<Page>("dashboard");
   const { state } = useServer();
 
+  const gameType = state.activeServer?.gameType ?? "palworld";
+
   const renderPage = () => {
-    switch (page) {
-      case "dashboard":
-        return <Dashboard />;
-      case "install":
-        return <Install />;
-      case "config":
-        return <Config />;
-      case "logs":
-        return <Logs />;
-      case "network":
-        return <Network />;
-      case "backup":
-        return <Backup />;
-      case "schedule":
-        return <Schedule />;
-      case "players":
-        return <Players />;
-      case "servers":
-        return <Servers />;
-    }
+    if (page === "install") return <Install />;
+    if (page === "servers") return <Servers />;
+    const Component = getGamePlugin(gameType)?.pages[page];
+    return Component ? <Component /> : null;
   };
 
   // Clé composée : changement de page OU de serveur actif → re-mount complet,

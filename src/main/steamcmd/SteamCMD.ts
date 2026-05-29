@@ -7,6 +7,7 @@ import https from "https";
 import type { UpdateCheckResult } from "../../shared/types";
 
 const PALWORLD_APP_ID = "2394010";
+const VALHEIM_APP_ID = "896660";
 const STEAMCMD_URL =
   "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip";
 
@@ -51,13 +52,28 @@ export class SteamCMD {
     installPath: string,
     onProgress: (msg: string) => void,
   ): Promise<{ success: boolean; error?: string }> {
+    return this.runInstall(PALWORLD_APP_ID, installPath, onProgress);
+  }
+
+  async installValheim(
+    installPath: string,
+    onProgress: (msg: string) => void,
+  ): Promise<{ success: boolean; error?: string }> {
+    return this.runInstall(VALHEIM_APP_ID, installPath, onProgress);
+  }
+
+  private async runInstall(
+    appId: string,
+    installPath: string,
+    onProgress: (msg: string) => void,
+  ): Promise<{ success: boolean; error?: string }> {
     if (!this.isInstalled()) {
       const result = await this.install(onProgress);
       if (!result.success) return result;
     }
 
     mkdirSync(installPath, { recursive: true });
-    onProgress(`Installing Palworld server to: ${installPath}`);
+    onProgress(`Installing app ${appId} to: ${installPath}`);
 
     return new Promise((resolve) => {
       const args = [
@@ -66,7 +82,7 @@ export class SteamCMD {
         "+login",
         "anonymous",
         "+app_update",
-        PALWORLD_APP_ID,
+        appId,
         "validate",
         "+quit",
       ];
@@ -85,7 +101,7 @@ export class SteamCMD {
 
       proc.on("close", (code) => {
         if (code === 0) {
-          onProgress("Palworld server installed/updated successfully!");
+          onProgress("Server installed/updated successfully!");
           resolve({ success: true });
         } else {
           resolve({

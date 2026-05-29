@@ -78,18 +78,17 @@ export class FirewallManager {
     );
   }
 
-  private async ruleExists(
-    name: string,
-    protocol?: "TCP" | "UDP",
-  ): Promise<boolean> {
-    const protoArg = protocol ? ` protocol=${protocol}` : "";
+  private async ruleExists(name: string): Promise<boolean> {
     try {
       const { stdout } = await execAsync(
-        `netsh advfirewall firewall show rule name="${name}"${protoArg}`,
+        `netsh advfirewall firewall show rule name="${name}"`,
         { timeout: 5000 },
       );
       return !stdout.includes("No rules match");
-    } catch {
+    } catch (err: unknown) {
+      const out = String((err as { stdout?: string })?.stdout ?? "");
+      if (out.includes("No rules match")) return false;
+      console.error("[FirewallManager] ruleExists:", name, err);
       return false;
     }
   }
@@ -128,8 +127,11 @@ export class FirewallManager {
         `netsh advfirewall firewall delete rule name="${name}"${protoArg}`,
         { timeout: 10000 },
       );
-    } catch {
-      // Rule may not exist, ignore
+    } catch (err: unknown) {
+      const out = String((err as { stdout?: string })?.stdout ?? "");
+      if (!out.includes("No rules match")) {
+        console.error("[FirewallManager] deleteRule:", name, err);
+      }
     }
   }
 
@@ -187,6 +189,31 @@ export class FirewallManager {
     await this.deleteRule(RULE_NAMES.restapi);
   }
 
+  async checkRule(name: string): Promise<boolean> {
+    return this.ruleExists(name);
+  }
+
+  async enableNamedRule(
+    name: string,
+    port: number,
+    protocol: "TCP" | "UDP",
+  ): Promise<{ success: boolean; error?: string }> {
+    await this.deleteRule(name, protocol);
+    return this.addRule(name, port, protocol);
+  }
+
+  async disableNamedRule(
+    name: string,
+    protocol?: "TCP" | "UDP",
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      await this.deleteRule(name, protocol);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: String(err) };
+    }
+  }
+
   async createCustomRule(
     name: string,
     port: number,
@@ -228,7 +255,7 @@ export class FirewallManager {
         name: r.name,
         port: r.port,
         protocol: r.protocol,
-        active: await this.ruleExists(r.name, r.protocol),
+        active: await this.ruleExists(r.name),
       })),
     );
   }

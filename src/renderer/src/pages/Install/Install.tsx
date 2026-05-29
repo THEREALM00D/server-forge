@@ -95,11 +95,16 @@ export default function Install() {
     setRunning(false);
   };
 
-  const handleInstallPalworld = async () => {
+  const gameType = state.activeServer?.gameType ?? "palworld";
+
+  const handleInstallGame = async () => {
     if (!installPath) return;
     setRunning(true);
     setLogs([]);
-    const res = await steamService.installPalworld(installPath);
+    const res =
+      gameType === "valheim"
+        ? await window.api.steamcmd.installValheim(installPath)
+        : await steamService.installPalworld(installPath);
     if (res.success) {
       await refreshServers();
       setUpdateStatus(null);
@@ -112,7 +117,10 @@ export default function Install() {
   const handleUpdate = async () => {
     setRunning(true);
     setLogs([]);
-    const res = await steamService.updatePalworld();
+    const res =
+      gameType === "valheim"
+        ? await window.api.steamcmd.updateValheim()
+        : await steamService.updatePalworld();
     if (res.success) setUpdateStatus(null);
     else addLog(t("install.errorPrefix", { msg: res.error }));
     setRunning(false);
@@ -204,11 +212,13 @@ export default function Install() {
             color="success"
             startIcon={<DownloadIcon />}
             disabled={running || !steamInstalled}
-            onClick={handleInstallPalworld}
+            onClick={handleInstallGame}
           >
             {running
               ? t("install.folder.installing")
-              : t("install.folder.installPalworld")}
+              : gameType === "valheim"
+                ? t("install.folder.installValheim")
+                : t("install.folder.installPalworld")}
           </Button>
           <Button
             fullWidth

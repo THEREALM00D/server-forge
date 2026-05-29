@@ -5,12 +5,25 @@ import type {
   LaunchArgsConfig,
   RestartConfig,
   ServerConfig,
+  ValheimLaunchConfig,
 } from "../../shared/types";
 import type { AppStore } from "../ipc/context";
 
 const DEFAULT_LAUNCH_ARGS: LaunchArgsConfig = {
   publicLobby: false,
   performanceFlags: false,
+  customArgs: "",
+};
+
+const DEFAULT_VALHEIM_CONFIG: ValheimLaunchConfig = {
+  name: "Mon Serveur Valheim",
+  world: "Dedicated",
+  password: "",
+  port: 2456,
+  public: true,
+  savedir: "",
+  crossplay: false,
+  logFile: "",
   customArgs: "",
 };
 
@@ -29,6 +42,7 @@ const DEFAULT_RESTART: RestartConfig = {
 
 export const DEFAULT_SERVER_CONFIG: ServerConfig = {
   launchArgs: DEFAULT_LAUNCH_ARGS,
+  valheimConfig: DEFAULT_VALHEIM_CONFIG,
   backup: DEFAULT_BACKUP,
   restart: DEFAULT_RESTART,
 };
@@ -45,6 +59,7 @@ export class ServerConfigStore {
     if (!existing) return DEFAULT_SERVER_CONFIG;
     return {
       launchArgs: { ...DEFAULT_LAUNCH_ARGS, ...existing.launchArgs },
+      valheimConfig: { ...DEFAULT_VALHEIM_CONFIG, ...existing.valheimConfig },
       backup: { ...DEFAULT_BACKUP, ...existing.backup },
       restart: { ...DEFAULT_RESTART, ...existing.restart },
     };
@@ -54,6 +69,7 @@ export class ServerConfigStore {
     const current = this.get(serverId);
     const next: ServerConfig = {
       launchArgs: { ...current.launchArgs, ...patch.launchArgs },
+      valheimConfig: { ...current.valheimConfig, ...patch.valheimConfig },
       backup: { ...current.backup, ...patch.backup },
       restart: { ...current.restart, ...patch.restart },
     };
@@ -103,6 +119,7 @@ export class ServerConfigStore {
 
     const legacy: ServerConfig = {
       launchArgs: this.store.get("launchArgs", DEFAULT_LAUNCH_ARGS),
+      valheimConfig: DEFAULT_VALHEIM_CONFIG,
       backup: {
         backupDir: preservedBackupDir,
         backupKeep: this.store.get("backupKeep", 10),

@@ -1,0 +1,27 @@
+import type { GameType, ServerConfig } from "../../shared/types";
+import { palworldServerConfig } from "./palworld/serverConfig";
+import { valheimServerConfig } from "./valheim/serverConfig";
+import type { PalConfigParser } from "./palworld/PalConfigParser";
+
+const GAME_SERVER_CONFIGS = {
+  palworld: palworldServerConfig,
+  valheim: valheimServerConfig,
+};
+
+export const getGameServerConfig = (type: GameType) =>
+  GAME_SERVER_CONFIGS[type];
+
+export function buildGameArgs(gameType: GameType, cfg: ServerConfig): string[] {
+  if (gameType === "valheim")
+    return valheimServerConfig.buildArgs(cfg.valheimConfig);
+  return palworldServerConfig.buildArgs(cfg.launchArgs);
+}
+
+export function getGameStopConfig(
+  gameType: GameType,
+  serverPath: string,
+  configParser: PalConfigParser,
+) {
+  if (gameType === "valheim") return valheimServerConfig.getStopConfig();
+  return palworldServerConfig.getStopConfig(serverPath, configParser);
+}

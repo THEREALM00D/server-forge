@@ -1,0 +1,65 @@
+import type { GamePlugin } from "../types";
+import Dashboard from "./pages/Dashboard/Dashboard";
+import Config from "./pages/Config/Config";
+import Logs from "./pages/Logs/Logs";
+import Network from "./pages/Network/Network";
+import Backup from "./pages/Backup/Backup";
+import Schedule from "./pages/Schedule/Schedule";
+import Players from "./pages/Players/Players";
+import dashboardFr from "./pages/Dashboard/__i18n__/fr";
+import dashboardEn from "./pages/Dashboard/__i18n__/en";
+import configFr from "./pages/Config/__i18n__/fr";
+import configEn from "./pages/Config/__i18n__/en";
+import logsFr from "./pages/Logs/__i18n__/fr";
+import logsEn from "./pages/Logs/__i18n__/en";
+import networkFr from "./pages/Network/__i18n__/fr";
+import networkEn from "./pages/Network/__i18n__/en";
+import backupFr from "./pages/Backup/__i18n__/fr";
+import backupEn from "./pages/Backup/__i18n__/en";
+import scheduleFr from "./pages/Schedule/__i18n__/fr";
+import scheduleEn from "./pages/Schedule/__i18n__/en";
+import playersFr from "./pages/Players/__i18n__/fr";
+import playersEn from "./pages/Players/__i18n__/en";
+
+export const palworldPlugin: GamePlugin = {
+  id: "palworld",
+  supportedPages: [
+    "dashboard",
+    "install",
+    "config",
+    "logs",
+    "network",
+    "backup",
+    "schedule",
+    "players",
+  ],
+  pages: {
+    dashboard: Dashboard,
+    config: Config,
+    logs: Logs,
+    network: Network,
+    backup: Backup,
+    schedule: Schedule,
+    players: Players,
+  },
+  i18n: {
+    fr: {
+      ...dashboardFr,
+      ...configFr,
+      ...logsFr,
+      ...networkFr,
+      ...backupFr,
+      ...scheduleFr,
+      ...playersFr,
+    },
+    en: {
+      ...dashboardEn,
+      ...configEn,
+      ...logsEn,
+      ...networkEn,
+      ...backupEn,
+      ...scheduleEn,
+      ...playersEn,
+    },
+  },
+};

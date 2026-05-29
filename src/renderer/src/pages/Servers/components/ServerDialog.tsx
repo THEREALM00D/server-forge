@@ -136,6 +136,7 @@ export default function ServerDialog({
               <MenuItem value="palworld">
                 {t("servers.games.palworld")}
               </MenuItem>
+              <MenuItem value="valheim">{t("servers.games.valheim")}</MenuItem>
             </Select>
           </FormControl>
 

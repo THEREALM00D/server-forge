@@ -1,10 +1,10 @@
 import { Box, Stack, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { useServer } from "../../../../context/ServerContext";
-import { useServerControls } from "../../hooks/useServerControls";
+import { useServerControls } from "../../../../hooks/useServerControls";
 import { usePalApi } from "./hooks/usePalApi";
-import ServerControls from "./components/ServerControls";
-import StatsGrid from "./components/StatsGrid";
+import ServerControls from "../../../../components/server/ServerControls";
+import StatsGrid from "../../../../components/server/StatsGrid";
 import ServerInfoPanel from "./components/ServerInfoPanel";
 import PlayersPanel from "./components/PlayersPanel";
 

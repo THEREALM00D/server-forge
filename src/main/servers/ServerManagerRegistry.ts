@@ -1,7 +1,12 @@
 import si from "systeminformation";
 import { ServerManager } from "../server/ServerManager";
-import type { ServerStatus, Server } from "../../shared/types";
+import type { GameType, ServerStatus, Server } from "../../shared/types";
 import type { ServerRegistry } from "./ServerRegistry";
+
+const PROCESS_NAME_PREFIXES: Record<GameType, string> = {
+  palworld: "palserver",
+  valheim: "valheim_server",
+};
 
 /**
  * Garde une instance `ServerManager` par serveur, indexée par `serverId`.
@@ -70,18 +75,17 @@ export class ServerManagerRegistry {
     } catch {
       return;
     }
-    const palProcs = procs.list.filter((p) =>
-      p.name.toLowerCase().startsWith("palserver"),
-    );
-    if (palProcs.length === 0) return;
 
     for (const server of this.servers.list()) {
-      const match = this.matchProcessToServer(palProcs, server);
+      const prefix = PROCESS_NAME_PREFIXES[server.gameType] ?? "palserver";
+      const candidates = procs.list.filter((p) =>
+        p.name.toLowerCase().startsWith(prefix),
+      );
+      if (candidates.length === 0) continue;
+      const match = this.matchProcessToServer(candidates, server);
       if (!match) continue;
       const mgr = this.getOrCreate(server.id);
-      // ServerManager.tryAdopt() s'occupe de scanner et d'adopter. On lui
-      // donne juste le hook de log ; il refera la détection lui-même.
-      await mgr.tryAdopt(onLog).catch(() => {});
+      await mgr.tryAdopt(onLog, prefix).catch(() => {});
     }
   }
 

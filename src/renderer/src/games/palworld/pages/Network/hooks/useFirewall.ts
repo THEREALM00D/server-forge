@@ -1,9 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { firewallService } from "../../../services/firewallService";
 import { configService } from "../../../services/configService";
+import { useNotification } from "../../../../../context/NotificationContext";
 import type { FirewallRuleStatus } from "@shared/types";
 
+const RULE_KEYS: Record<string, "game" | "rcon" | "restapi"> = {
+  "Palworld Server - Game": "game",
+  "Palworld Server - RCON": "rcon",
+  "Palworld Server - REST API": "restapi",
+};
+
 export function useFirewall(serverPath: string) {
+  const { t } = useTranslation();
+  const { notify } = useNotification();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [rules, setRules] = useState<FirewallRuleStatus[]>([]);
   const [customRules, setCustomRules] = useState<FirewallRuleStatus[]>([]);
@@ -40,5 +50,55 @@ export function useFirewall(serverPath: string) {
     refresh();
   }, [refresh]);
 
-  return { isAdmin, rules, customRules, loading, refresh, getPorts };
+  const onToggle = useCallback(
+    async (rule: FirewallRuleStatus) => {
+      const key = RULE_KEYS[rule.name];
+      if (!key) return;
+      if (rule.active) {
+        const res = await firewallService.disableRule(key);
+        if (!res.success) notify(res.error ?? t("common.error"), "error");
+        else
+          notify(
+            t("network.standard.ruleRemoved", { name: rule.name }),
+            "success",
+          );
+      } else {
+        const res = await firewallService.enableRule(
+          key,
+          rule.port,
+          rule.protocol,
+        );
+        if (!res.success) notify(res.error ?? t("common.error"), "error");
+        else
+          notify(
+            t("network.standard.ruleAdded", { name: rule.name }),
+            "success",
+          );
+      }
+    },
+    [notify, t],
+  );
+
+  const onApplyAll = useCallback(async () => {
+    const { gamePort, rconPort, restApiPort } = await getPorts();
+    const res = await firewallService.applyAll(gamePort, rconPort, restApiPort);
+    if (!res.success) notify(res.errors.join("\n"), "error");
+    else notify(t("network.standard.allApplied"), "success");
+  }, [getPorts, notify, t]);
+
+  const onRemoveAll = useCallback(async () => {
+    await firewallService.removeAll();
+    notify(t("network.standard.allRemoved"), "info");
+  }, [notify, t]);
+
+  return {
+    isAdmin,
+    rules,
+    customRules,
+    loading,
+    refresh,
+    onToggle,
+    onApplyAll,
+    onRemoveAll,
+  };
 }

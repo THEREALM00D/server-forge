@@ -1,6 +1,6 @@
 import { join } from "path";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
-import { PalworldApiClient } from "../server/PalworldApiClient";
+import { PalworldApiClient } from "../games/palworld/PalworldApiClient";
 import type { PlayerHistoryEntry, PalPlayer } from "../../shared/types";
 
 const POLL_INTERVAL_MS = 30_000;
