@@ -46,6 +46,8 @@ export function registerSteamHandlers(ctx: IpcContext): void {
 
   ipcMain.handle("steamcmd:checkForUpdate", async () => {
     const installPath = ctx.getActiveServerPath();
-    return ctx.steamcmd.checkForUpdate(installPath);
+    const appId =
+      ctx.getActiveServer()?.gameType === "valheim" ? "896660" : "2394010";
+    return ctx.steamcmd.checkForUpdate(installPath, appId);
   });
 }

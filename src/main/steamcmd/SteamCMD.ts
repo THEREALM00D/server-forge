@@ -117,11 +117,14 @@ export class SteamCMD {
     });
   }
 
-  private getInstalledBuildId(installPath: string): string | null {
+  private getInstalledBuildId(
+    installPath: string,
+    appId: string,
+  ): string | null {
     // SteamCMD peut écrire le manifest dans installPath/steamapps/ ou dans son propre répertoire
     const candidates = [
-      join(installPath, "steamapps", `appmanifest_${PALWORLD_APP_ID}.acf`),
-      join(this.steamcmdDir, "steamapps", `appmanifest_${PALWORLD_APP_ID}.acf`),
+      join(installPath, "steamapps", `appmanifest_${appId}.acf`),
+      join(this.steamcmdDir, "steamapps", `appmanifest_${appId}.acf`),
     ];
     for (const acf of candidates) {
       if (!existsSync(acf)) continue;
@@ -131,8 +134,11 @@ export class SteamCMD {
     return null;
   }
 
-  checkForUpdate(installPath: string): Promise<UpdateCheckResult> {
-    const installedBuild = this.getInstalledBuildId(installPath);
+  checkForUpdate(
+    installPath: string,
+    appId: string = PALWORLD_APP_ID,
+  ): Promise<UpdateCheckResult> {
+    const installedBuild = this.getInstalledBuildId(installPath, appId);
     if (!installedBuild || !this.isInstalled()) {
       return Promise.resolve({
         upToDate: false,
@@ -164,7 +170,7 @@ export class SteamCMD {
           "+app_info_update",
           "1",
           "+app_info_print",
-          PALWORLD_APP_ID,
+          appId,
           "+quit",
         ],
         { cwd: this.steamcmdDir },
