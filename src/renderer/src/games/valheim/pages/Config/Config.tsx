@@ -2,9 +2,13 @@ import {
   Box,
   Button,
   Checkbox,
+  FormControl,
   FormControlLabel,
   IconButton,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
   Stack,
   TextField,
   Tooltip,
@@ -15,12 +19,14 @@ import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import { useTranslation } from "react-i18next";
 import { useServer } from "../../../../context/ServerContext";
 import { useValheimConfig } from "./hooks/useValheimConfig";
+import { useValheimAdminLists } from "./hooks/useValheimAdminLists";
 
 export default function ValheimConfig() {
   const { t } = useTranslation();
   const { state } = useServer();
   const { config, loading, saved, handleChange, handleSave } =
     useValheimConfig();
+  const { adminList, bannedList, permittedList } = useValheimAdminLists();
 
   if (!state.serverPath) {
     return (
@@ -102,8 +108,44 @@ export default function ValheimConfig() {
           onChange={(e) => handleChange({ savedir: e.target.value })}
           size="small"
           fullWidth
-          placeholder="%APPDATA%\Roaming\Valheim"
+          placeholder="%LOCALAPPDATA%\..\LocalLow\IronGate\Valheim"
         />
+        <TextField
+          label={t("valheimConfig.fields.worldSeed.label")}
+          helperText={t("valheimConfig.fields.worldSeed.description")}
+          value={config.worldSeed}
+          onChange={(e) => handleChange({ worldSeed: e.target.value })}
+          size="small"
+          fullWidth
+        />
+        <FormControl size="small" sx={{ maxWidth: 280 }}>
+          <InputLabel>{t("valheimConfig.fields.worldSize.label")}</InputLabel>
+          <Select
+            label={t("valheimConfig.fields.worldSize.label")}
+            value={config.worldSize}
+            onChange={(e) =>
+              handleChange({
+                worldSize: e.target.value as typeof config.worldSize,
+              })
+            }
+          >
+            <MenuItem value="">
+              {t("valheimConfig.fields.worldSize.default")}
+            </MenuItem>
+            <MenuItem value="small">
+              {t("valheimConfig.fields.worldSize.small")}
+            </MenuItem>
+            <MenuItem value="medium">
+              {t("valheimConfig.fields.worldSize.medium")}
+            </MenuItem>
+            <MenuItem value="large">
+              {t("valheimConfig.fields.worldSize.large")}
+            </MenuItem>
+            <MenuItem value="yolo">
+              {t("valheimConfig.fields.worldSize.yolo")}
+            </MenuItem>
+          </Select>
+        </FormControl>
       </Section>
 
       <Section label={t("valheimConfig.sections.network")}>
@@ -190,6 +232,42 @@ export default function ValheimConfig() {
       >
         {saved ? t("valheimConfig.saved") : t("valheimConfig.save")}
       </Button>
+
+      <Section label={t("valheimConfig.sections.administration")}>
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          {t("valheimConfig.administration.description")}
+        </Typography>
+        <AdminListField
+          label={t("valheimConfig.administration.adminList")}
+          helper={t("valheimConfig.administration.adminListHelper")}
+          value={adminList.value}
+          saved={adminList.saved}
+          onChange={adminList.handleChange}
+          onSave={adminList.handleSave}
+          saveLabel={t("valheimConfig.administration.save")}
+          savedLabel={t("valheimConfig.administration.saved")}
+        />
+        <AdminListField
+          label={t("valheimConfig.administration.bannedList")}
+          helper={t("valheimConfig.administration.bannedListHelper")}
+          value={bannedList.value}
+          saved={bannedList.saved}
+          onChange={bannedList.handleChange}
+          onSave={bannedList.handleSave}
+          saveLabel={t("valheimConfig.administration.save")}
+          savedLabel={t("valheimConfig.administration.saved")}
+        />
+        <AdminListField
+          label={t("valheimConfig.administration.permittedList")}
+          helper={t("valheimConfig.administration.permittedListHelper")}
+          value={permittedList.value}
+          saved={permittedList.saved}
+          onChange={permittedList.handleChange}
+          onSave={permittedList.handleSave}
+          saveLabel={t("valheimConfig.administration.save")}
+          savedLabel={t("valheimConfig.administration.saved")}
+        />
+      </Section>
     </Stack>
   );
 }
@@ -217,5 +295,49 @@ function Section({
       </Typography>
       <Stack spacing={2}>{children}</Stack>
     </Paper>
+  );
+}
+
+function AdminListField({
+  label,
+  helper,
+  value,
+  saved,
+  onChange,
+  onSave,
+  saveLabel,
+  savedLabel,
+}: {
+  label: string;
+  helper: string;
+  value: string;
+  saved: boolean;
+  onChange: (v: string) => void;
+  onSave: () => void;
+  saveLabel: string;
+  savedLabel: string;
+}) {
+  return (
+    <Stack spacing={1}>
+      <TextField
+        label={label}
+        helperText={helper}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        size="small"
+        fullWidth
+        multiline
+        rows={3}
+      />
+      <Button
+        variant="outlined"
+        size="small"
+        color={saved ? "success" : "primary"}
+        onClick={onSave}
+        sx={{ alignSelf: "flex-start" }}
+      >
+        {saved ? savedLabel : saveLabel}
+      </Button>
+    </Stack>
   );
 }

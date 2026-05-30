@@ -2,6 +2,8 @@ export default {
   install: {
     title: "Installation",
     subtitle: "Installer ou mettre à jour le serveur Palworld via SteamCMD",
+    subtitleValheim:
+      "Installer ou mettre à jour le serveur Valheim via SteamCMD",
     steamcmd: {
       label: "SteamCMD",
       installed: "Installé",

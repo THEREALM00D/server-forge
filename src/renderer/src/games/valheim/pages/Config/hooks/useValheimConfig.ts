@@ -12,6 +12,8 @@ const DEFAULT_CONFIG: ValheimLaunchConfig = {
   crossplay: false,
   logFile: "",
   customArgs: "",
+  worldSeed: "",
+  worldSize: "",
 };
 
 export function useValheimConfig() {

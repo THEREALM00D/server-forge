@@ -11,6 +11,7 @@ export default {
       world: "Monde",
       network: "Réseau",
       advanced: "Avancé",
+      administration: "Administration",
     },
     fields: {
       name: {
@@ -39,7 +40,19 @@ export default {
       savedir: {
         label: "Dossier de sauvegardes",
         description:
-          "Chemin personnalisé pour les mondes. Vide = %APPDATA%\\Roaming\\Valheim.",
+          "Chemin personnalisé pour les mondes. Vide = %LOCALAPPDATA%\\..\\LocalLow\\IronGate\\Valheim.",
+      },
+      worldSeed: {
+        label: "Seed du monde",
+        description: "Graine de génération du monde. Vide = aléatoire.",
+      },
+      worldSize: {
+        label: "Taille du monde",
+        default: "Défaut",
+        small: "Petite",
+        medium: "Moyenne",
+        large: "Grande",
+        yolo: "Yolo (très grande)",
       },
       crossplay: {
         label: "Crossplay (Xbox)",
@@ -54,6 +67,21 @@ export default {
         label: "Arguments supplémentaires",
         description: "Arguments additionnels ajoutés à la ligne de commande.",
       },
+    },
+    administration: {
+      description:
+        "Fichiers de contrôle d'accès (un SteamID64 par ligne). Situés dans le dossier de sauvegardes.",
+      adminList: "Administrateurs (adminlist.txt)",
+      adminListHelper:
+        "Accès aux commandes admin en jeu (/kick, /ban, /debugmode…)",
+      bannedList: "Bannis (bannedlist.txt)",
+      bannedListHelper: "Joueurs bloqués à la connexion.",
+      permittedList: "Liste blanche (permittedlist.txt)",
+      permittedListHelper:
+        "Si non vide, seuls ces joueurs peuvent se connecter.",
+      save: "Sauvegarder",
+      saved: "Sauvegardé !",
+      saveFailed: "Impossible de sauvegarder la liste",
     },
   },
 };

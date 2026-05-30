@@ -193,7 +193,11 @@ export class BackupManager {
     });
   }
 
-  async restore(serverPath: string, backupPath: string): Promise<void> {
+  async restore(
+    serverPath: string,
+    backupPath: string,
+    saveDir?: string,
+  ): Promise<void> {
     if (!existsSync(backupPath)) {
       throw new Error(`Fichier de backup introuvable : ${backupPath}`);
     }
@@ -205,7 +209,7 @@ export class BackupManager {
       );
     }
 
-    const targetDir = this.getSavePath(serverPath);
+    const targetDir = saveDir ?? this.getSavePath(serverPath);
     // Restore atomique : extraire dans un dossier .restore.tmp à côté du target.
     // Si extraction OK, on swap. Si elle plante, le save courant est intact.
     const stagingDir = `${targetDir}.restore.tmp`;

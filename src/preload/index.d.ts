@@ -171,6 +171,12 @@ interface API {
       serverId?: string,
     ) => Promise<void>;
     openSaveFolder: (customSavedir: string) => Promise<void>;
+    getAdminList: (serverId?: string) => Promise<string[]>;
+    setAdminList: (list: string[], serverId?: string) => Promise<void>;
+    getBannedList: (serverId?: string) => Promise<string[]>;
+    setBannedList: (list: string[], serverId?: string) => Promise<void>;
+    getPermittedList: (serverId?: string) => Promise<string[]>;
+    setPermittedList: (list: string[], serverId?: string) => Promise<void>;
   };
   app: {
     getVersion: () => Promise<string>;

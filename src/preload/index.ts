@@ -177,6 +177,18 @@ const api = {
       ipcRenderer.invoke("valheim:setConfig", cfg, serverId),
     openSaveFolder: (customSavedir: string) =>
       ipcRenderer.invoke("valheim:openSaveFolder", customSavedir),
+    getAdminList: (serverId?: string) =>
+      ipcRenderer.invoke("valheim:getAdminList", serverId),
+    setAdminList: (list: string[], serverId?: string) =>
+      ipcRenderer.invoke("valheim:setAdminList", list, serverId),
+    getBannedList: (serverId?: string) =>
+      ipcRenderer.invoke("valheim:getBannedList", serverId),
+    setBannedList: (list: string[], serverId?: string) =>
+      ipcRenderer.invoke("valheim:setBannedList", list, serverId),
+    getPermittedList: (serverId?: string) =>
+      ipcRenderer.invoke("valheim:getPermittedList", serverId),
+    setPermittedList: (list: string[], serverId?: string) =>
+      ipcRenderer.invoke("valheim:setPermittedList", list, serverId),
   },
   // App
   app: {

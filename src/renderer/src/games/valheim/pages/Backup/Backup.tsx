@@ -4,7 +4,7 @@ import { useBackup } from "../../../../hooks/useBackup";
 import BackupConfigPanel from "../../../../components/backup/BackupConfig";
 import BackupList from "../../../../components/backup/BackupList";
 
-export default function Backup() {
+export default function ValheimBackup() {
   const { t } = useTranslation();
   const {
     backups,
@@ -25,7 +25,7 @@ export default function Backup() {
       <div>
         <Typography variant="h6">{t("backup.title")}</Typography>
         <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
-          {t("backup.subtitle")}
+          {t("valheimBackup.subtitle")}
         </Typography>
       </div>
 

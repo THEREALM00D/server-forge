@@ -25,6 +25,8 @@ const DEFAULT_VALHEIM_CONFIG: ValheimLaunchConfig = {
   crossplay: false,
   logFile: "",
   customArgs: "",
+  worldSeed: "",
+  worldSize: "",
 };
 
 const DEFAULT_BACKUP: BackupConfig = {

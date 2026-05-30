@@ -40,6 +40,8 @@ export function buildValheimArgs(cfg: ValheimLaunchConfig): string[] {
   if (cfg.savedir) args.push("-savedir", cfg.savedir);
   if (cfg.crossplay) args.push("-crossplay");
   if (cfg.logFile) args.push("-logFile", cfg.logFile);
+  if (cfg.worldSeed) args.push("-worldseed", cfg.worldSeed);
+  if (cfg.worldSize) args.push("-worldsize", cfg.worldSize);
   const custom = cfg.customArgs.trim();
   if (custom) args.push(...custom.split(/\s+/));
   return args;

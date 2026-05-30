@@ -1,24 +1,58 @@
 import type { GamePlugin } from "../types";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import Config from "./pages/Config/Config";
+import Logs from "./pages/Logs/Logs";
 import Network from "./pages/Network/Network";
+import Backup from "./pages/Backup/Backup";
+import Schedule from "./pages/Schedule/Schedule";
 import dashboardFr from "./pages/Dashboard/__i18n__/fr";
 import dashboardEn from "./pages/Dashboard/__i18n__/en";
 import configFr from "./pages/Config/__i18n__/fr";
 import configEn from "./pages/Config/__i18n__/en";
+import logsFr from "./pages/Logs/__i18n__/fr";
+import logsEn from "./pages/Logs/__i18n__/en";
 import networkFr from "./pages/Network/__i18n__/fr";
 import networkEn from "./pages/Network/__i18n__/en";
+import backupFr from "./pages/Backup/__i18n__/fr";
+import backupEn from "./pages/Backup/__i18n__/en";
+import scheduleFr from "./pages/Schedule/__i18n__/fr";
+import scheduleEn from "./pages/Schedule/__i18n__/en";
 
 export const valheimPlugin: GamePlugin = {
   id: "valheim",
-  supportedPages: ["dashboard", "install", "config", "network"],
+  supportedPages: [
+    "dashboard",
+    "install",
+    "config",
+    "logs",
+    "network",
+    "backup",
+    "schedule",
+  ],
   pages: {
     dashboard: Dashboard,
     config: Config,
+    logs: Logs,
     network: Network,
+    backup: Backup,
+    schedule: Schedule,
   },
   i18n: {
-    fr: { ...dashboardFr, ...configFr, ...networkFr },
-    en: { ...dashboardEn, ...configEn, ...networkEn },
+    fr: {
+      ...dashboardFr,
+      ...configFr,
+      ...logsFr,
+      ...networkFr,
+      ...backupFr,
+      ...scheduleFr,
+    },
+    en: {
+      ...dashboardEn,
+      ...configEn,
+      ...logsEn,
+      ...networkEn,
+      ...backupEn,
+      ...scheduleEn,
+    },
   },
 };

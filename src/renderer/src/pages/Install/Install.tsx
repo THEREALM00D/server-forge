@@ -43,8 +43,11 @@ export default function Install() {
   const { state, refreshServers } = useServer();
   const { notify } = useNotification();
   const [steamInstalled, setSteamInstalled] = useState<boolean | null>(null);
+  const gameType = state.activeServer?.gameType ?? "palworld";
+
   const [installPath, setInstallPath] = useState(
-    state.serverPath || "C:\\PalworldServer",
+    state.serverPath ||
+      (gameType === "valheim" ? "C:\\ValheimServer" : "C:\\PalworldServer"),
   );
   const [logs, setLogs] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
@@ -95,8 +98,6 @@ export default function Install() {
     setRunning(false);
   };
 
-  const gameType = state.activeServer?.gameType ?? "palworld";
-
   const handleInstallGame = async () => {
     if (!installPath) return;
     setRunning(true);
@@ -138,7 +139,11 @@ export default function Install() {
       <Box>
         <Typography variant="h6">{t("install.title")}</Typography>
         <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
-          {t("install.subtitle")}
+          {t(
+            gameType === "valheim"
+              ? "install.subtitleValheim"
+              : "install.subtitle",
+          )}
         </Typography>
       </Box>
 
@@ -194,7 +199,11 @@ export default function Install() {
             size="small"
             value={installPath}
             onChange={(e) => setInstallPath(e.target.value)}
-            placeholder="C:\PalworldServer"
+            placeholder={
+              gameType === "valheim"
+                ? "C:\\ValheimServer"
+                : "C:\\PalworldServer"
+            }
           />
           <Button
             variant="outlined"
@@ -232,122 +241,124 @@ export default function Install() {
         </Stack>
       </Paper>
 
-      <Paper sx={{ p: 2.5 }}>
-        <Typography variant="subtitle2" sx={{ mb: 2 }}>
-          {t("install.launchArgs.title")}
-        </Typography>
-        <Stack spacing={1.5}>
-          <FormControlLabel
-            control={
-              <Switch
-                size="small"
-                checked={launchArgs.publicLobby}
-                onChange={(e) =>
-                  updateLaunchArgs({ publicLobby: e.target.checked })
-                }
-              />
-            }
-            label={
-              <Stack direction="row" sx={{ alignItems: "center", gap: 0.5 }}>
-                <Typography variant="body2">
-                  {t("install.launchArgs.publicLobby")}
-                </Typography>
-                <Tooltip
-                  arrow
-                  placement="top"
-                  title={t("install.launchArgs.publicLobbyTooltip")}
-                >
-                  <InfoOutlinedIcon
-                    sx={{
-                      fontSize: 16,
-                      color: "text.secondary",
-                      cursor: "help",
-                    }}
-                  />
-                </Tooltip>
-              </Stack>
-            }
-            sx={{
-              justifyContent: "space-between",
-              ml: 0,
-              flexDirection: "row-reverse",
-            }}
-          />
-          <Divider />
-          <FormControlLabel
-            control={
-              <Switch
-                size="small"
-                checked={launchArgs.performanceFlags}
-                onChange={(e) =>
-                  updateLaunchArgs({ performanceFlags: e.target.checked })
-                }
-              />
-            }
-            label={
-              <Stack direction="row" sx={{ alignItems: "center", gap: 0.5 }}>
-                <Typography variant="body2">
-                  {t("install.launchArgs.performanceFlags")}
-                </Typography>
-                <Tooltip
-                  arrow
-                  placement="top"
-                  title={t("install.launchArgs.performanceFlagsTooltip")}
-                >
-                  <InfoOutlinedIcon
-                    sx={{
-                      fontSize: 16,
-                      color: "text.secondary",
-                      cursor: "help",
-                    }}
-                  />
-                </Tooltip>
-              </Stack>
-            }
-            sx={{
-              justifyContent: "space-between",
-              ml: 0,
-              flexDirection: "row-reverse",
-            }}
-          />
-          <Divider />
-          <Stack direction="row" sx={{ alignItems: "center", gap: 2 }}>
-            <Stack
-              direction="row"
-              sx={{ alignItems: "center", gap: 0.5, minWidth: 200 }}
-            >
-              <Typography variant="body2">
-                {t("install.launchArgs.customArgs")}
-              </Typography>
-              <Tooltip
-                arrow
-                placement="top"
-                title={t("install.launchArgs.customArgsTooltip")}
-              >
-                <InfoOutlinedIcon
-                  sx={{
-                    fontSize: 16,
-                    color: "text.secondary",
-                    cursor: "help",
-                  }}
+      {gameType === "palworld" && (
+        <Paper sx={{ p: 2.5 }}>
+          <Typography variant="subtitle2" sx={{ mb: 2 }}>
+            {t("install.launchArgs.title")}
+          </Typography>
+          <Stack spacing={1.5}>
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  checked={launchArgs.publicLobby}
+                  onChange={(e) =>
+                    updateLaunchArgs({ publicLobby: e.target.checked })
+                  }
                 />
-              </Tooltip>
-            </Stack>
-            <TextField
-              size="small"
-              placeholder="-log -port=8211"
-              value={launchArgs.customArgs}
-              onChange={(e) =>
-                setLaunchArgs({ ...launchArgs, customArgs: e.target.value })
               }
-              onBlur={() =>
-                updateLaunchArgs({ customArgs: launchArgs.customArgs })
+              label={
+                <Stack direction="row" sx={{ alignItems: "center", gap: 0.5 }}>
+                  <Typography variant="body2">
+                    {t("install.launchArgs.publicLobby")}
+                  </Typography>
+                  <Tooltip
+                    arrow
+                    placement="top"
+                    title={t("install.launchArgs.publicLobbyTooltip")}
+                  >
+                    <InfoOutlinedIcon
+                      sx={{
+                        fontSize: 16,
+                        color: "text.secondary",
+                        cursor: "help",
+                      }}
+                    />
+                  </Tooltip>
+                </Stack>
               }
-              sx={{ flex: 1 }}
+              sx={{
+                justifyContent: "space-between",
+                ml: 0,
+                flexDirection: "row-reverse",
+              }}
             />
+            <Divider />
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  checked={launchArgs.performanceFlags}
+                  onChange={(e) =>
+                    updateLaunchArgs({ performanceFlags: e.target.checked })
+                  }
+                />
+              }
+              label={
+                <Stack direction="row" sx={{ alignItems: "center", gap: 0.5 }}>
+                  <Typography variant="body2">
+                    {t("install.launchArgs.performanceFlags")}
+                  </Typography>
+                  <Tooltip
+                    arrow
+                    placement="top"
+                    title={t("install.launchArgs.performanceFlagsTooltip")}
+                  >
+                    <InfoOutlinedIcon
+                      sx={{
+                        fontSize: 16,
+                        color: "text.secondary",
+                        cursor: "help",
+                      }}
+                    />
+                  </Tooltip>
+                </Stack>
+              }
+              sx={{
+                justifyContent: "space-between",
+                ml: 0,
+                flexDirection: "row-reverse",
+              }}
+            />
+            <Divider />
+            <Stack direction="row" sx={{ alignItems: "center", gap: 2 }}>
+              <Stack
+                direction="row"
+                sx={{ alignItems: "center", gap: 0.5, minWidth: 200 }}
+              >
+                <Typography variant="body2">
+                  {t("install.launchArgs.customArgs")}
+                </Typography>
+                <Tooltip
+                  arrow
+                  placement="top"
+                  title={t("install.launchArgs.customArgsTooltip")}
+                >
+                  <InfoOutlinedIcon
+                    sx={{
+                      fontSize: 16,
+                      color: "text.secondary",
+                      cursor: "help",
+                    }}
+                  />
+                </Tooltip>
+              </Stack>
+              <TextField
+                size="small"
+                placeholder="-log -port=8211"
+                value={launchArgs.customArgs}
+                onChange={(e) =>
+                  setLaunchArgs({ ...launchArgs, customArgs: e.target.value })
+                }
+                onBlur={() =>
+                  updateLaunchArgs({ customArgs: launchArgs.customArgs })
+                }
+                sx={{ flex: 1 }}
+              />
+            </Stack>
           </Stack>
-        </Stack>
-      </Paper>
+        </Paper>
+      )}
 
       {state.serverPath && (
         <Paper sx={{ p: 2.5 }}>

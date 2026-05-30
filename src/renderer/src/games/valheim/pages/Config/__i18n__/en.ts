@@ -11,6 +11,7 @@ export default {
       world: "World",
       network: "Network",
       advanced: "Advanced",
+      administration: "Administration",
     },
     fields: {
       name: {
@@ -37,7 +38,19 @@ export default {
       savedir: {
         label: "Saves folder",
         description:
-          "Custom path for worlds. Empty = %APPDATA%\\Roaming\\Valheim.",
+          "Custom path for worlds. Empty = %LOCALAPPDATA%\\..\\LocalLow\\IronGate\\Valheim.",
+      },
+      worldSeed: {
+        label: "World seed",
+        description: "World generation seed. Empty = random.",
+      },
+      worldSize: {
+        label: "World size",
+        default: "Default",
+        small: "Small",
+        medium: "Medium",
+        large: "Large",
+        yolo: "Yolo (very large)",
       },
       crossplay: {
         label: "Crossplay (Xbox)",
@@ -51,6 +64,20 @@ export default {
         label: "Extra arguments",
         description: "Additional arguments appended to the command line.",
       },
+    },
+    administration: {
+      description:
+        "Access control files (one SteamID64 per line). Located in the saves folder.",
+      adminList: "Admins (adminlist.txt)",
+      adminListHelper:
+        "Access to in-game admin commands (/kick, /ban, /debugmode…)",
+      bannedList: "Banned players (bannedlist.txt)",
+      bannedListHelper: "Players blocked from connecting.",
+      permittedList: "Whitelist (permittedlist.txt)",
+      permittedListHelper: "If not empty, only these players can connect.",
+      save: "Save",
+      saved: "Saved!",
+      saveFailed: "Unable to save the list",
     },
   },
 };

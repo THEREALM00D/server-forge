@@ -1,10 +1,19 @@
 import { ipcMain } from "electron/main";
+import { join } from "path";
+import { homedir } from "os";
 import type { IpcContext } from "../context";
 
 interface BackupCfgInput {
   backupDir: string;
   backupKeep: number;
   backupIntervalMinutes: number;
+}
+
+// Retourne le dossier des mondes Valheim : custom savedir ou %LOCALAPPDATA_LOW%/IronGate/Valheim/worlds_local
+function getValheimWorldsPath(savedir: string): string {
+  const base =
+    savedir || join(homedir(), "AppData", "LocalLow", "IronGate", "Valheim");
+  return join(base, "worlds_local");
 }
 
 export function registerBackupHandlers(ctx: IpcContext): void {
@@ -28,7 +37,12 @@ export function registerBackupHandlers(ctx: IpcContext): void {
     const serverPath = ctx.getActiveServerPath();
     if (!serverPath) throw new Error("Aucun chemin serveur configuré");
     const dir = ctx.getBackupDir();
-    const entry = await ctx.backup.create(serverPath, dir);
+    const server = ctx.getActiveServer();
+    const sourcePath =
+      server?.gameType === "valheim"
+        ? getValheimWorldsPath(ctx.getValheimConfig().savedir)
+        : undefined;
+    const entry = await ctx.backup.create(serverPath, dir, sourcePath);
     ctx.backup.rotate(dir, ctx.getServerConfig().backup.backupKeep);
     return entry;
   });
@@ -39,7 +53,12 @@ export function registerBackupHandlers(ctx: IpcContext): void {
     if (ctx.serverManagers.getActive()?.getStatus() === "running") {
       throw new Error("Arrêtez le serveur avant de restaurer une sauvegarde");
     }
-    await ctx.backup.restore(serverPath, backupPath);
+    const server = ctx.getActiveServer();
+    const saveDir =
+      server?.gameType === "valheim"
+        ? getValheimWorldsPath(ctx.getValheimConfig().savedir)
+        : undefined;
+    await ctx.backup.restore(serverPath, backupPath, saveDir);
   });
 
   ipcMain.handle("backup:delete", (_, backupPath: string) => {

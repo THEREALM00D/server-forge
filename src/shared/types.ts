@@ -134,6 +134,8 @@ export interface ValheimLaunchConfig {
   crossplay: boolean;
   logFile: string;
   customArgs: string;
+  worldSeed: string;
+  worldSize: "small" | "medium" | "large" | "yolo" | "";
 }
 
 // --- Historique des joueurs ---

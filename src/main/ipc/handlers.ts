@@ -207,6 +207,8 @@ export function registerIpcHandlers(): void {
             crossplay: false,
             logFile: "",
             customArgs: "",
+            worldSeed: "",
+            worldSize: "",
           } satisfies ValheimLaunchConfig,
           backup: { backupDir: "", backupIntervalMinutes: 0, backupKeep: 10 },
           restart: getRestartConfig(),
