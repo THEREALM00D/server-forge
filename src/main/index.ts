@@ -3,6 +3,9 @@ import { shell } from "electron";
 import { join } from "path";
 import { registerIpcHandlers } from "./ipc/handlers";
 
+// Enregistrer nxm:// avant app.whenReady() pour que Windows reconnaisse le handler
+app.setAsDefaultProtocolClient("nxm");
+
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
     width: 1280,
@@ -39,6 +42,19 @@ function createWindow(): void {
   }
 }
 
+// Événement second-instance : l'app est déjà ouverte, Windows relance avec nxm://
+app.on("second-instance", (_, argv) => {
+  const nxmUrl = argv.find((a) => a.startsWith("nxm://"));
+  if (nxmUrl) {
+    const win = BrowserWindow.getAllWindows()[0];
+    if (win) {
+      if (win.isMinimized()) win.restore();
+      win.focus();
+      win.webContents.send("nxm:install", nxmUrl);
+    }
+  }
+});
+
 app.whenReady().then(() => {
   if (process.platform === "win32") {
     app.setAppUserModelId("com.palworld.manager");
@@ -51,7 +67,8 @@ app.whenReady().then(() => {
         responseHeaders: {
           ...details.responseHeaders,
           "Content-Security-Policy": [
-            "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:",
+            // staticdelivery.nexusmods.com : images des mods NexusMods
+            "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://staticdelivery.nexusmods.com; font-src 'self' data:",
           ],
         },
       });
@@ -60,6 +77,16 @@ app.whenReady().then(() => {
 
   registerIpcHandlers();
   createWindow();
+
+  // Premier lancement avec nxm:// (app pas encore ouverte, args de la commande)
+  const nxmUrl = process.argv.find((a) => a.startsWith("nxm://"));
+  if (nxmUrl) {
+    app.once("browser-window-created", (_, win) => {
+      win.webContents.once("did-finish-load", () => {
+        win.webContents.send("nxm:install", nxmUrl);
+      });
+    });
+  }
 
   app.on("activate", function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

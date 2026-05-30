@@ -10,6 +10,7 @@ export default {
     success: "Succès",
     language: "Langue",
     errorPrefix: "Erreur : {{msg}}",
+    change: "Modifier",
   },
   status: {
     running: "En ligne",

@@ -10,6 +10,9 @@ import type {
   UpdateCheckResult,
   LaunchArgsConfig,
   ValheimLaunchConfig,
+  ValheimMod,
+  NexusModInfo,
+  NexusModFile,
   PlayerHistoryEntry,
   Server,
   GameType,
@@ -160,6 +163,7 @@ interface API {
   };
   shell: {
     openPath: (path: string) => Promise<void>;
+    openExternal: (url: string) => Promise<void>;
   };
   dialog: {
     selectFolder: () => Promise<string | null>;
@@ -171,6 +175,36 @@ interface API {
       serverId?: string,
     ) => Promise<void>;
     openSaveFolder: (customSavedir: string) => Promise<void>;
+    mods: {
+      validateKey: (
+        key: string,
+      ) => Promise<{ username: string; is_premium: boolean; email: string }>;
+      setApiKey: (key: string, serverId?: string) => Promise<void>;
+      getApiKey: (serverId?: string) => Promise<string>;
+      detectBepInEx: (serverId?: string) => Promise<boolean>;
+      list: (serverId?: string) => Promise<ValheimMod[]>;
+      getTrendingPublic: () => Promise<NexusModInfo[]>;
+      getTrending: (serverId?: string) => Promise<NexusModInfo[]>;
+      getLatestAdded: (serverId?: string) => Promise<NexusModInfo[]>;
+      getLatestUpdated: (serverId?: string) => Promise<NexusModInfo[]>;
+      getMod: (modId: number, serverId?: string) => Promise<NexusModInfo>;
+      getModFiles: (
+        modId: number,
+        serverId?: string,
+      ) => Promise<NexusModFile[]>;
+      installFromNxm: (
+        nxmUrl: string,
+        serverId?: string,
+      ) => Promise<ValheimMod>;
+      remove: (modId: number, serverId?: string) => Promise<void>;
+      toggle: (
+        modId: number,
+        enabled: boolean,
+        serverId?: string,
+      ) => Promise<void>;
+      onProgress: (cb: (msg: string) => void) => () => void;
+      onNxmInstall: (cb: (url: string) => void) => () => void;
+    };
     getAdminList: (serverId?: string) => Promise<string[]>;
     setAdminList: (list: string[], serverId?: string) => Promise<void>;
     getBannedList: (serverId?: string) => Promise<string[]>;

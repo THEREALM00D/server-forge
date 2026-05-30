@@ -26,6 +26,9 @@ export function registerMiscHandlers(ctx: IpcContext): void {
 
   // Shell
   ipcMain.handle("shell:openPath", (_, path: string) => shell.openPath(path));
+  ipcMain.handle("shell:openExternal", (_, url: string) =>
+    shell.openExternal(url),
+  );
 
   // App
   ipcMain.handle("app:getVersion", () => ctx.app.getVersion());

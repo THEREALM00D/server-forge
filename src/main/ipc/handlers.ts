@@ -24,6 +24,7 @@ import { registerServersHandlers } from "./handlers/servers";
 import { registerPalapiHandlers } from "../games/palworld/handlers/palapi";
 import { registerPlayersHandlers } from "../games/palworld/handlers/players";
 import { registerValheimHandlers } from "../games/valheim/handlers/config";
+import { registerValheimModsHandlers } from "../games/valheim/handlers/mods";
 import {
   getGameServerConfig,
   buildGameArgs,
@@ -95,6 +96,21 @@ export function registerIpcHandlers(): void {
     serverConfigs.update(resolveServerId(id), {
       valheimConfig: patch as ValheimLaunchConfig,
     });
+
+  const getValheimModsApiKey = (id?: string): string => {
+    const serverId = resolveServerId(id);
+    const keys = store.get("nexusApiKeys", {} as Record<string, string>);
+    return keys[serverId] ?? "";
+  };
+  const setValheimModsApiKey = (key: string, id?: string): void => {
+    const serverId = resolveServerId(id);
+    const keys = store.get("nexusApiKeys", {} as Record<string, string>);
+    store.set("nexusApiKeys", { ...keys, [serverId]: key });
+  };
+  const getModsDataDir = (id?: string): string => {
+    const serverId = resolveServerId(id);
+    return join(app.getPath("userData"), "servers", serverId);
+  };
 
   const serverManagers = new ServerManagerRegistry(servers);
   const requireActiveManager = () => {
@@ -288,6 +304,9 @@ export function registerIpcHandlers(): void {
     getServerPath,
     getValheimConfig,
     updateValheimConfig,
+    getValheimModsApiKey,
+    setValheimModsApiKey,
+    getModsDataDir,
   };
 
   registerMiscHandlers(ctx);
@@ -300,4 +319,5 @@ export function registerIpcHandlers(): void {
   registerPlayersHandlers(ctx);
   registerServersHandlers(ctx, servers);
   registerValheimHandlers(ctx);
+  registerValheimModsHandlers(ctx);
 }

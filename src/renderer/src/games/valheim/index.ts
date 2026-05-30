@@ -5,6 +5,7 @@ import Logs from "./pages/Logs/Logs";
 import Network from "./pages/Network/Network";
 import Backup from "./pages/Backup/Backup";
 import Schedule from "./pages/Schedule/Schedule";
+import Mods from "./pages/Mods/Mods";
 import dashboardFr from "./pages/Dashboard/__i18n__/fr";
 import dashboardEn from "./pages/Dashboard/__i18n__/en";
 import configFr from "./pages/Config/__i18n__/fr";
@@ -17,6 +18,8 @@ import backupFr from "./pages/Backup/__i18n__/fr";
 import backupEn from "./pages/Backup/__i18n__/en";
 import scheduleFr from "./pages/Schedule/__i18n__/fr";
 import scheduleEn from "./pages/Schedule/__i18n__/en";
+import modsFr from "./pages/Mods/__i18n__/fr";
+import modsEn from "./pages/Mods/__i18n__/en";
 
 export const valheimPlugin: GamePlugin = {
   id: "valheim",
@@ -28,6 +31,7 @@ export const valheimPlugin: GamePlugin = {
     "network",
     "backup",
     "schedule",
+    "mods",
   ],
   pages: {
     dashboard: Dashboard,
@@ -36,6 +40,7 @@ export const valheimPlugin: GamePlugin = {
     network: Network,
     backup: Backup,
     schedule: Schedule,
+    mods: Mods,
   },
   i18n: {
     fr: {
@@ -45,6 +50,7 @@ export const valheimPlugin: GamePlugin = {
       ...networkFr,
       ...backupFr,
       ...scheduleFr,
+      ...modsFr,
     },
     en: {
       ...dashboardEn,
@@ -53,6 +59,7 @@ export const valheimPlugin: GamePlugin = {
       ...networkEn,
       ...backupEn,
       ...scheduleEn,
+      ...modsEn,
     },
   },
 };

@@ -17,6 +17,7 @@ export type Page =
   | "backup"
   | "schedule"
   | "players"
+  | "mods"
   | "servers";
 
 const darkTheme = createTheme({

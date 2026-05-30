@@ -8,6 +8,7 @@ export default {
     backup: "Sauvegardes",
     schedule: "Planification",
     players: "Joueurs",
+    mods: "Mods",
     servers: "Serveurs",
     noServer: "Aucun serveur",
     noServers: "Aucun serveur configuré",

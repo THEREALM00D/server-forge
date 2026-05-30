@@ -20,6 +20,7 @@ import RouterIcon from "@mui/icons-material/Router";
 import BackupIcon from "@mui/icons-material/Backup";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import PeopleIcon from "@mui/icons-material/People";
+import ExtensionIcon from "@mui/icons-material/Extension";
 import StorageIcon from "@mui/icons-material/Storage";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -73,6 +74,11 @@ const navItems: { id: Page; labelKey: string; icon: React.ReactNode }[] = [
     id: "players",
     labelKey: "sidebar.players",
     icon: <PeopleIcon fontSize="small" />,
+  },
+  {
+    id: "mods",
+    labelKey: "sidebar.mods",
+    icon: <ExtensionIcon fontSize="small" />,
   },
   {
     id: "servers",

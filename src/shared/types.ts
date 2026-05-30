@@ -138,6 +138,41 @@ export interface ValheimLaunchConfig {
   worldSize: "small" | "medium" | "large" | "yolo" | "";
 }
 
+// --- Mods Valheim ---
+export interface ValheimMod {
+  modId: number;
+  fileId: number;
+  name: string;
+  version: string;
+  author: string;
+  summary: string;
+  installedAt: number;
+  enabled: boolean;
+  installDir: string; // nom du dossier dans BepInEx/plugins/
+  pictureUrl?: string;
+}
+
+export interface NexusModInfo {
+  mod_id: number;
+  name: string;
+  summary: string;
+  picture_url?: string;
+  version: string;
+  author: string;
+  endorsement_count: number;
+  updated_timestamp: number;
+}
+
+export interface NexusModFile {
+  file_id: number;
+  file_name: string;
+  version: string;
+  size_kb: number;
+  category_name: string; // "MAIN", "UPDATE", "OPTIONAL", etc.
+  description: string;
+  uploaded_timestamp: number;
+}
+
 // --- Historique des joueurs ---
 export interface PlayerSession {
   joinAt: number;
