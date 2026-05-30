@@ -20,9 +20,16 @@
 - On evite la dupplication
 - Preferer les components reutilisable au lieu de dupliquer les choses
 - Toujours ajuster CLAUDE.md a la fin du travail pour avoir la meilleur doc possible
+- utiliser la doc officiel dans ## Utiliser la doc 
 
 ## Use the mui-mcp server to answer any MUI questions --  
 - 1. call the "useMuiDocs" tool to fetch the docs of the package relevant in the question 
 - 2. call the "fetchDocs" tool to fetch any additional docs if needed using ONLY the URLs present in the returned content. 
 - 3. repeat steps 1-2 until you have fetched all relevant docs for the given question 
 - 4. use the fetched content to answer the question
+
+## Utiliser la doc 
+- https://api-docs.nexusmods.com/#section/Overview
+- https://valheim.fandom.com/wiki/Dedicated_servers
+- https://www.valheimgame.com/support/a-guide-to-dedicated-servers/
+- https://github.com/Nexus-Mods/node-nexus-api
