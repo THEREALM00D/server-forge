@@ -1,86 +1,60 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNotification } from "../../../../../context/NotificationContext";
-import type { NexusModInfo, ValheimMod } from "@shared/types";
+import type { ThunderstoreModInfo, ValheimMod, ModUpdate } from "@shared/types";
 
 type BrowseTab = "trending" | "latest" | "updated";
-
-interface ApiKeyState {
-  value: string;
-  username: string | null;
-  isPremium: boolean;
-  validating: boolean;
-}
 
 export function useValheimMods() {
   const { t, i18n } = useTranslation();
   const { notify } = useNotification();
   const locale = i18n.resolvedLanguage ?? "fr";
 
-  const [apiKey, setApiKeyState] = useState<ApiKeyState>({
-    value: "",
-    username: null,
-    isPremium: false,
-    validating: false,
-  });
   const [bepInEx, setBepInEx] = useState<boolean | null>(null);
   const [installedMods, setInstalledMods] = useState<ValheimMod[]>([]);
   const [browseTab, setBrowseTab] = useState<BrowseTab>("trending");
-  const [browseMods, setBrowseMods] = useState<NexusModInfo[]>([]);
+  const [browseMods, setBrowseMods] = useState<ThunderstoreModInfo[]>([]);
   const [browseLoading, setBrowseLoading] = useState(false);
   const [browseError, setBrowseError] = useState(false);
   const [installing, setInstalling] = useState(false);
+  const [installingBepInEx, setInstallingBepInEx] = useState(false);
 
-  // Chargement initial
-  useEffect(() => {
-    window.api.valheim.mods.getApiKey().then((key) => {
-      if (key) setApiKeyState((p) => ({ ...p, value: key }));
-    });
-    window.api.valheim.mods
-      .detectBepInEx()
-      .then(setBepInEx)
-      .catch(() => setBepInEx(false));
-    window.api.valheim.mods
-      .list()
-      .then(setInstalledMods)
-      .catch(() => {});
+  // Dépendances manquantes après une installation
+  const [pendingDeps, setPendingDeps] = useState<{
+    modName: string;
+    deps: ThunderstoreModInfo[];
+  } | null>(null);
+
+  // Mises à jour disponibles pour les mods installés
+  const [updates, setUpdates] = useState<ModUpdate[]>([]);
+
+  const getInstalledCodes = (mods: ValheimMod[]) =>
+    mods.map((m) => m.thunderstoreCode).filter((c): c is string => Boolean(c));
+
+  const refreshUpdates = useCallback(async (mods: ValheimMod[]) => {
+    const codes = getInstalledCodes(mods);
+    if (codes.length === 0) {
+      setUpdates([]);
+      return;
+    }
+    try {
+      const found = await window.api.valheim.mods.checkUpdates(codes);
+      setUpdates(found);
+    } catch {
+      // silencieux
+      console.error("Failed to check for mod updates");
+    }
   }, []);
 
-  // Écouter les installations nxm:// déclenchées depuis le navigateur
-  useEffect(() => {
-    const unsub = window.api.valheim.mods.onNxmInstall(async (url) => {
-      notify(t("valheimMods.nxm.installing"), "info");
-      setInstalling(true);
-      try {
-        const mod = await window.api.valheim.mods.installFromNxm(url);
-        setInstalledMods((prev) => [
-          ...prev.filter((m) => m.modId !== mod.modId),
-          mod,
-        ]);
-        notify(t("valheimMods.nxm.success", { name: mod.name }), "success");
-      } catch (e) {
-        notify(
-          t("valheimMods.nxm.error", { error: (e as Error).message }),
-          "error",
-        );
-      } finally {
-        setInstalling(false);
-      }
-    });
-    return unsub;
-  }, [notify, t]);
-
-  // Charger les mods selon l'onglet parcourir
-  const loadBrowse = useCallback(async (tab: BrowseTab, hasKey: boolean) => {
+  const loadBrowse = useCallback(async (tab: BrowseTab, searchQuery = "") => {
     setBrowseLoading(true);
     setBrowseError(false);
     try {
-      let mods: NexusModInfo[];
-      if (tab === "trending") {
-        // v3 public (top 5, sans clé) ou v1 complet (avec clé)
-        mods = hasKey
-          ? await window.api.valheim.mods.getTrending()
-          : await window.api.valheim.mods.getTrendingPublic();
+      let mods: ThunderstoreModInfo[];
+      if (searchQuery.trim()) {
+        mods = await window.api.valheim.mods.search(searchQuery.trim());
+      } else if (tab === "trending") {
+        mods = await window.api.valheim.mods.getTrending();
       } else if (tab === "latest") {
         mods = await window.api.valheim.mods.getLatestAdded();
       } else {
@@ -95,40 +69,134 @@ export function useValheimMods() {
     }
   }, []);
 
-  const handleTabChange = useCallback(
-    (tab: BrowseTab) => {
-      setBrowseTab(tab);
-      loadBrowse(tab, !!apiKey.username);
-    },
-    [loadBrowse, apiKey.username],
-  );
-
-  // Trending public au démarrage sans clé, complet avec clé
+  // Chargement initial
   useEffect(() => {
-    loadBrowse("trending", !!apiKey.value);
+    loadBrowse("trending");
+    window.api.valheim.mods
+      .detectBepInEx()
+      .then(setBepInEx)
+      .catch(() => setBepInEx(false));
+    window.api.valheim.mods
+      .list()
+      .then((mods) => {
+        setInstalledMods(mods);
+        refreshUpdates(mods);
+      })
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleValidateKey = useCallback(
-    async (key: string) => {
-      setApiKeyState((p) => ({ ...p, validating: true }));
+  const handleTabChange = useCallback(
+    (tab: BrowseTab) => {
+      setBrowseTab(tab);
+      loadBrowse(tab);
+    },
+    [loadBrowse],
+  );
+
+  const handleSearch = useCallback(
+    (query: string) => {
+      loadBrowse(browseTab, query);
+    },
+    [loadBrowse, browseTab],
+  );
+
+  const handleInstallBepInEx = useCallback(async () => {
+    setInstallingBepInEx(true);
+    try {
+      await window.api.valheim.mods.installBepInEx();
+      const detected = await window.api.valheim.mods.detectBepInEx();
+      setBepInEx(detected);
+      notify(t("valheimMods.bepinex.success"), "success");
+    } catch (e) {
+      notify((e as Error).message, "error");
+    } finally {
+      setInstallingBepInEx(false);
+    }
+  }, [notify, t]);
+
+  // Vérifie les dépendances manquantes après une installation
+  const checkDepsAfterInstall = useCallback(
+    async (code: string, currentMods: ValheimMod[], modName: string) => {
+      const parts = code.split("-");
+      if (parts.length < 3) return;
+      const name = parts[parts.length - 2];
+      const namespace = parts.slice(0, parts.length - 2).join("-");
+      const installedCodes = getInstalledCodes(currentMods);
       try {
-        const user = await window.api.valheim.mods.validateKey(key);
-        await window.api.valheim.mods.setApiKey(key);
-        setApiKeyState({
-          value: key,
-          username: user.username,
-          isPremium: user.is_premium,
-          validating: false,
-        });
-        notify(t("valheimMods.apiKey.saved"), "success");
-        loadBrowse("trending", true);
+        const deps = await window.api.valheim.mods.getMissingDeps(
+          namespace,
+          name,
+          installedCodes,
+        );
+        if (deps.length > 0) setPendingDeps({ modName, deps });
       } catch {
-        setApiKeyState((p) => ({ ...p, validating: false }));
-        notify(t("valheimMods.apiKey.invalid"), "error");
+        // silencieux
       }
     },
-    [notify, t, loadBrowse],
+    [],
+  );
+
+  const handleInstallFromThunderstore = useCallback(
+    async (code: string) => {
+      setInstalling(true);
+      try {
+        const mod = await window.api.valheim.mods.installFromThunderstore(code);
+        setInstalledMods((prev) => {
+          const next = [
+            ...prev.filter(
+              (m) =>
+                m.thunderstoreCode !== code && m.installDir !== mod.installDir,
+            ),
+            mod,
+          ];
+          refreshUpdates(next);
+          checkDepsAfterInstall(code, next, mod.name);
+          return next;
+        });
+        notify(
+          t("valheimMods.thunderstore.success", { name: mod.name }),
+          "success",
+        );
+      } catch (e) {
+        notify((e as Error).message, "error");
+      } finally {
+        setInstalling(false);
+      }
+    },
+    [notify, t, refreshUpdates, checkDepsAfterInstall],
+  );
+
+  const handleInstallImportProfile = useCallback(
+    async (base64Code: string) => {
+      setInstalling(true);
+      try {
+        const { installed, errors } =
+          await window.api.valheim.mods.importProfile(base64Code);
+        const fresh = await window.api.valheim.mods.list();
+        setInstalledMods(fresh);
+        refreshUpdates(fresh);
+        if (installed.length > 0)
+          notify(
+            t("valheimMods.thunderstore.profileSuccess", {
+              count: installed.length,
+            }),
+            "success",
+          );
+        if (errors.length > 0)
+          notify(
+            t("valheimMods.thunderstore.profileErrors", {
+              count: errors.length,
+            }),
+            "warning",
+          );
+      } catch (e) {
+        notify((e as Error).message, "error");
+      } finally {
+        setInstalling(false);
+      }
+    },
+    [notify, t, refreshUpdates],
   );
 
   const handleRemoveMod = useCallback(
@@ -137,12 +205,16 @@ export function useValheimMods() {
         return;
       try {
         await window.api.valheim.mods.remove(modId);
-        setInstalledMods((prev) => prev.filter((m) => m.modId !== modId));
+        setInstalledMods((prev) => {
+          const next = prev.filter((m) => m.modId !== modId);
+          refreshUpdates(next);
+          return next;
+        });
       } catch (e) {
         notify((e as Error).message, "error");
       }
     },
-    [notify, t],
+    [notify, t, refreshUpdates],
   );
 
   const handleToggleMod = useCallback(
@@ -159,8 +231,22 @@ export function useValheimMods() {
     [notify],
   );
 
+  const handleRefreshUpdates = useCallback(async () => {
+    await refreshUpdates(installedMods);
+  }, [refreshUpdates, installedMods]);
+
+  const handleInstallAllDeps = useCallback(async () => {
+    if (!pendingDeps) return;
+    const deps = pendingDeps.deps;
+    setPendingDeps(null);
+    for (const dep of deps) {
+      await handleInstallFromThunderstore(
+        `${dep.author}-${dep.name}-${dep.version}`,
+      );
+    }
+  }, [pendingDeps, handleInstallFromThunderstore]);
+
   return {
-    apiKey,
     bepInEx,
     installedMods,
     browseTab,
@@ -168,10 +254,19 @@ export function useValheimMods() {
     browseLoading,
     browseError,
     installing,
+    installingBepInEx,
     locale,
-    handleValidateKey,
+    pendingDeps,
+    updates,
     handleTabChange,
+    handleSearch,
     handleRemoveMod,
     handleToggleMod,
+    handleInstallBepInEx,
+    handleInstallFromThunderstore,
+    handleImportProfile: handleInstallImportProfile,
+    handleRefreshUpdates,
+    handleInstallAllDeps,
+    handleDismissDeps: () => setPendingDeps(null),
   };
 }

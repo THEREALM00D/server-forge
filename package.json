@@ -16,7 +16,8 @@
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "build": "electron-vite build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "generate:thunderstore": "swagger-typescript-api generate -p https://thunderstore.io/api/docs/?format=openapi -o src/main/games/valheim -n thunderstore-api.ts --no-client"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -52,7 +53,9 @@
     "electron-builder": "^24.13.3",
     "electron-vite": "^2.3.0",
     "eslint": "^8.57.0",
+    "openapi-typescript": "^7.13.0",
     "prettier": "^3.3.2",
+    "swagger-typescript-api": "^13.12.0",
     "typescript": "^6.0.2",
     "vite": "^5.3.1"
   }

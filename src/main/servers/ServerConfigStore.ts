@@ -6,6 +6,7 @@ import type {
   RestartConfig,
   ServerConfig,
   ValheimLaunchConfig,
+  ValheimModifiers,
 } from "../../shared/types";
 import type { AppStore } from "../ipc/context";
 
@@ -13,6 +14,14 @@ const DEFAULT_LAUNCH_ARGS: LaunchArgsConfig = {
   publicLobby: false,
   performanceFlags: false,
   customArgs: "",
+};
+
+const DEFAULT_MODIFIERS: ValheimModifiers = {
+  combat: "",
+  deathpenalty: "",
+  resources: "",
+  raids: "",
+  portals: "",
 };
 
 const DEFAULT_VALHEIM_CONFIG: ValheimLaunchConfig = {
@@ -27,6 +36,7 @@ const DEFAULT_VALHEIM_CONFIG: ValheimLaunchConfig = {
   customArgs: "",
   worldSeed: "",
   worldSize: "",
+  modifiers: DEFAULT_MODIFIERS,
 };
 
 const DEFAULT_BACKUP: BackupConfig = {

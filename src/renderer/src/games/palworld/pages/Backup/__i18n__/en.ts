@@ -1,43 +1,5 @@
 export default {
-  backup: {
-    title: "Backups",
+  palworldBackup: {
     subtitle: "Manage backups of the SaveGames folder",
-    config: {
-      title: "Configuration",
-      dir: "Backup folder",
-      dirTooltip: "Choose a folder",
-      dirOpen: "Open in explorer",
-      keep: "Backups to keep (rotation)",
-      keepHelper: "0 = no rotation",
-      auto: "Automatic backup",
-      autoOff: "Disabled",
-      auto15: "Every 15 minutes",
-      auto30: "Every 30 minutes",
-      auto60: "Every hour",
-      auto180: "Every 3 hours",
-      auto360: "Every 6 hours",
-      auto720: "Every 12 hours",
-      auto1440: "Once a day",
-    },
-    list: {
-      title: "Backups ({{count}})",
-      create: "Create a backup",
-      creating: "Backing up...",
-      none: "No backup",
-      restoreTooltip: "Restore (server must be stopped)",
-      deleteTooltip: "Delete",
-      restoreConfirm:
-        "Restore {{name}}?\nThe current save will be overwritten.",
-      deleteConfirm: "Delete {{name}}?",
-    },
-    notify: {
-      cannotLoad: "Unable to load backups",
-      created: "Backup created: {{name}}",
-      createFailed: "Backup failed",
-      restored: "Backup restored: {{name}}",
-      restoreFailed: "Restore failed",
-      deleted: "Backup deleted",
-      deleteFailed: "Unable to delete the backup",
-    },
   },
 };

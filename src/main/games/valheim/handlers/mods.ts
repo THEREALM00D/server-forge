@@ -1,13 +1,10 @@
 import { ipcMain } from "electron/main";
+import { shell } from "electron";
+import { join } from "path";
+import { mkdirSync } from "fs";
 import type { IpcContext } from "../../../ipc/context";
-import { NexusModsClient, parseNxmUrl } from "../NexusModsClient";
+import { ThunderstoreClient } from "../ThunderstoreClient";
 import { ValheimModsManager } from "../ValheimModsManager";
-
-function getClient(ctx: IpcContext, serverId?: string): NexusModsClient {
-  const key = ctx.getValheimModsApiKey(serverId);
-  if (!key) throw new Error("Clé API NexusMods non configurée");
-  return new NexusModsClient(key);
-}
 
 function getManager(ctx: IpcContext, serverId?: string): ValheimModsManager {
   return new ValheimModsManager(
@@ -17,20 +14,34 @@ function getManager(ctx: IpcContext, serverId?: string): ValheimModsManager {
 }
 
 export function registerValheimModsHandlers(ctx: IpcContext): void {
-  ipcMain.handle("valheim:mods:validateKey", (_, key: string) =>
-    new NexusModsClient(key).validateApiKey(),
+  // --- Browse Thunderstore (public, sans clé API) ---
+
+  ipcMain.handle("valheim:mods:getTrending", () =>
+    ThunderstoreClient.getTrending(),
   );
 
+  ipcMain.handle("valheim:mods:getLatestAdded", () =>
+    ThunderstoreClient.getLatestAdded(),
+  );
+
+  ipcMain.handle("valheim:mods:getLatestUpdated", () =>
+    ThunderstoreClient.getLatestUpdated(),
+  );
+
+  ipcMain.handle("valheim:mods:search", (_, query: string) =>
+    ThunderstoreClient.search(query),
+  );
+
+  // getModFiles prend maintenant (namespace, name) — les versions du package Thunderstore
   ipcMain.handle(
-    "valheim:mods:setApiKey",
-    (_, key: string, serverId?: string) => {
-      ctx.setValheimModsApiKey(key, serverId);
-    },
+    "valheim:mods:getModFiles",
+    (_, namespace: string, name: string) =>
+      ThunderstoreClient.getPackage(namespace, name).then(
+        ThunderstoreClient.toModFiles,
+      ),
   );
 
-  ipcMain.handle("valheim:mods:getApiKey", (_, serverId?: string) =>
-    ctx.getValheimModsApiKey(serverId),
-  );
+  // --- Gestion locale des mods installés ---
 
   ipcMain.handle("valheim:mods:detectBepInEx", (_, serverId?: string) =>
     getManager(ctx, serverId).detectBepInEx(),
@@ -40,56 +51,17 @@ export function registerValheimModsHandlers(ctx: IpcContext): void {
     getManager(ctx, serverId).list(),
   );
 
-  // Trending public v3 : pas de clé API requise (top 5)
-  ipcMain.handle("valheim:mods:getTrendingPublic", () =>
-    NexusModsClient.getTrendingPublic(),
-  );
+  ipcMain.handle("valheim:mods:openPluginsFolder", (_, serverId?: string) => {
+    const dir = join(ctx.getServerPath(serverId), "BepInEx", "plugins");
+    mkdirSync(dir, { recursive: true });
+    return shell.openPath(dir);
+  });
 
-  ipcMain.handle("valheim:mods:getTrending", (_, serverId?: string) =>
-    getClient(ctx, serverId).getTrending(),
-  );
-
-  ipcMain.handle("valheim:mods:getLatestAdded", (_, serverId?: string) =>
-    getClient(ctx, serverId).getLatestAdded(),
-  );
-
-  ipcMain.handle("valheim:mods:getLatestUpdated", (_, serverId?: string) =>
-    getClient(ctx, serverId).getLatestUpdated(),
-  );
-
-  ipcMain.handle("valheim:mods:getMod", (_, modId: number, serverId?: string) =>
-    getClient(ctx, serverId).getMod(modId),
-  );
-
-  ipcMain.handle(
-    "valheim:mods:getModFiles",
-    (_, modId: number, serverId?: string) =>
-      getClient(ctx, serverId).getModFiles(modId),
-  );
-
-  ipcMain.handle(
-    "valheim:mods:installFromNxm",
-    async (event, nxmUrl: string, serverId?: string) => {
-      const { modId, fileId, key, expires } = parseNxmUrl(nxmUrl);
-      const client = getClient(ctx, serverId);
-      const [mod, files] = await Promise.all([
-        client.getMod(modId),
-        client.getModFiles(modId),
-      ]);
-      const file = files.find((f) => f.file_id === fileId);
-      if (!file)
-        throw new Error(`Fichier ${fileId} introuvable pour le mod ${modId}`);
-      const downloadUrl = await client.getDownloadUrl(
-        modId,
-        fileId,
-        key,
-        expires,
-      );
-      return getManager(ctx, serverId).install(mod, file, downloadUrl, (msg) =>
-        event.sender.send("valheim:mods:progress", msg),
-      );
-    },
-  );
+  ipcMain.handle("valheim:mods:openConfigFolder", (_, serverId?: string) => {
+    const dir = join(ctx.getServerPath(serverId), "BepInEx", "config");
+    mkdirSync(dir, { recursive: true });
+    return shell.openPath(dir);
+  });
 
   ipcMain.handle("valheim:mods:remove", (_, modId: number, serverId?: string) =>
     getManager(ctx, serverId).remove(modId),
@@ -99,5 +71,58 @@ export function registerValheimModsHandlers(ctx: IpcContext): void {
     "valheim:mods:toggle",
     (_, modId: number, enabled: boolean, serverId?: string) =>
       getManager(ctx, serverId).toggle(modId, enabled),
+  );
+
+  ipcMain.handle(
+    "valheim:mods:installBepInEx",
+    async (event, serverId?: string) =>
+      getManager(ctx, serverId).installBepInEx((msg) =>
+        event.sender.send("valheim:mods:progress", msg),
+      ),
+  );
+
+  ipcMain.handle(
+    "valheim:mods:installFromThunderstore",
+    async (event, code: string, serverId?: string) =>
+      getManager(ctx, serverId).installFromThunderstore(code, (msg) =>
+        event.sender.send("valheim:mods:progress", msg),
+      ),
+  );
+
+  ipcMain.handle(
+    "valheim:mods:importProfile",
+    async (event, base64Code: string, serverId?: string) => {
+      const manager = getManager(ctx, serverId);
+      const codes = await manager.parseThunderstoreProfile(base64Code);
+      const results: Awaited<
+        ReturnType<typeof manager.installFromThunderstore>
+      >[] = [];
+      const errors: string[] = [];
+      for (const code of codes) {
+        try {
+          const mod = await manager.installFromThunderstore(code, (msg) =>
+            event.sender.send("valheim:mods:progress", msg),
+          );
+          results.push(mod);
+        } catch (e) {
+          errors.push(`${code}: ${(e as Error).message}`);
+          event.sender.send(
+            "valheim:mods:progress",
+            `⚠ ${code} — ${(e as Error).message}`,
+          );
+        }
+      }
+      return { installed: results, errors };
+    },
+  );
+
+  ipcMain.handle(
+    "valheim:mods:getMissingDeps",
+    (_, namespace: string, name: string, installedCodes: string[]) =>
+      ThunderstoreClient.getMissingDeps(namespace, name, installedCodes),
+  );
+
+  ipcMain.handle("valheim:mods:checkUpdates", (_, installedCodes: string[]) =>
+    ThunderstoreClient.checkUpdates(installedCodes),
   );
 }

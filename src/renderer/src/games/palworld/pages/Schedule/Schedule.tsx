@@ -49,13 +49,13 @@ export default function Schedule() {
         RESTAPIEnabled: true,
       });
       if (res.success) {
-        notify(t("schedule.notify.apiEnabled"), "success");
+        notify(t("palworldSchedule.notify.apiEnabled"), "success");
         await checkApi();
       } else {
-        notify(res.error || t("schedule.notify.apiEnableFailed"));
+        notify(res.error || t("palworldSchedule.notify.apiEnableFailed"));
       }
     } catch {
-      notify(t("schedule.notify.apiCannotWrite"));
+      notify(t("palworldSchedule.notify.apiCannotWrite"));
     }
   };
 
@@ -84,11 +84,11 @@ export default function Schedule() {
           severity="warning"
           action={
             <Button color="inherit" size="small" onClick={handleEnableApi}>
-              {t("schedule.enableApi")}
+              {t("palworldSchedule.enableApi")}
             </Button>
           }
         >
-          {t("schedule.apiWarning")}
+          {t("palworldSchedule.apiWarning")}
         </Alert>
       )}
 

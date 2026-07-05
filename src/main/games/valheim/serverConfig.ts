@@ -14,6 +14,18 @@ export const valheimServerConfig = {
     if (cfg.logFile) args.push("-logFile", cfg.logFile);
     if (cfg.worldSeed) args.push("-worldseed", cfg.worldSeed);
     if (cfg.worldSize) args.push("-worldsize", cfg.worldSize);
+    if (cfg.modifiers) {
+      const entries: Array<[string, string]> = [
+        ["combat", cfg.modifiers.combat],
+        ["deathpenalty", cfg.modifiers.deathpenalty],
+        ["resources", cfg.modifiers.resources],
+        ["raids", cfg.modifiers.raids],
+        ["portals", cfg.modifiers.portals],
+      ];
+      for (const [key, val] of entries) {
+        if (val) args.push("-modifier", key, val);
+      }
+    }
     const custom = cfg.customArgs.trim();
     if (custom) args.push(...custom.split(/\s+/));
     return args;

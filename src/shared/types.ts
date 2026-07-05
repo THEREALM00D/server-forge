@@ -124,6 +124,14 @@ export interface LaunchArgsConfig {
 }
 
 // --- Launch arguments (valheim_server.exe) ---
+export interface ValheimModifiers {
+  combat: "veryhard" | "hard" | "normal" | "easy" | "veryeasy" | "";
+  deathpenalty: "casual" | "veryeasy" | "easy" | "normal" | "hard" | "";
+  resources: "muchless" | "less" | "normal" | "more" | "mostmore" | "";
+  raids: "none" | "muchless" | "less" | "normal" | "more" | "";
+  portals: "casual" | "hard" | "veryhard" | "";
+}
+
 export interface ValheimLaunchConfig {
   name: string;
   world: string;
@@ -136,6 +144,7 @@ export interface ValheimLaunchConfig {
   customArgs: string;
   worldSeed: string;
   worldSize: "small" | "medium" | "large" | "yolo" | "";
+  modifiers: ValheimModifiers;
 }
 
 // --- Mods Valheim ---
@@ -150,9 +159,11 @@ export interface ValheimMod {
   enabled: boolean;
   installDir: string; // nom du dossier dans BepInEx/plugins/
   pictureUrl?: string;
+  source?: "thunderstore" | "manual";
+  thunderstoreCode?: string; // "Auteur-Nom-Version" pour les mods Thunderstore
 }
 
-export interface NexusModInfo {
+export interface ThunderstoreModInfo {
   mod_id: number;
   name: string;
   summary: string;
@@ -163,14 +174,22 @@ export interface NexusModInfo {
   updated_timestamp: number;
 }
 
-export interface NexusModFile {
+export interface ThunderstoreModVersion {
   file_id: number;
   file_name: string;
   version: string;
   size_kb: number;
-  category_name: string; // "MAIN", "UPDATE", "OPTIONAL", etc.
+  category_name: string;
   description: string;
   uploaded_timestamp: number;
+}
+
+export interface ModUpdate {
+  installedCode: string;
+  latestCode: string;
+  latestVersion: string;
+  name: string;
+  author: string;
 }
 
 // --- Historique des joueurs ---

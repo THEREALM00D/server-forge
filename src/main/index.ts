@@ -1,10 +1,17 @@
 import { app, BrowserWindow, session } from "electron/main";
 import { shell } from "electron";
-import { join } from "path";
+import { join, resolve } from "path";
 import { registerIpcHandlers } from "./ipc/handlers";
 
-// Enregistrer nxm:// avant app.whenReady() pour que Windows reconnaisse le handler
-app.setAsDefaultProtocolClient("nxm");
+// En dev sur Windows, setAsDefaultProtocolClient doit recevoir le chemin du
+// script entry point pour enregistrer notre app et non electron.exe directement.
+if (!app.isPackaged) {
+  app.setAsDefaultProtocolClient("nxm", process.execPath, [
+    resolve(process.argv[1]),
+  ]);
+} else {
+  app.setAsDefaultProtocolClient("nxm");
+}
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -67,8 +74,7 @@ app.whenReady().then(() => {
         responseHeaders: {
           ...details.responseHeaders,
           "Content-Security-Policy": [
-            // staticdelivery.nexusmods.com : images des mods NexusMods
-            "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://staticdelivery.nexusmods.com; font-src 'self' data:",
+            "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://gcdn.thunderstore.io; font-src 'self' data:",
           ],
         },
       });

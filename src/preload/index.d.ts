@@ -11,8 +11,9 @@ import type {
   LaunchArgsConfig,
   ValheimLaunchConfig,
   ValheimMod,
-  NexusModInfo,
-  NexusModFile,
+  ThunderstoreModInfo,
+  ThunderstoreModVersion,
+  ModUpdate,
   PlayerHistoryEntry,
   Server,
   GameType,
@@ -176,34 +177,40 @@ interface API {
     ) => Promise<void>;
     openSaveFolder: (customSavedir: string) => Promise<void>;
     mods: {
-      validateKey: (
-        key: string,
-      ) => Promise<{ username: string; is_premium: boolean; email: string }>;
-      setApiKey: (key: string, serverId?: string) => Promise<void>;
-      getApiKey: (serverId?: string) => Promise<string>;
+      getTrending: () => Promise<ThunderstoreModInfo[]>;
+      getLatestAdded: () => Promise<ThunderstoreModInfo[]>;
+      getLatestUpdated: () => Promise<ThunderstoreModInfo[]>;
+      search: (query: string) => Promise<ThunderstoreModInfo[]>;
+      getModFiles: (
+        namespace: string,
+        name: string,
+      ) => Promise<ThunderstoreModVersion[]>;
       detectBepInEx: (serverId?: string) => Promise<boolean>;
       list: (serverId?: string) => Promise<ValheimMod[]>;
-      getTrendingPublic: () => Promise<NexusModInfo[]>;
-      getTrending: (serverId?: string) => Promise<NexusModInfo[]>;
-      getLatestAdded: (serverId?: string) => Promise<NexusModInfo[]>;
-      getLatestUpdated: (serverId?: string) => Promise<NexusModInfo[]>;
-      getMod: (modId: number, serverId?: string) => Promise<NexusModInfo>;
-      getModFiles: (
-        modId: number,
-        serverId?: string,
-      ) => Promise<NexusModFile[]>;
-      installFromNxm: (
-        nxmUrl: string,
-        serverId?: string,
-      ) => Promise<ValheimMod>;
       remove: (modId: number, serverId?: string) => Promise<void>;
       toggle: (
         modId: number,
         enabled: boolean,
         serverId?: string,
       ) => Promise<void>;
+      installBepInEx: (serverId?: string) => Promise<void>;
+      installFromThunderstore: (
+        code: string,
+        serverId?: string,
+      ) => Promise<ValheimMod>;
+      importProfile: (
+        base64Code: string,
+        serverId?: string,
+      ) => Promise<{ installed: ValheimMod[]; errors: string[] }>;
+      openPluginsFolder: (serverId?: string) => Promise<string>;
+      openConfigFolder: (serverId?: string) => Promise<string>;
+      getMissingDeps: (
+        namespace: string,
+        name: string,
+        installedCodes: string[],
+      ) => Promise<ThunderstoreModInfo[]>;
+      checkUpdates: (installedCodes: string[]) => Promise<ModUpdate[]>;
       onProgress: (cb: (msg: string) => void) => () => void;
-      onNxmInstall: (cb: (url: string) => void) => () => void;
     };
     getAdminList: (serverId?: string) => Promise<string[]>;
     setAdminList: (list: string[], serverId?: string) => Promise<void>;

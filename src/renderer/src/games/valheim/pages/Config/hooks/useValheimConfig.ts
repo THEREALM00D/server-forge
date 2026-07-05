@@ -1,6 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNotification } from "../../../../../context/NotificationContext";
-import type { ValheimLaunchConfig } from "@shared/types";
+import type { ValheimLaunchConfig, ValheimModifiers } from "@shared/types";
+
+const DEFAULT_MODIFIERS: ValheimModifiers = {
+  combat: "",
+  deathpenalty: "",
+  resources: "",
+  raids: "",
+  portals: "",
+};
 
 const DEFAULT_CONFIG: ValheimLaunchConfig = {
   name: "Mon Serveur Valheim",
@@ -14,6 +22,7 @@ const DEFAULT_CONFIG: ValheimLaunchConfig = {
   customArgs: "",
   worldSeed: "",
   worldSize: "",
+  modifiers: DEFAULT_MODIFIERS,
 };
 
 export function useValheimConfig() {

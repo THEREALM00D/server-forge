@@ -9,9 +9,59 @@ export default {
     sections: {
       general: "General",
       world: "World",
+      modifiers: "World Modifiers",
       network: "Network",
       advanced: "Advanced",
       administration: "Administration",
+    },
+    modifiers: {
+      description:
+        "Adjust world difficulty via -modifier arguments. Use a preset or configure each parameter individually.",
+      default: "Default",
+      presets: {
+        casual: "Casual",
+        normal: "Normal",
+        hard: "Hard",
+        hardcore: "Hardcore",
+      },
+      combat: {
+        label: "Combat",
+        veryeasy: "Very easy",
+        easy: "Easy",
+        normal: "Normal",
+        hard: "Hard",
+        veryhard: "Very hard",
+      },
+      deathpenalty: {
+        label: "Death penalty",
+        casual: "None",
+        veryeasy: "Very light",
+        easy: "Light",
+        normal: "Normal",
+        hard: "Harsh",
+      },
+      resources: {
+        label: "Resources",
+        muchless: "Much less",
+        less: "Less",
+        normal: "Normal",
+        more: "More",
+        mostmore: "Most",
+      },
+      raids: {
+        label: "Raids",
+        none: "None",
+        muchless: "Very rare",
+        less: "Rare",
+        normal: "Normal",
+        more: "Frequent",
+      },
+      portals: {
+        label: "Portals",
+        casual: "Open",
+        hard: "Restricted",
+        veryhard: "Very restricted",
+      },
     },
     fields: {
       name: {

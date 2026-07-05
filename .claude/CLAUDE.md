@@ -29,7 +29,7 @@
 - 4. use the fetched content to answer the question
 
 ## Utiliser la doc 
-- https://api-docs.nexusmods.com/#section/Overview
 - https://valheim.fandom.com/wiki/Dedicated_servers
 - https://www.valheimgame.com/support/a-guide-to-dedicated-servers/
-- https://github.com/Nexus-Mods/node-nexus-api
+- https://thunderstore.io/api/docs/
+-  https://thunderstore.io/api/docs/?format=openapi

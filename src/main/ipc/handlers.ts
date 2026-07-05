@@ -97,16 +97,6 @@ export function registerIpcHandlers(): void {
       valheimConfig: patch as ValheimLaunchConfig,
     });
 
-  const getValheimModsApiKey = (id?: string): string => {
-    const serverId = resolveServerId(id);
-    const keys = store.get("nexusApiKeys", {} as Record<string, string>);
-    return keys[serverId] ?? "";
-  };
-  const setValheimModsApiKey = (key: string, id?: string): void => {
-    const serverId = resolveServerId(id);
-    const keys = store.get("nexusApiKeys", {} as Record<string, string>);
-    store.set("nexusApiKeys", { ...keys, [serverId]: key });
-  };
   const getModsDataDir = (id?: string): string => {
     const serverId = resolveServerId(id);
     return join(app.getPath("userData"), "servers", serverId);
@@ -225,6 +215,13 @@ export function registerIpcHandlers(): void {
             customArgs: "",
             worldSeed: "",
             worldSize: "",
+            modifiers: {
+              combat: "",
+              deathpenalty: "",
+              resources: "",
+              raids: "",
+              portals: "",
+            },
           } satisfies ValheimLaunchConfig,
           backup: { backupDir: "", backupIntervalMinutes: 0, backupKeep: 10 },
           restart: getRestartConfig(),
@@ -304,8 +301,6 @@ export function registerIpcHandlers(): void {
     getServerPath,
     getValheimConfig,
     updateValheimConfig,
-    getValheimModsApiKey,
-    setValheimModsApiKey,
     getModsDataDir,
   };
 

@@ -1,38 +1,43 @@
 export default {
   valheimMods: {
     title: "Mods",
-    subtitle: "Manage your Valheim server mods via NexusMods",
+    subtitle: "Manage your Valheim server mods via Thunderstore",
     tabs: {
       installed: "Installed",
       browse: "Browse",
-    },
-    apiKey: {
-      title: "NexusMods Connection",
-      label: "API Key",
-      placeholder: "Your NexusMods API key",
-      helper: "Generate a key at nexusmods.com → account → Settings → API Keys",
-      validate: "Validate",
-      validating: "Checking…",
-      connected: "Connected as {{username}}",
-      premium: "Premium",
-      free: "Free",
-      invalid: "Invalid API key",
-      saved: "API key saved",
     },
     bepinex: {
       warning:
         "BepInEx not detected in the server folder. Most Valheim mods require BepInEx to work.",
       ok: "BepInEx detected",
+      install: "Install BepInEx",
+      installing: "Installing…",
+      success: "BepInEx installed successfully",
     },
     installed: {
       empty:
-        'No mods installed. Browse NexusMods to find mods, then click "Mod Manager Download" on the site.',
+        "No mods installed. Browse Thunderstore or import an r2modman profile.",
       remove: "Uninstall",
       removeConfirm: "Uninstall {{name}}?",
       enabled: "Enabled",
       disabled: "Disabled",
+      manual: "Manual",
       installedAt: "Installed on {{date}}",
       version: "v{{version}}",
+    },
+    thunderstore: {
+      title: "Thunderstore Code",
+      label: "Package code",
+      helper:
+        "Format: Author-ModName-Version (e.g. denikson-BepInExPack_Valheim-5.4.2202)",
+      importProfile: "Import profile",
+      profileLabel: "Profile code",
+      profileHelper:
+        "Paste the code exported from Thunderstore or r2modman (Settings → Export profile → Copy code)",
+      install: "Install",
+      success: "{{name}} installed from Thunderstore",
+      profileSuccess: "{{count}} mod(s) installed from profile",
+      profileErrors: "{{count}} mod(s) failed — see notifications",
     },
     browse: {
       tabs: {
@@ -40,27 +45,43 @@ export default {
         latest: "New",
         updated: "Updated",
       },
-      openOnNexus: "Open on NexusMods",
-      openTooltip:
-        'Opens the mod page on NexusMods. Then click "Mod Manager Download" to install it.',
-      viewFiles: "Files",
+      search: "Search Thunderstore…",
+      searchBtn: "Search",
+      clearSearch: "Clear",
+      installLatest: "Install latest version",
+      openOnThunderstore: "Open on Thunderstore",
+      openTooltip: "Opens the mod page on Thunderstore",
+      viewFiles: "Versions",
       filesDialog: {
-        title: "Files for {{name}}",
+        title: "Versions of {{name}}",
         close: "Close",
         size: "{{size}} KB",
-        noFiles: "No files available",
+        noFiles: "No versions available",
       },
-      endorsements: "{{count}} endorsements",
-      noApiKey: "Configure your NexusMods API key to browse mods.",
-      publicMode:
-        "Public mode (top 5, no API key). Configure your key to see more mods and unlock the New and Updated tabs.",
+      endorsements: "{{count}} stars",
       loading: "Loading…",
-      error: "Unable to load mods",
+      error: "Unable to load Thunderstore mods",
+    },
+    folders: {
+      plugins: "Mods folder",
+      config: "Mod configs",
     },
     nxm: {
-      installing: "Installing from NexusMods…",
+      installing: "Installing…",
       success: "{{name}} installed successfully",
       error: "Installation error: {{error}}",
+    },
+    deps: {
+      title: "Required dependencies",
+      subtitle:
+        "{{name}} requires {{count}} uninstalled mod(s). Install them now?",
+      installAll: "Install all ({{count}})",
+      skip: "Skip",
+    },
+    updates: {
+      newVersion: "v{{version}} available",
+      updateBtn: "Update to v{{version}}",
+      refresh: "Check for updates",
     },
   },
 };

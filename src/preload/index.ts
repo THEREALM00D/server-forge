@@ -180,41 +180,54 @@ const api = {
     openSaveFolder: (customSavedir: string) =>
       ipcRenderer.invoke("valheim:openSaveFolder", customSavedir),
     mods: {
-      validateKey: (key: string) =>
-        ipcRenderer.invoke("valheim:mods:validateKey", key),
-      setApiKey: (key: string, serverId?: string) =>
-        ipcRenderer.invoke("valheim:mods:setApiKey", key, serverId),
-      getApiKey: (serverId?: string) =>
-        ipcRenderer.invoke("valheim:mods:getApiKey", serverId),
+      // Browse Thunderstore (public, sans clé API)
+      getTrending: () => ipcRenderer.invoke("valheim:mods:getTrending"),
+      getLatestAdded: () => ipcRenderer.invoke("valheim:mods:getLatestAdded"),
+      getLatestUpdated: () =>
+        ipcRenderer.invoke("valheim:mods:getLatestUpdated"),
+      search: (query: string) =>
+        ipcRenderer.invoke("valheim:mods:search", query),
+      getModFiles: (namespace: string, name: string) =>
+        ipcRenderer.invoke("valheim:mods:getModFiles", namespace, name),
+      // Gestion locale
       detectBepInEx: (serverId?: string) =>
         ipcRenderer.invoke("valheim:mods:detectBepInEx", serverId),
       list: (serverId?: string) =>
         ipcRenderer.invoke("valheim:mods:list", serverId),
-      getTrendingPublic: () =>
-        ipcRenderer.invoke("valheim:mods:getTrendingPublic"),
-      getTrending: (serverId?: string) =>
-        ipcRenderer.invoke("valheim:mods:getTrending", serverId),
-      getLatestAdded: (serverId?: string) =>
-        ipcRenderer.invoke("valheim:mods:getLatestAdded", serverId),
-      getLatestUpdated: (serverId?: string) =>
-        ipcRenderer.invoke("valheim:mods:getLatestUpdated", serverId),
-      getMod: (modId: number, serverId?: string) =>
-        ipcRenderer.invoke("valheim:mods:getMod", modId, serverId),
-      getModFiles: (modId: number, serverId?: string) =>
-        ipcRenderer.invoke("valheim:mods:getModFiles", modId, serverId),
-      installFromNxm: (nxmUrl: string, serverId?: string) =>
-        ipcRenderer.invoke("valheim:mods:installFromNxm", nxmUrl, serverId),
       remove: (modId: number, serverId?: string) =>
         ipcRenderer.invoke("valheim:mods:remove", modId, serverId),
       toggle: (modId: number, enabled: boolean, serverId?: string) =>
         ipcRenderer.invoke("valheim:mods:toggle", modId, enabled, serverId),
+      installBepInEx: (serverId?: string) =>
+        ipcRenderer.invoke("valheim:mods:installBepInEx", serverId),
+      installFromThunderstore: (code: string, serverId?: string) =>
+        ipcRenderer.invoke(
+          "valheim:mods:installFromThunderstore",
+          code,
+          serverId,
+        ),
+      importProfile: (base64Code: string, serverId?: string) =>
+        ipcRenderer.invoke("valheim:mods:importProfile", base64Code, serverId),
+      openPluginsFolder: (serverId?: string) =>
+        ipcRenderer.invoke("valheim:mods:openPluginsFolder", serverId),
+      openConfigFolder: (serverId?: string) =>
+        ipcRenderer.invoke("valheim:mods:openConfigFolder", serverId),
+      getMissingDeps: (
+        namespace: string,
+        name: string,
+        installedCodes: string[],
+      ) =>
+        ipcRenderer.invoke(
+          "valheim:mods:getMissingDeps",
+          namespace,
+          name,
+          installedCodes,
+        ),
+      checkUpdates: (installedCodes: string[]) =>
+        ipcRenderer.invoke("valheim:mods:checkUpdates", installedCodes),
       onProgress: (cb: (msg: string) => void) => {
         ipcRenderer.on("valheim:mods:progress", (_e, msg) => cb(msg));
         return () => ipcRenderer.removeAllListeners("valheim:mods:progress");
-      },
-      onNxmInstall: (cb: (url: string) => void) => {
-        ipcRenderer.on("nxm:install", (_e, url) => cb(url));
-        return () => ipcRenderer.removeAllListeners("nxm:install");
       },
     },
     getAdminList: (serverId?: string) =>

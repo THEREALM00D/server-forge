@@ -25,7 +25,7 @@ export default function Backup() {
       <div>
         <Typography variant="h6">{t("backup.title")}</Typography>
         <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
-          {t("backup.subtitle")}
+          {t("palworldBackup.subtitle")}
         </Typography>
       </div>
 

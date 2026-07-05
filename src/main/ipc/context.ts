@@ -33,9 +33,6 @@ export interface AppStore {
   servers: Server[];
   activeServerId: string | null;
   serversConfig: Record<string, ServerConfig>;
-
-  // Clés API NexusMods par serveur (serverId → apiKey)
-  nexusApiKeys?: Record<string, string>;
 }
 
 export interface IpcContext {
@@ -99,9 +96,6 @@ export interface IpcContext {
     patch: Partial<ValheimLaunchConfig>,
   ) => void;
 
-  // Mods Valheim
-  getValheimModsApiKey: (serverId?: string) => string;
-  setValheimModsApiKey: (key: string, serverId?: string) => void;
   /** Dossier userData/servers/{id}/ utilisé pour stocker mods.json et les ZIPs temp. */
   getModsDataDir: (serverId?: string) => string;
 }

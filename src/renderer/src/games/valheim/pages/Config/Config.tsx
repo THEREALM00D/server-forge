@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  ButtonGroup,
   Checkbox,
   FormControl,
   FormControlLabel,
@@ -20,6 +21,38 @@ import { useTranslation } from "react-i18next";
 import { useServer } from "../../../../context/ServerContext";
 import { useValheimConfig } from "./hooks/useValheimConfig";
 import { useValheimAdminLists } from "./hooks/useValheimAdminLists";
+import type { ValheimModifiers } from "@shared/types";
+
+const PRESETS: Record<string, ValheimModifiers> = {
+  casual: {
+    combat: "easy",
+    deathpenalty: "casual",
+    resources: "more",
+    raids: "none",
+    portals: "casual",
+  },
+  normal: {
+    combat: "",
+    deathpenalty: "",
+    resources: "",
+    raids: "",
+    portals: "",
+  },
+  hard: {
+    combat: "hard",
+    deathpenalty: "hard",
+    resources: "less",
+    raids: "more",
+    portals: "hard",
+  },
+  hardcore: {
+    combat: "veryhard",
+    deathpenalty: "hard",
+    resources: "muchless",
+    raids: "more",
+    portals: "veryhard",
+  },
+};
 
 export default function ValheimConfig() {
   const { t } = useTranslation();
@@ -52,6 +85,14 @@ export default function ValheimConfig() {
       </Typography>
     );
   }
+
+  const modifiers = config.modifiers ?? {
+    combat: "",
+    deathpenalty: "",
+    resources: "",
+    raids: "",
+    portals: "",
+  };
 
   return (
     <Stack spacing={3} sx={{ maxWidth: 680 }}>
@@ -146,6 +187,102 @@ export default function ValheimConfig() {
             </MenuItem>
           </Select>
         </FormControl>
+      </Section>
+
+      <Section label={t("valheimConfig.sections.modifiers")}>
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          {t("valheimConfig.modifiers.description")}
+        </Typography>
+
+        {/* Boutons presets */}
+        <ButtonGroup size="small" variant="outlined">
+          {(["casual", "normal", "hard", "hardcore"] as const).map((key) => (
+            <Button
+              key={key}
+              onClick={() => handleChange({ modifiers: PRESETS[key] })}
+            >
+              {t(`valheimConfig.modifiers.presets.${key}`)}
+            </Button>
+          ))}
+        </ButtonGroup>
+
+        {/* Selects par modificateur */}
+        <Stack
+          direction="row"
+          spacing={1.5}
+          sx={{ flexWrap: "wrap", gap: 1.5 }}
+        >
+          <ModifierSelect
+            label={t("valheimConfig.modifiers.combat.label")}
+            value={modifiers.combat}
+            options={["veryeasy", "easy", "normal", "hard", "veryhard"]}
+            labelPrefix="valheimConfig.modifiers.combat"
+            onChange={(v) =>
+              handleChange({
+                modifiers: {
+                  ...modifiers,
+                  combat: v as ValheimModifiers["combat"],
+                },
+              })
+            }
+          />
+          <ModifierSelect
+            label={t("valheimConfig.modifiers.deathpenalty.label")}
+            value={modifiers.deathpenalty}
+            options={["casual", "veryeasy", "easy", "normal", "hard"]}
+            labelPrefix="valheimConfig.modifiers.deathpenalty"
+            onChange={(v) =>
+              handleChange({
+                modifiers: {
+                  ...modifiers,
+                  deathpenalty: v as ValheimModifiers["deathpenalty"],
+                },
+              })
+            }
+          />
+          <ModifierSelect
+            label={t("valheimConfig.modifiers.resources.label")}
+            value={modifiers.resources}
+            options={["muchless", "less", "normal", "more", "mostmore"]}
+            labelPrefix="valheimConfig.modifiers.resources"
+            onChange={(v) =>
+              handleChange({
+                modifiers: {
+                  ...modifiers,
+                  resources: v as ValheimModifiers["resources"],
+                },
+              })
+            }
+          />
+          <ModifierSelect
+            label={t("valheimConfig.modifiers.raids.label")}
+            value={modifiers.raids}
+            options={["none", "muchless", "less", "normal", "more"]}
+            labelPrefix="valheimConfig.modifiers.raids"
+            onChange={(v) =>
+              handleChange({
+                modifiers: {
+                  ...modifiers,
+                  raids: v as ValheimModifiers["raids"],
+                },
+              })
+            }
+          />
+          <ModifierSelect
+            label={t("valheimConfig.modifiers.portals.label")}
+            value={modifiers.portals}
+            options={["casual", "hard", "veryhard"]}
+            labelPrefix="valheimConfig.modifiers.portals"
+            onChange={(v) =>
+              handleChange({
+                modifiers: {
+                  ...modifiers,
+                  portals: v as ValheimModifiers["portals"],
+                },
+              })
+            }
+          />
+        </Stack>
       </Section>
 
       <Section label={t("valheimConfig.sections.network")}>
@@ -295,6 +432,39 @@ function Section({
       </Typography>
       <Stack spacing={2}>{children}</Stack>
     </Paper>
+  );
+}
+
+function ModifierSelect({
+  label,
+  value,
+  options,
+  labelPrefix,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  labelPrefix: string;
+  onChange: (v: string) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <FormControl size="small" sx={{ minWidth: 160 }}>
+      <InputLabel>{label}</InputLabel>
+      <Select
+        label={label}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <MenuItem value="">{t("valheimConfig.modifiers.default")}</MenuItem>
+        {options.map((opt) => (
+          <MenuItem key={opt} value={opt}>
+            {t(`${labelPrefix}.${opt}`)}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
   );
 }
 

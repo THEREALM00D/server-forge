@@ -9,57 +9,63 @@ import {
   DialogTitle,
   Divider,
   IconButton,
+  InputAdornment,
   Paper,
   Stack,
   Tab,
   Tabs,
+  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
+import SearchIcon from "@mui/icons-material/Search";
+import DownloadIcon from "@mui/icons-material/Download";
 import { useTranslation } from "react-i18next";
-import type { NexusModInfo, NexusModFile } from "@shared/types";
+import type {
+  ThunderstoreModInfo,
+  ThunderstoreModVersion,
+} from "@shared/types";
 
 type BrowseTab = "trending" | "latest" | "updated";
 
 interface Props {
-  hasApiKey: boolean;
   tab: BrowseTab;
-  mods: NexusModInfo[];
+  mods: ThunderstoreModInfo[];
   loading: boolean;
   error: boolean;
   onTabChange: (tab: BrowseTab) => void;
+  onSearch: (query: string) => void;
+  onInstallVersion: (code: string) => void;
 }
 
-// Les onglets Latest/Updated nécessitent une clé API (v1 seulement)
-const TAB_REQUIRES_KEY: Record<BrowseTab, boolean> = {
-  trending: false,
-  latest: true,
-  updated: true,
-};
-
 export default function ModBrowser({
-  hasApiKey,
   tab,
   mods,
   loading,
   error,
   onTabChange,
+  onSearch,
+  onInstallVersion,
 }: Props) {
   const { t } = useTranslation();
+  const [search, setSearch] = useState("");
   const [filesDialog, setFilesDialog] = useState<{
-    mod: NexusModInfo;
-    files: NexusModFile[] | null;
+    mod: ThunderstoreModInfo;
+    files: ThunderstoreModVersion[] | null;
   } | null>(null);
   const [loadingFiles, setLoadingFiles] = useState(false);
 
-  const openFiles = async (mod: NexusModInfo) => {
+  const openFiles = async (mod: ThunderstoreModInfo) => {
     setFilesDialog({ mod, files: null });
     setLoadingFiles(true);
     try {
-      const files = await window.api.valheim.mods.getModFiles(mod.mod_id);
+      const files = await window.api.valheim.mods.getModFiles(
+        mod.author,
+        mod.name,
+      );
       setFilesDialog({ mod, files });
     } catch {
       setFilesDialog({ mod, files: [] });
@@ -68,31 +74,74 @@ export default function ModBrowser({
     }
   };
 
+  const handleSearchSubmit = () => {
+    onSearch(search);
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") onSearch(search);
+    if (e.key === "Escape") {
+      setSearch("");
+      onSearch("");
+    }
+  };
+
   return (
     <Stack spacing={2}>
+      {/* Champ de recherche — soumet via Entrée ou bouton */}
+      <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
+        <TextField
+          size="small"
+          placeholder={t("valheimMods.browse.search")}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={handleSearchKeyDown}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ fontSize: 18, color: "text.disabled" }} />
+                </InputAdornment>
+              ),
+            },
+          }}
+          sx={{ flex: 1, maxWidth: 320 }}
+        />
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={handleSearchSubmit}
+          sx={{ height: 40 }}
+        >
+          {t("valheimMods.browse.searchBtn")}
+        </Button>
+        {search && (
+          <Button
+            size="small"
+            onClick={() => {
+              setSearch("");
+              onSearch("");
+            }}
+            sx={{ height: 40 }}
+          >
+            {t("valheimMods.browse.clearSearch")}
+          </Button>
+        )}
+      </Stack>
+
       <Tabs
         value={tab}
-        onChange={(_, v) => onTabChange(v as BrowseTab)}
+        onChange={(_, v) => {
+          setSearch("");
+          onTabChange(v as BrowseTab);
+        }}
         textColor="primary"
         indicatorColor="primary"
       >
         <Tab value="trending" label={t("valheimMods.browse.tabs.trending")} />
-        <Tab
-          value="latest"
-          label={t("valheimMods.browse.tabs.latest")}
-          disabled={TAB_REQUIRES_KEY["latest"] && !hasApiKey}
-        />
-        <Tab
-          value="updated"
-          label={t("valheimMods.browse.tabs.updated")}
-          disabled={TAB_REQUIRES_KEY["updated"] && !hasApiKey}
-        />
+        <Tab value="latest" label={t("valheimMods.browse.tabs.latest")} />
+        <Tab value="updated" label={t("valheimMods.browse.tabs.updated")} />
       </Tabs>
-      {!hasApiKey && (
-        <Typography variant="caption" sx={{ color: "text.secondary" }}>
-          {t("valheimMods.browse.publicMode")}
-        </Typography>
-      )}
 
       {loading && (
         <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
@@ -131,7 +180,14 @@ export default function ModBrowser({
                 )}
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
-                    {mod.name}
+                    {mod.name}{" "}
+                    <Typography
+                      component="span"
+                      variant="caption"
+                      sx={{ color: "text.secondary" }}
+                    >
+                      v{mod.version}
+                    </Typography>
                   </Typography>
                   <Typography
                     variant="caption"
@@ -170,12 +226,26 @@ export default function ModBrowser({
                       <FolderOpenIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
+                  {/* Installation directe de la dernière version */}
+                  <Tooltip title={t("valheimMods.browse.installLatest")}>
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      onClick={() =>
+                        onInstallVersion(
+                          `${mod.author}-${mod.name}-${mod.version}`,
+                        )
+                      }
+                    >
+                      <DownloadIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                   <Tooltip title={t("valheimMods.browse.openTooltip")}>
                     <IconButton
                       size="small"
                       onClick={() =>
                         window.api.shell.openExternal(
-                          `https://www.nexusmods.com/valheim/mods/${mod.mod_id}`,
+                          `https://thunderstore.io/c/valheim/p/${mod.author}/${mod.name}/`,
                         )
                       }
                     >
@@ -189,7 +259,7 @@ export default function ModBrowser({
         </Stack>
       )}
 
-      {/* Dialog fichiers */}
+      {/* Dialog versions */}
       {filesDialog && (
         <Dialog
           open
@@ -217,7 +287,10 @@ export default function ModBrowser({
                   <Box key={f.file_id} sx={{ py: 1.5 }}>
                     <Stack
                       direction="row"
-                      sx={{ justifyContent: "space-between" }}
+                      sx={{
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
                     >
                       <Box>
                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
@@ -227,12 +300,24 @@ export default function ModBrowser({
                           variant="caption"
                           sx={{ color: "text.secondary" }}
                         >
-                          v{f.version} — {f.category_name} —{" "}
                           {t("valheimMods.browse.filesDialog.size", {
                             size: f.size_kb.toLocaleString(),
                           })}
                         </Typography>
                       </Box>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<DownloadIcon />}
+                        onClick={() => {
+                          onInstallVersion(
+                            `${filesDialog.mod.author}-${filesDialog.mod.name}-${f.version}`,
+                          );
+                          setFilesDialog(null);
+                        }}
+                      >
+                        {t("valheimMods.thunderstore.install")}
+                      </Button>
                     </Stack>
                   </Box>
                 ))}
