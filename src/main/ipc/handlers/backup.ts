@@ -16,6 +16,11 @@ function getValheimWorldsPath(savedir: string): string {
   return join(base, "worlds_local");
 }
 
+// Dossier des sauvegardes Astroneer (à l'intérieur du dossier serveur, comme Palworld).
+function getAstroneerSavePath(serverPath: string): string {
+  return join(serverPath, "Astro", "Saved", "SaveGames");
+}
+
 export function registerBackupHandlers(ctx: IpcContext): void {
   ipcMain.handle("backup:getConfig", () => {
     const cfg = ctx.getServerConfig().backup;
@@ -41,7 +46,9 @@ export function registerBackupHandlers(ctx: IpcContext): void {
     const sourcePath =
       server?.gameType === "valheim"
         ? getValheimWorldsPath(ctx.getValheimConfig().savedir)
-        : undefined;
+        : server?.gameType === "astroneer"
+          ? getAstroneerSavePath(serverPath)
+          : undefined;
     const entry = await ctx.backup.create(serverPath, dir, sourcePath);
     ctx.backup.rotate(dir, ctx.getServerConfig().backup.backupKeep);
     return entry;
@@ -57,7 +64,9 @@ export function registerBackupHandlers(ctx: IpcContext): void {
     const saveDir =
       server?.gameType === "valheim"
         ? getValheimWorldsPath(ctx.getValheimConfig().savedir)
-        : undefined;
+        : server?.gameType === "astroneer"
+          ? getAstroneerSavePath(serverPath)
+          : undefined;
     await ctx.backup.restore(serverPath, backupPath, saveDir);
   });
 

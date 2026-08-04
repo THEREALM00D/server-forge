@@ -1,5 +1,12 @@
 import { ipcMain } from "electron/main";
 import type { IpcContext } from "../context";
+import type { GameType } from "../../../shared/types";
+
+const STEAM_APP_IDS: Record<GameType, string> = {
+  palworld: "2394010",
+  valheim: "896660",
+  astroneer: "728470",
+};
 
 export function registerSteamHandlers(ctx: IpcContext): void {
   ipcMain.handle("steamcmd:isInstalled", () => ctx.steamcmd.isInstalled());
@@ -44,10 +51,26 @@ export function registerSteamHandlers(ctx: IpcContext): void {
     });
   });
 
+  ipcMain.handle(
+    "steamcmd:installAstroneer",
+    async (event, installPath: string) => {
+      ctx.setActiveServerPath(installPath);
+      return ctx.steamcmd.installAstroneer(installPath, (progress) => {
+        event.sender.send("steamcmd:progress", progress);
+      });
+    },
+  );
+
+  ipcMain.handle("steamcmd:updateAstroneer", async (event) => {
+    const installPath = ctx.getActiveServerPath();
+    return ctx.steamcmd.installAstroneer(installPath, (progress) => {
+      event.sender.send("steamcmd:progress", progress);
+    });
+  });
+
   ipcMain.handle("steamcmd:checkForUpdate", async () => {
     const installPath = ctx.getActiveServerPath();
-    const appId =
-      ctx.getActiveServer()?.gameType === "valheim" ? "896660" : "2394010";
-    return ctx.steamcmd.checkForUpdate(installPath, appId);
+    const gameType = ctx.getActiveServer()?.gameType ?? "palworld";
+    return ctx.steamcmd.checkForUpdate(installPath, STEAM_APP_IDS[gameType]);
   });
 }

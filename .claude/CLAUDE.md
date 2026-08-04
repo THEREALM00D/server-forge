@@ -20,7 +20,8 @@
 - On evite la dupplication
 - Preferer les components reutilisable au lieu de dupliquer les choses
 - Toujours ajuster CLAUDE.md a la fin du travail pour avoir la meilleur doc possible
-- utiliser la doc officiel dans ## Utiliser la doc 
+- utiliser la doc officiel dans ## Utiliser la doc
+- Tu peux te utiliser et mettre a jour BACKLOG.md
 
 ## Use the mui-mcp server to answer any MUI questions --  
 - 1. call the "useMuiDocs" tool to fetch the docs of the package relevant in the question 
@@ -33,3 +34,4 @@
 - https://www.valheimgame.com/support/a-guide-to-dedicated-servers/
 - https://thunderstore.io/api/docs/
 -  https://thunderstore.io/api/docs/?format=openapi
+- https://blog.astroneer.space/p/astroneer-dedicated-server-details/

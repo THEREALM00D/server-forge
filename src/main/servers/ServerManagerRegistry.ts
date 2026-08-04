@@ -6,6 +6,7 @@ import type { ServerRegistry } from "./ServerRegistry";
 const PROCESS_NAME_PREFIXES: Record<GameType, string> = {
   palworld: "palserver",
   valheim: "valheim_server",
+  astroneer: "astroserver",
 };
 
 /**

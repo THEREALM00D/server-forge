@@ -8,6 +8,7 @@ import type { UpdateCheckResult } from "../../shared/types";
 
 const PALWORLD_APP_ID = "2394010";
 const VALHEIM_APP_ID = "896660";
+const ASTRONEER_APP_ID = "728470";
 const STEAMCMD_URL =
   "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip";
 
@@ -60,6 +61,13 @@ export class SteamCMD {
     onProgress: (msg: string) => void,
   ): Promise<{ success: boolean; error?: string }> {
     return this.runInstall(VALHEIM_APP_ID, installPath, onProgress);
+  }
+
+  async installAstroneer(
+    installPath: string,
+    onProgress: (msg: string) => void,
+  ): Promise<{ success: boolean; error?: string }> {
+    return this.runInstall(ASTRONEER_APP_ID, installPath, onProgress);
   }
 
   private async runInstall(

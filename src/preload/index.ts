@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
+import type { GameType } from "../shared/types";
 
 const api = {
   // Window controls
@@ -22,7 +23,7 @@ const api = {
     create: (input: {
       name: string;
       path: string;
-      gameType?: "palworld" | "valheim";
+      gameType?: GameType;
       color?: string | null;
     }) => ipcRenderer.invoke("servers:create", input),
     update: (
@@ -30,7 +31,7 @@ const api = {
       patch: Partial<{
         name: string;
         path: string;
-        gameType: "palworld" | "valheim";
+        gameType: GameType;
         color: string | null;
       }>,
     ) => ipcRenderer.invoke("servers:update", id, patch),
@@ -46,6 +47,9 @@ const api = {
     installValheim: (path: string) =>
       ipcRenderer.invoke("steamcmd:installValheim", path),
     updateValheim: () => ipcRenderer.invoke("steamcmd:updateValheim"),
+    installAstroneer: (path: string) =>
+      ipcRenderer.invoke("steamcmd:installAstroneer", path),
+    updateAstroneer: () => ipcRenderer.invoke("steamcmd:updateAstroneer"),
     checkForUpdate: () => ipcRenderer.invoke("steamcmd:checkForUpdate"),
     onProgress: (cb: (msg: string) => void) => {
       ipcRenderer.on("steamcmd:progress", (_e, msg) => cb(msg));
@@ -242,6 +246,20 @@ const api = {
       ipcRenderer.invoke("valheim:getPermittedList", serverId),
     setPermittedList: (list: string[], serverId?: string) =>
       ipcRenderer.invoke("valheim:setPermittedList", list, serverId),
+  },
+  // Astroneer (serverId optionnel — par défaut actif)
+  astroneer: {
+    getConfig: (serverId?: string) =>
+      ipcRenderer.invoke("astroneer:getConfig", serverId),
+    setConfig: (cfg: Record<string, unknown>, serverId?: string) =>
+      ipcRenderer.invoke("astroneer:setConfig", cfg, serverId),
+  },
+  // Astroneer .ini config (Engine.ini + AstroServerSettings.ini)
+  astroconfig: {
+    read: (serverId?: string) =>
+      ipcRenderer.invoke("astroconfig:read", serverId),
+    write: (settings: Record<string, unknown>, serverId?: string) =>
+      ipcRenderer.invoke("astroconfig:write", settings, serverId),
   },
   // App
   app: {

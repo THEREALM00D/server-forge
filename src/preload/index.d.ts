@@ -10,6 +10,8 @@ import type {
   UpdateCheckResult,
   LaunchArgsConfig,
   ValheimLaunchConfig,
+  AstroneerLaunchConfig,
+  AstroneerSettings,
   ValheimMod,
   ThunderstoreModInfo,
   ThunderstoreModVersion,
@@ -63,6 +65,10 @@ interface API {
       path: string,
     ) => Promise<{ success: boolean; error?: string }>;
     updateValheim: () => Promise<{ success: boolean; error?: string }>;
+    installAstroneer: (
+      path: string,
+    ) => Promise<{ success: boolean; error?: string }>;
+    updateAstroneer: () => Promise<{ success: boolean; error?: string }>;
     checkForUpdate: () => Promise<UpdateCheckResult>;
     onProgress: (cb: (msg: string) => void) => () => void;
   };
@@ -218,6 +224,20 @@ interface API {
     setBannedList: (list: string[], serverId?: string) => Promise<void>;
     getPermittedList: (serverId?: string) => Promise<string[]>;
     setPermittedList: (list: string[], serverId?: string) => Promise<void>;
+  };
+  astroneer: {
+    getConfig: (serverId?: string) => Promise<AstroneerLaunchConfig>;
+    setConfig: (
+      cfg: Partial<AstroneerLaunchConfig>,
+      serverId?: string,
+    ) => Promise<void>;
+  };
+  astroconfig: {
+    read: (serverId?: string) => Promise<AstroneerSettings>;
+    write: (
+      settings: AstroneerSettings,
+      serverId?: string,
+    ) => Promise<{ success: boolean; error?: string }>;
   };
   app: {
     getVersion: () => Promise<string>;

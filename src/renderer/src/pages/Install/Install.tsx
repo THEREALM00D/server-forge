@@ -23,7 +23,7 @@ import { useServer } from "../../context/ServerContext";
 import { useNotification } from "../../context/NotificationContext";
 import { steamService } from "../../games/palworld/services/steamService";
 import { dialogService } from "../../services/dialogService";
-import type { LaunchArgsConfig } from "@shared/types";
+import type { GameType, LaunchArgsConfig } from "@shared/types";
 
 interface UpdateStatus {
   checked: boolean;
@@ -38,6 +38,12 @@ const DEFAULT_LAUNCH_ARGS: LaunchArgsConfig = {
   customArgs: "",
 };
 
+const DEFAULT_INSTALL_PATHS: Record<GameType, string> = {
+  palworld: "C:\\PalworldServer",
+  valheim: "C:\\ValheimServer",
+  astroneer: "C:\\AstroneerServer",
+};
+
 export default function Install() {
   const { t } = useTranslation();
   const { state, refreshServers } = useServer();
@@ -46,8 +52,7 @@ export default function Install() {
   const gameType = state.activeServer?.gameType ?? "palworld";
 
   const [installPath, setInstallPath] = useState(
-    state.serverPath ||
-      (gameType === "valheim" ? "C:\\ValheimServer" : "C:\\PalworldServer"),
+    state.serverPath || DEFAULT_INSTALL_PATHS[gameType],
   );
   const [logs, setLogs] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
@@ -105,7 +110,9 @@ export default function Install() {
     const res =
       gameType === "valheim"
         ? await window.api.steamcmd.installValheim(installPath)
-        : await steamService.installPalworld(installPath);
+        : gameType === "astroneer"
+          ? await window.api.steamcmd.installAstroneer(installPath)
+          : await steamService.installPalworld(installPath);
     if (res.success) {
       await refreshServers();
       setUpdateStatus(null);
@@ -121,7 +128,9 @@ export default function Install() {
     const res =
       gameType === "valheim"
         ? await window.api.steamcmd.updateValheim()
-        : await steamService.updatePalworld();
+        : gameType === "astroneer"
+          ? await window.api.steamcmd.updateAstroneer()
+          : await steamService.updatePalworld();
     if (res.success) setUpdateStatus(null);
     else addLog(t("install.errorPrefix", { msg: res.error }));
     setRunning(false);
@@ -142,7 +151,9 @@ export default function Install() {
           {t(
             gameType === "valheim"
               ? "install.subtitleValheim"
-              : "install.subtitle",
+              : gameType === "astroneer"
+                ? "install.subtitleAstroneer"
+                : "install.subtitle",
           )}
         </Typography>
       </Box>
@@ -199,11 +210,7 @@ export default function Install() {
             size="small"
             value={installPath}
             onChange={(e) => setInstallPath(e.target.value)}
-            placeholder={
-              gameType === "valheim"
-                ? "C:\\ValheimServer"
-                : "C:\\PalworldServer"
-            }
+            placeholder={DEFAULT_INSTALL_PATHS[gameType]}
           />
           <Button
             variant="outlined"
@@ -227,7 +234,9 @@ export default function Install() {
               ? t("install.folder.installing")
               : gameType === "valheim"
                 ? t("install.folder.installValheim")
-                : t("install.folder.installPalworld")}
+                : gameType === "astroneer"
+                  ? t("install.folder.installAstroneer")
+                  : t("install.folder.installPalworld")}
           </Button>
           <Button
             fullWidth

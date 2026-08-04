@@ -1,6 +1,7 @@
 import { ipcMain } from "electron/main";
 import type { IpcContext } from "../context";
 import type {
+  AstroneerLaunchConfig,
   GameType,
   LaunchArgsConfig,
   ServerStatus,
@@ -20,6 +21,7 @@ const PERFORMANCE_FLAGS = [
 const EXE_NAMES: Record<GameType, string> = {
   palworld: "PalServer.exe",
   valheim: "valheim_server.exe",
+  astroneer: "AstroServer.exe",
 };
 
 export function buildServerArgs(cfg: LaunchArgsConfig): string[] {
@@ -45,6 +47,12 @@ export function buildValheimArgs(cfg: ValheimLaunchConfig): string[] {
   const custom = cfg.customArgs.trim();
   if (custom) args.push(...custom.split(/\s+/));
   return args;
+}
+
+// Astroneer se configure via Engine.ini/AstroServerSettings.ini, pas par CLI args.
+export function buildAstroneerArgs(cfg: AstroneerLaunchConfig): string[] {
+  const custom = cfg.customArgs.trim();
+  return custom ? custom.split(/\s+/) : [];
 }
 
 export function registerServerHandlers(ctx: IpcContext): void {
@@ -80,7 +88,9 @@ export function registerServerHandlers(ctx: IpcContext): void {
     const args =
       gameType === "valheim"
         ? buildValheimArgs(ctx.getValheimConfig(id))
-        : buildServerArgs(ctx.getServerConfig(id).launchArgs);
+        : gameType === "astroneer"
+          ? buildAstroneerArgs(ctx.getAstroneerConfig(id))
+          : buildServerArgs(ctx.getServerConfig(id).launchArgs);
 
     return ctx.serverManagers
       .getOrCreate(id)
@@ -103,7 +113,9 @@ export function registerServerHandlers(ctx: IpcContext): void {
     const args =
       gameType === "valheim"
         ? buildValheimArgs(ctx.getValheimConfig(id))
-        : buildServerArgs(ctx.getServerConfig(id).launchArgs);
+        : gameType === "astroneer"
+          ? buildAstroneerArgs(ctx.getAstroneerConfig(id))
+          : buildServerArgs(ctx.getServerConfig(id).launchArgs);
     return ctx.serverManagers
       .getOrCreate(id)
       .restart(

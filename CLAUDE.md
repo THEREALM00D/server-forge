@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## ServerForge
 
-Gestionnaire de serveurs dédiés de jeux vidéo. Supporte Palworld et Valheim.
+Gestionnaire de serveurs dédiés de jeux vidéo. Supporte Palworld, Valheim et Astroneer.
 
 ## Stack
 
@@ -42,6 +42,9 @@ src/
 │   │   │   ├── handlers/  #   handlers IPC (palapi, players), serverConfig
 │   │   │   └── ...
 │   │   ├── valheim/       # Code Valheim : handlers IPC (config), serverConfig
+│   │   ├── astroneer/     # Code Astroneer : AstroConfigParser (2 fichiers .ini),
+│   │   │   ├── handlers/  #   handlers IPC (config), serverConfig
+│   │   │   └── ...
 │   │   └── registry.ts    # getGameServerConfig, buildGameArgs, getGameStopConfig
 │   ├── ipc/
 │   │   ├── handlers.ts    # Setup : instancie les services, construit IpcContext
@@ -69,8 +72,11 @@ src/
     │   ├── palworld/
     │   │   ├── index.ts   # Manifest Palworld (pages, supportedPages, i18n)
     │   │   └── pages/<Page>/  # Page.tsx + hooks/ + components/ + __i18n__/{fr,en}.ts
-    │   └── valheim/
-    │       ├── index.ts   # Manifest Valheim
+    │   ├── valheim/
+    │   │   ├── index.ts   # Manifest Valheim
+    │   │   └── pages/<Page>/
+    │   └── astroneer/
+    │       ├── index.ts   # Manifest Astroneer (pas de page "mods" ni "players")
     │       └── pages/<Page>/
     └── pages/, services/  # Pages globales (Install, Servers) + services partagés
 ```
@@ -118,7 +124,7 @@ Chaque jeu expose un manifest typé dans `games/<jeu>/index.ts`. Le shell consom
 
 ### Adoption d'un processus existant
 
-Au démarrage, `ServerManager.tryAdopt()` scanne les processus via `systeminformation` pour détecter un `PalServer.exe` en cours (orphelin d'une session précédente). Si trouvé, le statut passe à `running` et on peut stop/restart via l'API REST + `taskkill`. **Les logs stdout/stderr ne sont pas récupérables** pour un processus adopté (le pipe appartenait à l'ancien parent).
+Au démarrage, `ServerManager.tryAdopt()` scanne les processus via `systeminformation` pour détecter l'exécutable du jeu en cours (orphelin d'une session précédente) — préfixe par jeu dans `PROCESS_NAME_PREFIXES` (`main/servers/ServerManagerRegistry.ts` : `palserver`, `valheim_server`, `astroserver`). Si trouvé, le statut passe à `running` et on peut stop/restart via l'API REST (Palworld) + `taskkill`. **Les logs stdout/stderr ne sont pas récupérables** pour un processus adopté (le pipe appartenait à l'ancien parent).
 
 ## Conventions
 
@@ -163,16 +169,29 @@ Au démarrage, `ServerManager.tryAdopt()` scanne les processus via `systeminform
 - Types : string (quoté), int, float (6 décimales), bool, enum (non quoté), array `(val1,val2)`
 - Les définitions d'UI (clés + types) sont dans `games/palworld/pages/Config/fields.ts`, les presets de difficulté dans `presets.ts`, et les labels/descriptions traduits dans `Config/__i18n__/{fr,en}.ts`.
 
+## Config INI Astroneer
+
+> **MVP sans RCON** : Astroneer expose un protocole RCON (TCP, `ConsolePort`, défaut 1234) pour liste de joueurs / save / shutdown gracieux, mais ServerForge ne l'implémente pas (choix produit — voir historique du projet). L'arrêt est donc toujours brutal (`taskkill`), comme Valheim. `ConsolePort`/`ConsolePassword` sont éditables dans la page Config (parité avec le groupe RCON de Palworld) mais **sans usage applicatif**, et **sans règle firewall automatique** — ne jamais exposer ce port publiquement (avertissement officiel Astroneer).
+
+- **2 fichiers INI standards** (contrairement au format Palworld `OptionSettings=(...)` sur une ligne), fusionnés en un seul objet `AstroneerSettings` côté app :
+  - `{serverPath}/Astro/Saved/Config/WindowsServer/Engine.ini` → section `[URL]`, clé `Port` (défaut 8777)
+  - `{serverPath}/Astro/Saved/Config/WindowsServer/AstroServerSettings.ini` → section `[/Script/Astro.AstroServerSettings]`, ~17 clés (`ServerName`, `MaxPlayerCount`, `OwnerName`, `ConsolePort`, etc.)
+- Parser : `src/main/games/astroneer/AstroConfigParser.ts` (`read`/`write` avec backup `.backup` avant écriture, comme `PalConfigParser`).
+- ⚠️ Astroneer ne persiste pas les changements de config faits pendant que le serveur tourne — éditer uniquement serveur arrêté (avertissement officiel).
+- UI data-driven comme Palworld : `games/astroneer/pages/Config/fields.ts` (`FIELD_GROUPS`) + composants `ConfigGroup`/`ConfigField` (copie locale, pas de presets de difficulté).
+- IPC : `astroconfig:read` / `astroconfig:write` (dossier `games/astroneer/handlers/config.ts`).
+
 ## Arguments de lancement
 
 - **Palworld** : config `launchArgs: { publicLobby, performanceFlags, customArgs }` (type `LaunchArgsConfig`). `buildArgs` dans `src/main/games/palworld/serverConfig.ts`.
 - **Valheim** : config `valheimConfig: ValheimLaunchConfig`. `buildArgs` dans `src/main/games/valheim/serverConfig.ts`.
-- IPC : `server:getLaunchArgs` / `server:setLaunchArgs`. UI : section « Arguments de lancement » dans Installation.
+- **Astroneer** : config `astroneerConfig: { customArgs }` (type `AstroneerLaunchConfig`) — Astroneer ne prend quasi aucun argument CLI, toute la config passe par les fichiers `.ini` (voir « Config INI Astroneer »). `buildArgs` dans `src/main/games/astroneer/serverConfig.ts`.
+- IPC : `server:getLaunchArgs` / `server:setLaunchArgs`. UI : section « Arguments de lancement » dans Installation (Palworld uniquement — Valheim/Astroneer n'affichent pas cette section, leur config passe par leur page Config dédiée).
 - `-publiclobby` active le mode lobby EOS Palworld (crossplay Xbox).
 
 ## Sauvegardes
 
-- Dossier zippé : `{serverPath}/Pal/Saved/SaveGames/`
+- Dossier zippé : `{serverPath}/Pal/Saved/SaveGames/` (Palworld) ou `{serverPath}/Astro/Saved/SaveGames/` (Astroneer, résolu dans `main/ipc/handlers/backup.ts`). Valheim utilise un chemin hors `serverPath` (`%LOCALAPPDATA_LOW%/IronGate/Valheim/worlds_local` ou `savedir` custom).
 - Format : ZIP niveau 9, nom `backup-YYYY-MM-DD_HH-MM-SS.zip`
 - Dossier cible : configurable (défaut `{userData}/backups`)
 - Rotation : garde N dernières (0 = infini)
@@ -181,9 +200,9 @@ Au démarrage, `ServerManager.tryAdopt()` scanne les processus via `systeminform
 ## Redémarrage planifié
 
 - Une heure quotidienne (`HH:MM` 24h), pas de multi-horaires
-- Flow : annonce (via `/v1/api/announce`) → attente `warningMinutes` → save → shutdown API
+- Flow (Palworld) : annonce (via `/v1/api/announce`) → attente `warningMinutes` → save → shutdown API
 - Scheduler vérifie toutes les 30 secondes
-- **Requiert l'API REST activée** — sinon l'arrêt est brutal (`taskkill`) sans save
+- **Requiert l'API REST activée** (Palworld) — sinon l'arrêt est brutal (`taskkill`) sans save. Valheim et Astroneer n'ont pas ce flow gracieux dans ServerForge : `getStopConfig()` renvoie toujours `restApiEnabled: false`, donc `taskkill` systématique.
 
 ## Historique des joueurs
 

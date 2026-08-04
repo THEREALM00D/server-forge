@@ -16,6 +16,7 @@ import type {
   Server,
   ServerConfig,
   ValheimLaunchConfig,
+  AstroneerLaunchConfig,
 } from "../../shared/types";
 
 export interface AppStore {
@@ -94,6 +95,13 @@ export interface IpcContext {
   updateValheimConfig: (
     serverId: string | undefined,
     patch: Partial<ValheimLaunchConfig>,
+  ) => void;
+
+  // Config Astroneer par-serveur (launch args spécifiques à Astroneer)
+  getAstroneerConfig: (serverId?: string) => AstroneerLaunchConfig;
+  updateAstroneerConfig: (
+    serverId: string | undefined,
+    patch: Partial<AstroneerLaunchConfig>,
   ) => void;
 
   /** Dossier userData/servers/{id}/ utilisé pour stocker mods.json et les ZIPs temp. */

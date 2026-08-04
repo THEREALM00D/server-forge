@@ -3,6 +3,7 @@ export default {
     title: "Installation",
     subtitle: "Install or update the Palworld server via SteamCMD",
     subtitleValheim: "Install or update the Valheim server via SteamCMD",
+    subtitleAstroneer: "Install or update the Astroneer server via SteamCMD",
     steamcmd: {
       label: "SteamCMD",
       installed: "Installed",
@@ -16,6 +17,7 @@ export default {
       title: "Installation folder",
       installPalworld: "Install Palworld",
       installValheim: "Install Valheim",
+      installAstroneer: "Install Astroneer",
       installing: "Installing...",
       update: "Update",
     },

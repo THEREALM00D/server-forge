@@ -12,7 +12,11 @@ import { ServerRegistry } from "../servers/ServerRegistry";
 import { ServerConfigStore } from "../servers/ServerConfigStore";
 import { ServerManagerRegistry } from "../servers/ServerManagerRegistry";
 import { PlayerHistoryRegistry } from "../servers/PlayerHistoryRegistry";
-import type { RestartConfig, ValheimLaunchConfig } from "../../shared/types";
+import type {
+  RestartConfig,
+  ValheimLaunchConfig,
+  AstroneerLaunchConfig,
+} from "../../shared/types";
 import type { AppStore, IpcContext } from "./context";
 import { registerMiscHandlers } from "./handlers/misc";
 import { registerSteamHandlers } from "./handlers/steam";
@@ -25,6 +29,7 @@ import { registerPalapiHandlers } from "../games/palworld/handlers/palapi";
 import { registerPlayersHandlers } from "../games/palworld/handlers/players";
 import { registerValheimHandlers } from "../games/valheim/handlers/config";
 import { registerValheimModsHandlers } from "../games/valheim/handlers/mods";
+import { registerAstroneerHandlers } from "../games/astroneer/handlers/config";
 import {
   getGameServerConfig,
   buildGameArgs,
@@ -95,6 +100,15 @@ export function registerIpcHandlers(): void {
   ) =>
     serverConfigs.update(resolveServerId(id), {
       valheimConfig: patch as ValheimLaunchConfig,
+    });
+  const getAstroneerConfig = (id?: string) =>
+    serverConfigs.get(resolveServerId(id)).astroneerConfig;
+  const updateAstroneerConfig = (
+    id: string | undefined,
+    patch: Partial<AstroneerLaunchConfig>,
+  ) =>
+    serverConfigs.update(resolveServerId(id), {
+      astroneerConfig: patch as AstroneerLaunchConfig,
     });
 
   const getModsDataDir = (id?: string): string => {
@@ -223,6 +237,9 @@ export function registerIpcHandlers(): void {
               portals: "",
             },
           } satisfies ValheimLaunchConfig,
+          astroneerConfig: {
+            customArgs: "",
+          } satisfies AstroneerLaunchConfig,
           backup: { backupDir: "", backupIntervalMinutes: 0, backupKeep: 10 },
           restart: getRestartConfig(),
         };
@@ -301,6 +318,8 @@ export function registerIpcHandlers(): void {
     getServerPath,
     getValheimConfig,
     updateValheimConfig,
+    getAstroneerConfig,
+    updateAstroneerConfig,
     getModsDataDir,
   };
 
@@ -315,4 +334,5 @@ export function registerIpcHandlers(): void {
   registerServersHandlers(ctx, servers);
   registerValheimHandlers(ctx);
   registerValheimModsHandlers(ctx);
+  registerAstroneerHandlers(ctx);
 }

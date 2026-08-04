@@ -2,7 +2,7 @@
 // Tout ce qui transite via IPC doit avoir le même type des deux côtés.
 
 // --- Serveurs ---
-export type GameType = "palworld" | "valheim";
+export type GameType = "palworld" | "valheim" | "astroneer";
 
 export interface Server {
   id: string;
@@ -19,6 +19,7 @@ export interface Server {
 export interface ServerConfig {
   launchArgs: LaunchArgsConfig;
   valheimConfig: ValheimLaunchConfig;
+  astroneerConfig: AstroneerLaunchConfig;
   backup: BackupConfig;
   restart: RestartConfig;
 }
@@ -146,6 +147,16 @@ export interface ValheimLaunchConfig {
   worldSize: "small" | "medium" | "large" | "yolo" | "";
   modifiers: ValheimModifiers;
 }
+
+// --- Launch arguments (AstroServer.exe) ---
+// Astroneer se configure quasi entièrement via Engine.ini / AstroServerSettings.ini
+// (voir AstroneerSettings ci-dessous) — customArgs reste pour parité avec les autres jeux.
+export interface AstroneerLaunchConfig {
+  customArgs: string;
+}
+
+// --- Config INI Astroneer (Engine.ini + AstroServerSettings.ini fusionnés) ---
+export type AstroneerSettings = Record<string, string | number | boolean>;
 
 // --- Mods Valheim ---
 export interface ValheimMod {

@@ -27,6 +27,7 @@ export default {
     games: {
       palworld: "Palworld",
       valheim: "Valheim",
+      astroneer: "Astroneer",
     },
     actions: {
       activate: "Activate",
