@@ -57,6 +57,7 @@ export default {
       restoreFailed: "Échec de la restauration",
       deleted: "Sauvegarde supprimée",
       deleteFailed: "Impossible de supprimer la sauvegarde",
+      configFailed: "Impossible d'enregistrer la configuration de sauvegarde",
     },
   },
   schedule: {
@@ -71,6 +72,7 @@ export default {
     save: "Enregistrer",
     notify: {
       saved: "Planification enregistrée",
+      saveFailed: "Impossible d'enregistrer la planification",
     },
   },
 };

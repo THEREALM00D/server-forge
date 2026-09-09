@@ -32,6 +32,8 @@ export default {
       cleared: "History cleared.",
       removed: "{{name}} removed from history.",
       cannotLoad: "Cannot load history.",
+      removeFailed: "Unable to remove {{name}}.",
+      clearFailed: "Unable to clear history.",
     },
     detail: {
       firstSeen: "First seen",

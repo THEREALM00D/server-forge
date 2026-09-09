@@ -37,8 +37,12 @@ export default function Schedule() {
   };
 
   useEffect(() => {
-    window.api.schedule.getRestart().then(setCfg);
+    window.api.schedule
+      .getRestart()
+      .then(setCfg)
+      .catch((e) => notify((e as Error).message, "error"));
     checkApi();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleEnableApi = async () => {
@@ -65,9 +69,13 @@ export default function Schedule() {
   };
 
   const handleSave = async () => {
-    await window.api.schedule.setRestart(cfg);
-    setDirty(false);
-    notify(t("schedule.notify.saved"), "success");
+    try {
+      await window.api.schedule.setRestart(cfg);
+      setDirty(false);
+      notify(t("schedule.notify.saved"), "success");
+    } catch (e) {
+      notify((e as Error).message || t("schedule.notify.saveFailed"), "error");
+    }
   };
 
   return (

@@ -35,7 +35,7 @@ export function useValheimConfig() {
     window.api.valheim
       .getConfig()
       .then((cfg) => setConfig({ ...DEFAULT_CONFIG, ...cfg }))
-      .catch(() => {})
+      .catch(() => notify("Impossible de charger la configuration", "error"))
       .finally(() => setLoading(false));
   }, []);
 

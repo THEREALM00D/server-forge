@@ -46,11 +46,15 @@ export default function Config() {
   const form = useForm<Settings>({
     defaultValues: {},
     onSubmit: async ({ value }) => {
-      const res = await configService.writePalConfig(value);
-      if (res.success) {
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
-      } else notify(res.error ?? t("config.unknownError"), "error");
+      try {
+        const res = await configService.writePalConfig(value);
+        if (res.success) {
+          setSaved(true);
+          setTimeout(() => setSaved(false), 2000);
+        } else notify(res.error ?? t("config.unknownError"), "error");
+      } catch (e) {
+        notify((e as Error).message, "error");
+      }
     },
   });
 
@@ -59,12 +63,16 @@ export default function Config() {
       setLoading(false);
       return;
     }
-    configService.readPalConfig().then((settings) => {
-      Object.entries(settings).forEach(([key, val]) =>
-        form.setFieldValue(key as never, val as never),
-      );
-      setLoading(false);
-    });
+    configService
+      .readPalConfig()
+      .then((settings) => {
+        Object.entries(settings).forEach(([key, val]) =>
+          form.setFieldValue(key as never, val as never),
+        );
+      })
+      .catch(() => notify(t("config.loadFailed"), "error"))
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.serverPath]);
 
   const applyDifficultyPreset = (difficulty: string) => {

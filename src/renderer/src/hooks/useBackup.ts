@@ -79,15 +79,23 @@ export function useBackup() {
     if (dir) {
       const next = { ...config, backupDir: dir };
       setConfig(next);
-      await window.api.backup.setConfig(next);
-      await refresh();
+      try {
+        await window.api.backup.setConfig(next);
+        await refresh();
+      } catch {
+        notify(t("backup.notify.configFailed"));
+      }
     }
   };
 
   const handleConfigChange = async (patch: Partial<BackupConfig>) => {
     const next = { ...config, ...patch };
     setConfig(next);
-    await window.api.backup.setConfig(next);
+    try {
+      await window.api.backup.setConfig(next);
+    } catch {
+      notify(t("backup.notify.configFailed"));
+    }
   };
 
   return {

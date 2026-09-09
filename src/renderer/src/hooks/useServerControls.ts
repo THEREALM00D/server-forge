@@ -19,25 +19,38 @@ export function useServerControls() {
 
   const start = async () => {
     optimistic("starting");
-    const res = await window.api.server.start();
-    if (!res.success) {
-      notify(res.error ?? "Impossible de démarrer le serveur", "error");
+    try {
+      const res = await window.api.server.start();
+      if (!res.success) {
+        notify(res.error ?? "Impossible de démarrer le serveur", "error");
+        optimistic("stopped");
+      }
+    } catch (e) {
+      notify((e as Error).message, "error");
       optimistic("stopped");
     }
   };
 
   const stop = async () => {
     optimistic("stopping");
-    const res = await window.api.server.stop();
-    if (!res.success)
-      notify(res.error ?? "Impossible d'arrêter le serveur", "error");
+    try {
+      const res = await window.api.server.stop();
+      if (!res.success)
+        notify(res.error ?? "Impossible d'arrêter le serveur", "error");
+    } catch (e) {
+      notify((e as Error).message, "error");
+    }
   };
 
   const restart = async () => {
     optimistic("stopping");
-    const res = await window.api.server.restart();
-    if (!res.success)
-      notify(res.error ?? "Impossible de redémarrer le serveur", "error");
+    try {
+      const res = await window.api.server.restart();
+      if (!res.success)
+        notify(res.error ?? "Impossible de redémarrer le serveur", "error");
+    } catch (e) {
+      notify((e as Error).message, "error");
+    }
   };
 
   return { start, stop, restart, canStart, canStop };

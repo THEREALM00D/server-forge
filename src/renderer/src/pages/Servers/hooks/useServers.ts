@@ -27,15 +27,19 @@ export function useServers() {
   const closeDialog = () => setDialogOpen(false);
 
   const handleSubmit = async (values: ServerFormValues) => {
-    if (editing) {
-      await window.api.servers.update(editing.id, values);
-      notify(t("servers.notify.updated", { name: values.name }), "success");
-    } else {
-      const created = await window.api.servers.create(values);
-      notify(t("servers.notify.created", { name: created.name }), "success");
+    try {
+      if (editing) {
+        await window.api.servers.update(editing.id, values);
+        notify(t("servers.notify.updated", { name: values.name }), "success");
+      } else {
+        const created = await window.api.servers.create(values);
+        notify(t("servers.notify.created", { name: created.name }), "success");
+      }
+      await refreshServers();
+      setDialogOpen(false);
+    } catch (e) {
+      notify((e as Error).message, "error");
     }
-    await refreshServers();
-    setDialogOpen(false);
   };
 
   const handleDelete = async (server: Server) => {
@@ -43,27 +47,39 @@ export function useServers() {
       !window.confirm(t("servers.actions.deleteConfirm", { name: server.name }))
     )
       return;
-    await window.api.servers.delete(server.id);
-    notify(t("servers.notify.deleted"), "success");
-    await refreshServers();
+    try {
+      await window.api.servers.delete(server.id);
+      notify(t("servers.notify.deleted"), "success");
+      await refreshServers();
+    } catch (e) {
+      notify((e as Error).message, "error");
+    }
   };
 
   const handleActivate = async (server: Server) => {
-    await switchActive(server.id);
-    notify(t("servers.notify.activated", { name: server.name }), "success");
+    try {
+      await switchActive(server.id);
+      notify(t("servers.notify.activated", { name: server.name }), "success");
+    } catch (e) {
+      notify((e as Error).message, "error");
+    }
   };
 
   const handleServerAction = async (
     action: "start" | "stop" | "restart",
     server: Server,
   ) => {
-    const res = await serverService[action](server.id);
-    if (!res.success) {
-      const key =
-        action === "stop"
-          ? "servers.notify.stopFailed"
-          : "servers.notify.startFailed";
-      notify(t(key, { error: res.error ?? "?" }), "error");
+    try {
+      const res = await serverService[action](server.id);
+      if (!res.success) {
+        const key =
+          action === "stop"
+            ? "servers.notify.stopFailed"
+            : "servers.notify.startFailed";
+        notify(t(key, { error: res.error ?? "?" }), "error");
+      }
+    } catch (e) {
+      notify((e as Error).message, "error");
     }
   };
 

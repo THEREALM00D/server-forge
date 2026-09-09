@@ -11,6 +11,7 @@ export default {
     save: "Save configuration",
     saved: "Saved!",
     unknownError: "Unknown error",
+    loadFailed: "Unable to load the configuration",
     noServerPath: "Configure the server path in Installation.",
     groups: {
       server: "Server",

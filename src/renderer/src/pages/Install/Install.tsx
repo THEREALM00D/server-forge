@@ -83,8 +83,12 @@ export default function Install() {
   const updateLaunchArgs = async (patch: Partial<LaunchArgsConfig>) => {
     const next = { ...launchArgs, ...patch };
     setLaunchArgs(next);
-    await window.api.server.setLaunchArgs(next);
-    notify(t("install.launchArgs.saved"), "info");
+    try {
+      await window.api.server.setLaunchArgs(next);
+      notify(t("install.launchArgs.saved"), "info");
+    } catch (e) {
+      notify((e as Error).message, "error");
+    }
   };
 
   const addLog = (msg: string) => setLogs((p) => [...p, msg]);
@@ -97,50 +101,77 @@ export default function Install() {
   const handleInstallSteam = async () => {
     setRunning(true);
     setLogs([]);
-    const res = await steamService.install();
-    setSteamInstalled(res.success);
-    if (!res.success) addLog(t("install.errorPrefix", { msg: res.error }));
-    setRunning(false);
+    try {
+      const res = await steamService.install();
+      setSteamInstalled(res.success);
+      if (!res.success) {
+        addLog(t("install.errorPrefix", { msg: res.error }));
+        notify(t("install.errorPrefix", { msg: res.error }), "error");
+      }
+    } catch (e) {
+      notify((e as Error).message, "error");
+    } finally {
+      setRunning(false);
+    }
   };
 
   const handleInstallGame = async () => {
     if (!installPath) return;
     setRunning(true);
     setLogs([]);
-    const res =
-      gameType === "valheim"
-        ? await window.api.steamcmd.installValheim(installPath)
-        : gameType === "astroneer"
-          ? await window.api.steamcmd.installAstroneer(installPath)
-          : await steamService.installPalworld(installPath);
-    if (res.success) {
-      await refreshServers();
-      setUpdateStatus(null);
-    } else {
-      addLog(t("install.errorPrefix", { msg: res.error }));
+    try {
+      const res =
+        gameType === "valheim"
+          ? await window.api.steamcmd.installValheim(installPath)
+          : gameType === "astroneer"
+            ? await window.api.steamcmd.installAstroneer(installPath)
+            : await steamService.installPalworld(installPath);
+      if (res.success) {
+        await refreshServers();
+        setUpdateStatus(null);
+      } else {
+        addLog(t("install.errorPrefix", { msg: res.error }));
+        notify(t("install.errorPrefix", { msg: res.error }), "error");
+      }
+    } catch (e) {
+      notify((e as Error).message, "error");
+    } finally {
+      setRunning(false);
     }
-    setRunning(false);
   };
 
   const handleUpdate = async () => {
     setRunning(true);
     setLogs([]);
-    const res =
-      gameType === "valheim"
-        ? await window.api.steamcmd.updateValheim()
-        : gameType === "astroneer"
-          ? await window.api.steamcmd.updateAstroneer()
-          : await steamService.updatePalworld();
-    if (res.success) setUpdateStatus(null);
-    else addLog(t("install.errorPrefix", { msg: res.error }));
-    setRunning(false);
+    try {
+      const res =
+        gameType === "valheim"
+          ? await window.api.steamcmd.updateValheim()
+          : gameType === "astroneer"
+            ? await window.api.steamcmd.updateAstroneer()
+            : await steamService.updatePalworld();
+      if (res.success) setUpdateStatus(null);
+      else {
+        addLog(t("install.errorPrefix", { msg: res.error }));
+        notify(t("install.errorPrefix", { msg: res.error }), "error");
+      }
+    } catch (e) {
+      notify((e as Error).message, "error");
+    } finally {
+      setRunning(false);
+    }
   };
 
   const handleCheckUpdate = async () => {
     setCheckingUpdate(true);
-    const result = await steamService.checkForUpdate();
-    setUpdateStatus({ checked: true, ...result });
-    setCheckingUpdate(false);
+    try {
+      const result = await steamService.checkForUpdate();
+      setUpdateStatus({ checked: true, ...result });
+    } catch (e) {
+      notify((e as Error).message, "error");
+    } finally {
+      setCheckingUpdate(false);
+    }
   };
 
   return (

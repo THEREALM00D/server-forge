@@ -45,11 +45,15 @@ export default function AstroneerConfig() {
   const form = useForm<Settings>({
     defaultValues: {},
     onSubmit: async ({ value }) => {
-      const res = await astroConfigService.writeConfig(value);
-      if (res.success) {
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
-      } else notify(res.error ?? t("config.unknownError"), "error");
+      try {
+        const res = await astroConfigService.writeConfig(value);
+        if (res.success) {
+          setSaved(true);
+          setTimeout(() => setSaved(false), 2000);
+        } else notify(res.error ?? t("config.unknownError"), "error");
+      } catch (e) {
+        notify((e as Error).message, "error");
+      }
     },
   });
 
@@ -58,12 +62,16 @@ export default function AstroneerConfig() {
       setLoading(false);
       return;
     }
-    astroConfigService.readConfig().then((settings) => {
-      Object.entries(settings).forEach(([key, val]) =>
-        form.setFieldValue(key as never, val as never),
-      );
-      setLoading(false);
-    });
+    astroConfigService
+      .readConfig()
+      .then((settings) => {
+        Object.entries(settings).forEach(([key, val]) =>
+          form.setFieldValue(key as never, val as never),
+        );
+      })
+      .catch(() => notify(t("config.loadFailed"), "error"))
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.serverPath]);
 
   if (!state.serverPath) {

@@ -11,6 +11,7 @@ export default {
     save: "Sauvegarder la configuration",
     saved: "Sauvegardé !",
     unknownError: "Erreur inconnue",
+    loadFailed: "Impossible de charger la configuration",
     noServerPath: "Configurez le chemin serveur dans Installation.",
     groups: {
       server: "Serveur",

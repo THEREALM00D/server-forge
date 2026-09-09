@@ -57,6 +57,7 @@ export default {
       restoreFailed: "Restore failed",
       deleted: "Backup deleted",
       deleteFailed: "Unable to delete the backup",
+      configFailed: "Unable to save the backup configuration",
     },
   },
   schedule: {
@@ -72,6 +73,7 @@ export default {
     save: "Save",
     notify: {
       saved: "Schedule saved",
+      saveFailed: "Unable to save the schedule",
     },
   },
 };

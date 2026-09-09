@@ -24,6 +24,7 @@ export default {
       manual: "Manual",
       installedAt: "Installed on {{date}}",
       version: "v{{version}}",
+      loadFailed: "Unable to load installed mods",
     },
     thunderstore: {
       title: "Thunderstore Code",

@@ -72,16 +72,24 @@ export default function Players() {
       !window.confirm(t("players.actions.removeConfirm", { name: entry.name }))
     )
       return;
-    await window.api.players.removeEntry(entry.userId);
-    notify(t("players.notify.removed", { name: entry.name }), "success");
-    await refresh();
+    try {
+      await window.api.players.removeEntry(entry.userId);
+      notify(t("players.notify.removed", { name: entry.name }), "success");
+      await refresh();
+    } catch {
+      notify(t("players.notify.removeFailed", { name: entry.name }), "error");
+    }
   };
 
   const handleClear = async () => {
     if (!window.confirm(t("players.actions.clearConfirm"))) return;
-    await window.api.players.clearHistory();
-    notify(t("players.notify.cleared"), "success");
-    await refresh();
+    try {
+      await window.api.players.clearHistory();
+      notify(t("players.notify.cleared"), "success");
+      await refresh();
+    } catch {
+      notify(t("players.notify.clearFailed"), "error");
+    }
   };
 
   return (

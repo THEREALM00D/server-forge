@@ -128,6 +128,7 @@ export default {
       save: "Save",
       saved: "Saved!",
       saveFailed: "Unable to save the list",
+      loadFailed: "Unable to load the list",
     },
   },
 };

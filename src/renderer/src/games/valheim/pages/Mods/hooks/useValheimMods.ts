@@ -31,20 +31,22 @@ export function useValheimMods() {
   const getInstalledCodes = (mods: ValheimMod[]) =>
     mods.map((m) => m.thunderstoreCode).filter((c): c is string => Boolean(c));
 
-  const refreshUpdates = useCallback(async (mods: ValheimMod[]) => {
-    const codes = getInstalledCodes(mods);
-    if (codes.length === 0) {
-      setUpdates([]);
-      return;
-    }
-    try {
-      const found = await window.api.valheim.mods.checkUpdates(codes);
-      setUpdates(found);
-    } catch {
-      // silencieux
-      console.error("Failed to check for mod updates");
-    }
-  }, []);
+  const refreshUpdates = useCallback(
+    async (mods: ValheimMod[]) => {
+      const codes = getInstalledCodes(mods);
+      if (codes.length === 0) {
+        setUpdates([]);
+        return;
+      }
+      try {
+        const found = await window.api.valheim.mods.checkUpdates(codes);
+        setUpdates(found);
+      } catch (e) {
+        notify((e as Error).message, "error");
+      }
+    },
+    [notify],
+  );
 
   const loadBrowse = useCallback(async (tab: BrowseTab, searchQuery = "") => {
     setBrowseLoading(true);
@@ -82,7 +84,7 @@ export function useValheimMods() {
         setInstalledMods(mods);
         refreshUpdates(mods);
       })
-      .catch(() => {});
+      .catch(() => notify(t("valheimMods.installed.loadFailed"), "error"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -130,11 +132,11 @@ export function useValheimMods() {
           installedCodes,
         );
         if (deps.length > 0) setPendingDeps({ modName, deps });
-      } catch {
-        // silencieux
+      } catch (e) {
+        notify((e as Error).message, "warning");
       }
     },
-    [],
+    [notify],
   );
 
   const handleInstallFromThunderstore = useCallback(

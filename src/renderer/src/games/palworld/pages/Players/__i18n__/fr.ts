@@ -33,6 +33,8 @@ export default {
       cleared: "Historique effacé.",
       removed: "{{name}} retiré de l'historique.",
       cannotLoad: "Impossible de charger l'historique.",
+      removeFailed: "Impossible de retirer {{name}}.",
+      clearFailed: "Impossible d'effacer l'historique.",
     },
     detail: {
       firstSeen: "Première connexion",

@@ -132,6 +132,7 @@ export default {
       save: "Sauvegarder",
       saved: "Sauvegardé !",
       saveFailed: "Impossible de sauvegarder la liste",
+      loadFailed: "Impossible de charger la liste",
     },
   },
 };

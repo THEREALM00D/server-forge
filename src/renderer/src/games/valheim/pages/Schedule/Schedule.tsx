@@ -28,7 +28,11 @@ export default function ValheimSchedule() {
   const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
-    window.api.schedule.getRestart().then(setCfg);
+    window.api.schedule
+      .getRestart()
+      .then(setCfg)
+      .catch((e) => notify((e as Error).message, "error"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const update = (patch: Partial<RestartConfig>) => {
@@ -37,9 +41,13 @@ export default function ValheimSchedule() {
   };
 
   const handleSave = async () => {
-    await window.api.schedule.setRestart(cfg);
-    setDirty(false);
-    notify(t("schedule.notify.saved"), "success");
+    try {
+      await window.api.schedule.setRestart(cfg);
+      setDirty(false);
+      notify(t("schedule.notify.saved"), "success");
+    } catch (e) {
+      notify((e as Error).message || t("schedule.notify.saveFailed"), "error");
+    }
   };
 
   return (

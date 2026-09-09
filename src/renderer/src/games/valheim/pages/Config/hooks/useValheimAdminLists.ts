@@ -18,7 +18,10 @@ function useList(
   useEffect(() => {
     getter()
       .then((list) => setState({ value: list.join("\n"), saved: false }))
-      .catch(() => {});
+      .catch(() =>
+        notify(t("valheimConfig.administration.loadFailed"), "error"),
+      );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleChange = (value: string) => {
