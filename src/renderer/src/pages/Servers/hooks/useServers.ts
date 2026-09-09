@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { Server } from "@shared/types";
 import { useServer } from "../../../context/ServerContext";
 import { useNotification } from "../../../context/NotificationContext";
-import { serverService } from "../../../games/palworld/services/serverService";
+import { serverService } from "../../../services/serverService";
 import type { ServerFormValues } from "../components/ServerDialog";
 
 export function useServers() {
@@ -75,7 +75,9 @@ export function useServers() {
         const key =
           action === "stop"
             ? "servers.notify.stopFailed"
-            : "servers.notify.startFailed";
+            : action === "restart"
+              ? "servers.notify.restartFailed"
+              : "servers.notify.startFailed";
         notify(t(key, { error: res.error ?? "?" }), "error");
       }
     } catch (e) {

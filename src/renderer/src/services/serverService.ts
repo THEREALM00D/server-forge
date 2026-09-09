@@ -1,8 +1,4 @@
-import type {
-  OperationResult,
-  ServerStatus,
-  ServerLogEvent,
-} from "../../../types";
+import type { OperationResult, ServerStatus, ServerLogEvent } from "../types";
 
 export const serverService = {
   start: (serverId?: string): Promise<OperationResult> =>

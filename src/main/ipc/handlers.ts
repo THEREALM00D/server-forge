@@ -9,7 +9,10 @@ import { BackupManager } from "../backup/BackupManager";
 import { RestartScheduler } from "../scheduler/RestartScheduler";
 import { PalworldApiClient } from "../games/palworld/PalworldApiClient";
 import { ServerRegistry } from "../servers/ServerRegistry";
-import { ServerConfigStore } from "../servers/ServerConfigStore";
+import {
+  ServerConfigStore,
+  DEFAULT_SERVER_CONFIG,
+} from "../servers/ServerConfigStore";
 import { ServerManagerRegistry } from "../servers/ServerManagerRegistry";
 import { PlayerHistoryRegistry } from "../servers/PlayerHistoryRegistry";
 import type {
@@ -140,9 +143,9 @@ export function registerIpcHandlers(): void {
   // Phase 2c : migre l'ancien history.json partagé vers le premier serveur
   if (firstServer) playerHistories.migrateLegacy(firstServer.id);
 
-  const broadcastLog = (line: string): void => {
+  const broadcastLog = (serverId: string, line: string): void => {
     BrowserWindow.getAllWindows().forEach((w) =>
-      w.webContents.send("server:log", line),
+      w.webContents.send("server:log", { serverId, line }),
     );
   };
 
@@ -211,38 +214,7 @@ export function registerIpcHandlers(): void {
     const gameType = active?.gameType ?? "palworld";
     const serverCfg = active
       ? serverConfigs.get(active.id)
-      : {
-          launchArgs: {
-            publicLobby: false,
-            performanceFlags: false,
-            customArgs: "",
-          },
-          valheimConfig: {
-            name: "",
-            world: "Dedicated",
-            password: "",
-            port: 2456,
-            public: true,
-            savedir: "",
-            crossplay: false,
-            logFile: "",
-            customArgs: "",
-            worldSeed: "",
-            worldSize: "",
-            modifiers: {
-              combat: "",
-              deathpenalty: "",
-              resources: "",
-              raids: "",
-              portals: "",
-            },
-          } satisfies ValheimLaunchConfig,
-          astroneerConfig: {
-            customArgs: "",
-          } satisfies AstroneerLaunchConfig,
-          backup: { backupDir: "", backupIntervalMinutes: 0, backupKeep: 10 },
-          restart: getRestartConfig(),
-        };
+      : DEFAULT_SERVER_CONFIG;
     const args = buildGameArgs(gameType, serverCfg);
     await mgr.restart(
       getActiveServerPath(),
@@ -255,35 +227,54 @@ export function registerIpcHandlers(): void {
 
   applyBackupScheduler();
 
-  // Tracker d'historique : démarre quand l'API REST est dispo, s'arrête sinon
-  const getApiClientForHistory = () => {
-    const mgr = activeManagerOrNull();
-    if (!mgr || mgr.getStatus() !== "running") return null;
-    const serverPath = getActiveServerPath();
-    if (!serverPath) return null;
-    try {
-      const cfg = configParser.read(serverPath);
-      if (!cfg.RESTAPIEnabled) return null;
-      return new PalworldApiClient(
-        Number(cfg.RESTAPIPort ?? 8212),
-        String(cfg.AdminPassword ?? ""),
-      );
-    } catch {
-      return null;
-    }
-  };
+  // Tracker d'historique : démarre par serveur quand son API REST est dispo,
+  // s'arrête sinon. Chaque serveur est suivi indépendamment (via son propre
+  // manager/path) pour ne pas mélanger les données quand plusieurs serveurs
+  // tournent en parallèle — pointer sur "le serveur actif" ferait dériver le
+  // tracker d'un serveur vers l'API d'un autre dès qu'on change l'actif.
+  const getApiClientForServer =
+    (serverId: string) => (): PalworldApiClient | null => {
+      const mgr = serverManagers
+        .entries()
+        .find((e) => e.serverId === serverId)?.manager;
+      if (!mgr || mgr.getStatus() !== "running") return null;
+      const serverPath = getServerPath(serverId);
+      if (!serverPath) return null;
+      try {
+        const cfg = configParser.read(serverPath);
+        if (!cfg.RESTAPIEnabled) return null;
+        return new PalworldApiClient(
+          Number(cfg.RESTAPIPort ?? 8212),
+          String(cfg.AdminPassword ?? ""),
+        );
+      } catch {
+        return null;
+      }
+    };
 
-  let lastTrackerActive = false;
+  const trackedServers = new Set<string>();
   setInterval(() => {
-    const mgr = activeManagerOrNull();
-    const tracker = playerHistories.getActive();
-    const shouldTrack = !!mgr && !!tracker && mgr.getStatus() === "running";
-    if (shouldTrack && !lastTrackerActive) {
-      tracker!.start(getApiClientForHistory);
-      lastTrackerActive = true;
-    } else if (!shouldTrack && lastTrackerActive) {
-      playerHistories.stopAll();
-      lastTrackerActive = false;
+    const currentIds = new Set<string>();
+    for (const server of servers.list()) {
+      currentIds.add(server.id);
+      const mgr = serverManagers
+        .entries()
+        .find((e) => e.serverId === server.id)?.manager;
+      const shouldTrack = !!mgr && mgr.getStatus() === "running";
+      const isTracked = trackedServers.has(server.id);
+      if (shouldTrack && !isTracked) {
+        playerHistories
+          .getOrCreate(server.id)
+          .start(getApiClientForServer(server.id));
+        trackedServers.add(server.id);
+      } else if (!shouldTrack && isTracked) {
+        playerHistories.getOrCreate(server.id).stop();
+        trackedServers.delete(server.id);
+      }
+    }
+    // Nettoie le suivi d'un serveur supprimé entre deux ticks.
+    for (const id of trackedServers) {
+      if (!currentIds.has(id)) trackedServers.delete(id);
     }
   }, 5000);
 

@@ -61,6 +61,7 @@ export default {
       nameRequired: "Le nom du serveur est obligatoire.",
       startFailed: "Démarrage échoué : {{error}}",
       stopFailed: "Arrêt échoué : {{error}}",
+      restartFailed: "Redémarrage échoué : {{error}}",
     },
   },
 };

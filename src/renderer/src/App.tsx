@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ThemeProvider, createTheme, CssBaseline, Box } from "@mui/material";
 import { ServerProvider, useServer } from "./context/ServerContext";
 import { NotificationProvider } from "./context/NotificationContext";
@@ -6,7 +6,7 @@ import Install from "./pages/Install/Install";
 import Servers from "./pages/Servers/Servers";
 import Titlebar from "./components/Titlebar/Titlebar";
 import Sidebar from "./components/Sidebar/Sidebar";
-import { getGamePlugin } from "./games/registry";
+import { DEFAULT_GAME, getGamePlugin } from "./games/registry";
 
 export type Page =
   | "dashboard"
@@ -60,7 +60,16 @@ function AppShell() {
   const [page, setPage] = useState<Page>("dashboard");
   const { state } = useServer();
 
-  const gameType = state.activeServer?.gameType ?? "palworld";
+  const gameType = state.activeServer?.gameType ?? DEFAULT_GAME;
+
+  // Si le serveur actif change de jeu et que la page courante n'existe pas
+  // pour ce jeu (ex: "mods" en quittant Valheim), on retombe sur le
+  // dashboard plutôt que d'afficher un écran vide.
+  useEffect(() => {
+    if (page === "install" || page === "servers") return;
+    const supported = getGamePlugin(gameType)?.supportedPages ?? [];
+    if (!supported.includes(page)) setPage("dashboard");
+  }, [gameType, page]);
 
   const renderPage = () => {
     if (page === "install") return <Install />;

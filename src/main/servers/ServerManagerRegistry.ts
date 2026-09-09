@@ -3,7 +3,7 @@ import { ServerManager } from "../server/ServerManager";
 import type { GameType, ServerStatus, Server } from "../../shared/types";
 import type { ServerRegistry } from "./ServerRegistry";
 
-const PROCESS_NAME_PREFIXES: Record<GameType, string> = {
+export const PROCESS_NAME_PREFIXES: Record<GameType, string> = {
   palworld: "palserver",
   valheim: "valheim_server",
   astroneer: "astroserver",
@@ -52,6 +52,19 @@ export class ServerManagerRegistry {
   }
 
   /**
+   * Arrête le serveur s'il tourne encore puis retire son manager du registre.
+   * À appeler avant de supprimer un serveur pour ne pas orpheliner son process.
+   */
+  async remove(serverId: string): Promise<void> {
+    const mgr = this.managers.get(serverId);
+    if (!mgr) return;
+    if (mgr.getStatus() !== "stopped") {
+      await mgr.stop().catch(() => {});
+    }
+    this.managers.delete(serverId);
+  }
+
+  /**
    * Status agrégé : pour chaque serveur du registre, retourne son statut.
    * Si aucun manager n'a été instancié pour ce serveur, retourne "stopped".
    */
@@ -69,7 +82,9 @@ export class ServerManagerRegistry {
    * process avec un chemin qui matche `server.path`, ce serveur passe en
    * `running` et son manager est créé/adopté.
    */
-  async tryAdoptAll(onLog: (line: string) => void): Promise<void> {
+  async tryAdoptAll(
+    onLog: (serverId: string, line: string) => void,
+  ): Promise<void> {
     let procs;
     try {
       procs = await si.processes();
@@ -86,7 +101,9 @@ export class ServerManagerRegistry {
       const match = this.matchProcessToServer(candidates, server);
       if (!match) continue;
       const mgr = this.getOrCreate(server.id);
-      await mgr.tryAdopt(onLog, prefix).catch(() => {});
+      await mgr
+        .tryAdopt((line) => onLog(server.id, line), prefix)
+        .catch(() => {});
     }
   }
 

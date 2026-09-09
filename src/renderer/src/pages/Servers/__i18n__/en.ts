@@ -59,6 +59,7 @@ export default {
       nameRequired: "Server name is required.",
       startFailed: "Start failed: {{error}}",
       stopFailed: "Stop failed: {{error}}",
+      restartFailed: "Restart failed: {{error}}",
     },
   },
 };

@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import type { Server, ServerStatus, SystemStats } from "../types";
 import { monitorService } from "../services/monitorService";
-import { serverService } from "../games/palworld/services/serverService";
+import { serverService } from "../services/serverService";
 
 interface ServerState {
   servers: Server[];

@@ -39,12 +39,19 @@ export function registerMiscHandlers(ctx: IpcContext): void {
     ctx.setActiveServerPath(path);
   });
 
-  // System monitoring
-  ipcMain.handle("monitor:getStats", () => ctx.systemMonitor.getStats());
+  // System monitoring — filtré sur le process du jeu du serveur actif
+  // (chaque jeu a son propre nom d'exécutable, cf. PROCESS_NAME_PREFIXES).
+  ipcMain.handle("monitor:getStats", () =>
+    ctx.systemMonitor.getStats(ctx.getActiveServer()?.gameType ?? "palworld"),
+  );
   ipcMain.handle("monitor:startPolling", (event) => {
-    ctx.systemMonitor.startPolling(2000, (stats) => {
-      event.sender.send("monitor:stats", stats);
-    });
+    ctx.systemMonitor.startPolling(
+      2000,
+      (stats) => {
+        event.sender.send("monitor:stats", stats);
+      },
+      () => ctx.getActiveServer()?.gameType ?? "palworld",
+    );
   });
   ipcMain.handle("monitor:stopPolling", () => ctx.systemMonitor.stopPolling());
 }

@@ -27,7 +27,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { useTranslation } from "react-i18next";
 import { Page } from "../../App";
 import { useServer } from "../../context/ServerContext";
-import { getGamePlugin } from "../../games/registry";
+import { DEFAULT_GAME, getGamePlugin } from "../../games/registry";
 import { STATUS_COLOR } from "../../utils/status";
 import ServerSwitcher from "./ServerSwitcher";
 
@@ -95,7 +95,7 @@ interface SidebarProps {
 export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
   const { state } = useServer();
   const { t, i18n } = useTranslation();
-  const plugin = getGamePlugin(state.activeServer?.gameType ?? "palworld");
+  const plugin = getGamePlugin(state.activeServer?.gameType ?? DEFAULT_GAME);
   const [collapsed, setCollapsed] = useState(false);
 
   const handleLanguageChange = (

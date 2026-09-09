@@ -224,8 +224,7 @@ export class PalConfigParser {
     );
     if (!match) return settings;
 
-    // Split on commas that are NOT inside parentheses
-    const pairs = match[1].match(/[^,()]+(?:\([^)]*\))?[^,()]*/g) ?? [];
+    const pairs = this.splitTopLevelPairs(match[1]);
     for (const pair of pairs) {
       const eqIdx = pair.indexOf("=");
       if (eqIdx === -1) continue;
@@ -234,6 +233,38 @@ export class PalConfigParser {
       settings[key] = this.parseValue(raw);
     }
     return settings;
+  }
+
+  /**
+   * Découpe sur les virgules de premier niveau, en ignorant celles à
+   * l'intérieur de parenthèses ou de guillemets — une valeur de type string
+   * (ex: ServerDescription) peut contenir une virgule littérale, qui ne doit
+   * pas être confondue avec le séparateur entre paires key=value.
+   */
+  private splitTopLevelPairs(content: string): string[] {
+    const pairs: string[] = [];
+    let depth = 0;
+    let inQuotes = false;
+    let current = "";
+    for (const ch of content) {
+      if (ch === '"') {
+        inQuotes = !inQuotes;
+        current += ch;
+        continue;
+      }
+      if (!inQuotes) {
+        if (ch === "(") depth++;
+        else if (ch === ")") depth--;
+        else if (ch === "," && depth === 0) {
+          pairs.push(current);
+          current = "";
+          continue;
+        }
+      }
+      current += ch;
+    }
+    if (current.trim()) pairs.push(current);
+    return pairs;
   }
 
   private parseValue(raw: string): string | number | boolean {

@@ -1,59 +1,11 @@
 import { ipcMain } from "electron/main";
 import type { IpcContext } from "../context";
-import type {
-  AstroneerLaunchConfig,
-  GameType,
-  LaunchArgsConfig,
-  ServerStatus,
-  ValheimLaunchConfig,
-} from "../../../shared/types";
+import type { LaunchArgsConfig, ServerStatus } from "../../../shared/types";
 import {
   detectPortConflicts,
   formatConflictsError,
 } from "../../servers/portConflicts";
-
-const PERFORMANCE_FLAGS = [
-  "-useperfthreads",
-  "-NoAsyncLoadingThread",
-  "-UseMultithreadForDS",
-];
-
-const EXE_NAMES: Record<GameType, string> = {
-  palworld: "PalServer.exe",
-  valheim: "valheim_server.exe",
-  astroneer: "AstroServer.exe",
-};
-
-export function buildServerArgs(cfg: LaunchArgsConfig): string[] {
-  const args: string[] = [];
-  if (cfg.publicLobby) args.push("-publiclobby");
-  if (cfg.performanceFlags) args.push(...PERFORMANCE_FLAGS);
-  const custom = cfg.customArgs.trim();
-  if (custom) args.push(...custom.split(/\s+/));
-  return args;
-}
-
-export function buildValheimArgs(cfg: ValheimLaunchConfig): string[] {
-  const args = ["-nographics", "-batchmode"];
-  args.push("-name", cfg.name, "-world", cfg.world);
-  args.push("-port", String(cfg.port));
-  args.push("-public", cfg.public ? "1" : "0");
-  if (cfg.password) args.push("-password", cfg.password);
-  if (cfg.savedir) args.push("-savedir", cfg.savedir);
-  if (cfg.crossplay) args.push("-crossplay");
-  if (cfg.logFile) args.push("-logFile", cfg.logFile);
-  if (cfg.worldSeed) args.push("-worldseed", cfg.worldSeed);
-  if (cfg.worldSize) args.push("-worldsize", cfg.worldSize);
-  const custom = cfg.customArgs.trim();
-  if (custom) args.push(...custom.split(/\s+/));
-  return args;
-}
-
-// Astroneer se configure via Engine.ini/AstroServerSettings.ini, pas par CLI args.
-export function buildAstroneerArgs(cfg: AstroneerLaunchConfig): string[] {
-  const custom = cfg.customArgs.trim();
-  return custom ? custom.split(/\s+/) : [];
-}
+import { buildGameArgs, getGameServerConfig } from "../../games/registry";
 
 export function registerServerHandlers(ctx: IpcContext): void {
   // Résout un serverId argumenté en serveur du registre. Fallback : actif.
@@ -84,13 +36,8 @@ export function registerServerHandlers(ctx: IpcContext): void {
     }
 
     const serverPath = ctx.getServerPath(id);
-    const exeName = EXE_NAMES[gameType];
-    const args =
-      gameType === "valheim"
-        ? buildValheimArgs(ctx.getValheimConfig(id))
-        : gameType === "astroneer"
-          ? buildAstroneerArgs(ctx.getAstroneerConfig(id))
-          : buildServerArgs(ctx.getServerConfig(id).launchArgs);
+    const exeName = getGameServerConfig(gameType).exeName;
+    const args = buildGameArgs(gameType, ctx.getServerConfig(id));
 
     return ctx.serverManagers
       .getOrCreate(id)
@@ -109,13 +56,8 @@ export function registerServerHandlers(ctx: IpcContext): void {
     const server = ctx.servers.list().find((s) => s.id === id);
     const gameType = server?.gameType ?? "palworld";
     const serverPath = ctx.getServerPath(id);
-    const exeName = EXE_NAMES[gameType];
-    const args =
-      gameType === "valheim"
-        ? buildValheimArgs(ctx.getValheimConfig(id))
-        : gameType === "astroneer"
-          ? buildAstroneerArgs(ctx.getAstroneerConfig(id))
-          : buildServerArgs(ctx.getServerConfig(id).launchArgs);
+    const exeName = getGameServerConfig(gameType).exeName;
+    const args = buildGameArgs(gameType, ctx.getServerConfig(id));
     return ctx.serverManagers
       .getOrCreate(id)
       .restart(

@@ -61,4 +61,12 @@ export class PlayerHistoryRegistry {
   stopAll(): void {
     for (const t of this.trackers.values()) t.stop();
   }
+
+  /** Stoppe et retire le tracker d'un serveur (à appeler avant sa suppression). */
+  remove(serverId: string): void {
+    const tracker = this.trackers.get(serverId);
+    if (!tracker) return;
+    tracker.stop();
+    this.trackers.delete(serverId);
+  }
 }

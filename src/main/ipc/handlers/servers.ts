@@ -29,7 +29,12 @@ export function registerServersHandlers(
     (_, id: string, patch: Partial<Omit<Server, "id" | "createdAt">>) =>
       registry.update(id, patch),
   );
-  ipcMain.handle("servers:delete", (_, id: string) => {
+  ipcMain.handle("servers:delete", async (_, id: string) => {
+    // Arrête le process (owned ou adopté) avant de retirer le serveur pour
+    // ne pas l'orpheliner — plus aucun moyen de le stopper depuis l'UI une
+    // fois le serveur retiré du registre.
+    await ctx.serverManagers.remove(id);
+    ctx.playerHistories.remove(id);
     registry.delete(id);
     // Nettoie la config stockée du serveur (sans toucher au filesystem :
     // les .zip de backup et le history.json restent dans

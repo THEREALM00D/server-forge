@@ -212,6 +212,42 @@ export class ServerManager {
     }
   }
 
+  private async isPidAlive(pid: number): Promise<boolean> {
+    try {
+      const procs = await si.processes();
+      return procs.list.some((p) => p.pid === pid);
+    } catch {
+      return true;
+    }
+  }
+
+  /**
+   * Si le process tourne toujours après le délai d'attente accordé, force
+   * l'arrêt via taskkill au lieu de rapporter un faux succès qui laisserait
+   * le statut bloqué sur "stopping" indéfiniment.
+   */
+  private async ensureStopped(pid: number): Promise<boolean> {
+    if (!(await this.isPidAlive(pid))) return true;
+    this.onLog(
+      "[Manager] Le processus ne répond pas, arrêt forcé via taskkill...",
+    );
+    this.forceKill(pid);
+    const timeoutMs = 6000;
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (!(await this.isPidAlive(pid))) break;
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    const alive = await this.isPidAlive(pid);
+    if (!alive) {
+      this.adoptedPid = null;
+      this.process = null;
+      this.status = "stopped";
+      this.stopAdoptedPoll();
+    }
+    return !alive;
+  }
+
   async stop(cfg?: StopConfig): Promise<{ success: boolean; error?: string }> {
     const pid = this.getRunningPid();
     if (!pid || this.status === "stopped") {
@@ -236,11 +272,23 @@ export class ServerManager {
           setTimeout(finish, timeoutMs);
         });
       }
-      return this.waitForPidExit(pid, timeoutMs).then(() => {
-        this.adoptedPid = null;
-        this.status = "stopped";
-        this.stopAdoptedPoll();
+      return this.waitForPidExit(pid, timeoutMs).then((exited) => {
+        if (exited) {
+          this.adoptedPid = null;
+          this.status = "stopped";
+          this.stopAdoptedPoll();
+        }
       });
+    };
+
+    const finalize = async (): Promise<{
+      success: boolean;
+      error?: string;
+    }> => {
+      const stopped = await this.ensureStopped(pid);
+      return stopped
+        ? { success: true }
+        : { success: false, error: "Le serveur ne répond pas à l'arrêt" };
     };
 
     if (cfg?.restApiEnabled && cfg.restApiPort && cfg.adminPassword) {
@@ -252,14 +300,14 @@ export class ServerManager {
       if (apiOk && waittime > 0) {
         this.onLog(`[Manager] Attente arrêt gracieux (${waittime}s)...`);
         await waitForExit((waittime + 10) * 1000);
-        return { success: true };
+        return finalize();
       }
 
       if (!apiOk) {
         this.onLog("[Manager] Arrêt forcé via taskkill...");
         this.forceKill(pid);
         await waitForExit(6000);
-        return { success: true };
+        return finalize();
       }
     }
 
@@ -270,7 +318,7 @@ export class ServerManager {
     );
     this.forceKill(pid);
     await waitForExit(6000);
-    return { success: true };
+    return finalize();
   }
 
   async restart(

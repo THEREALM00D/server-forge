@@ -54,7 +54,7 @@ export interface IpcContext {
   backup: BackupManager;
   restartScheduler: RestartScheduler;
   playerHistories: PlayerHistoryRegistry;
-  broadcastLog: (line: string) => void;
+  broadcastLog: (serverId: string, line: string) => void;
   getBackupDir: () => string;
   getRestartConfig: () => RestartConfig;
   applyBackupScheduler: () => void;
