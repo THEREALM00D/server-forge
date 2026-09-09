@@ -1,16 +1,18 @@
 {
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
   "permissions": {
     "allow": [
       "Bash(yarn create:*)",
       "WebFetch(domain:mui.com)",
       "WebFetch(domain:www.electronjs.org)",
       "Bash(yarn add:*)",
-      "WebFetch(domain:docs.palworldgame.com)"
+      "WebFetch(domain:docs.palworldgame.com)",
+      "WebSearch",
+      "Bash(tasklist)"
     ]
-  },
-  "attribution": {
-    "commit": "",
-    "pr": ""
   },
   "hooks": {
     "PostToolUse": [
