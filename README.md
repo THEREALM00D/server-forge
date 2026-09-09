@@ -1,9 +1,9 @@
 # ServerForge
 
-Gestionnaire de bureau open-source pour serveurs dédiés de jeux vidéo. Actuellement compatible avec **Palworld**.
+Gestionnaire de bureau pour serveurs dédiés de jeux vidéo. Compatible avec **Palworld**, **Valheim** et **Astroneer**.
 
 ![Plateforme](https://img.shields.io/badge/platform-Windows-blue)
-![Licence](https://img.shields.io/badge/license-MIT-green)
+![Licence](https://img.shields.io/badge/license-proprietary-red)
 
 ## Fonctionnalités
 
@@ -53,4 +53,4 @@ Voir [docs/installation.md](docs/installation.md) pour le guide complet.
 
 ## Licence
 
-MIT
+Propriétaire — tous droits réservés. Voir [LICENSE](LICENSE). Le code n'est pas open-source : la distribution en alpha est réservée aux testeurs invités et ne constitue pas une autorisation d'utilisation, copie ou redistribution.
