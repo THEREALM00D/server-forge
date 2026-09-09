@@ -11,6 +11,10 @@ export default function GeneralSection({
   onChange: (patch: Partial<ValheimLaunchConfig>) => void;
 }) {
   const { t } = useTranslation();
+  // Valheim refuse de démarrer (silencieusement, sans erreur claire dans les
+  // logs) si un mot de passe est défini mais fait moins de 5 caractères.
+  const passwordTooShort =
+    config.password.length > 0 && config.password.length < 5;
   return (
     <Section label={t("valheimConfig.sections.general")}>
       <TextField
@@ -23,7 +27,12 @@ export default function GeneralSection({
       />
       <TextField
         label={t("valheimConfig.fields.password.label")}
-        helperText={t("valheimConfig.fields.password.description")}
+        helperText={
+          passwordTooShort
+            ? t("valheimConfig.fields.password.tooShort")
+            : t("valheimConfig.fields.password.description")
+        }
+        error={passwordTooShort}
         value={config.password}
         onChange={(e) => onChange({ password: e.target.value })}
         size="small"

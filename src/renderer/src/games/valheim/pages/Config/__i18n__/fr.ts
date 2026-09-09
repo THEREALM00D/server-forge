@@ -76,6 +76,8 @@ export default {
         label: "Mot de passe",
         description:
           "Laissez vide pour un serveur sans mot de passe (min. 5 caractères si défini).",
+        tooShort:
+          "Trop court : Valheim exige au moins 5 caractères, sinon le serveur refuse de démarrer.",
       },
       port: {
         label: "Port",

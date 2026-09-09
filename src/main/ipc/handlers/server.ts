@@ -35,6 +35,22 @@ export function registerServerHandlers(ctx: IpcContext): void {
       }
     }
 
+    // Valheim refuse de démarrer si un mot de passe est défini mais fait
+    // moins de 5 caractères — sans crash ni message clair côté serveur, le
+    // process quitte juste silencieusement (code 0) après avoir échoué à
+    // générer le monde. On bloque en amont plutôt que de laisser
+    // l'utilisateur deviner pourquoi le serveur ne démarre jamais.
+    if (gameType === "valheim") {
+      const { password } = ctx.getServerConfig(id).valheimConfig;
+      if (password && password.length < 5) {
+        return {
+          success: false,
+          error:
+            "Le mot de passe Valheim doit faire au moins 5 caractères (ou être vide).",
+        };
+      }
+    }
+
     const serverPath = ctx.getServerPath(id);
     const exeName = getGameServerConfig(gameType).exeName;
     const args = buildGameArgs(gameType, ctx.getServerConfig(id));

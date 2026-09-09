@@ -76,6 +76,8 @@ export default {
         label: "Password",
         description:
           "Leave empty for a public server (min. 5 characters if set).",
+        tooShort:
+          "Too short: Valheim requires at least 5 characters, otherwise the server refuses to start.",
       },
       port: {
         label: "Port",
