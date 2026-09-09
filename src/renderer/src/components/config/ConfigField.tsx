@@ -1,5 +1,9 @@
 import {
+  FormControl,
   FormControlLabel,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   Switch,
   TextField,
@@ -8,12 +12,14 @@ import {
 } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { useTranslation } from "react-i18next";
-import type { FieldDef } from "../fields";
+import type { FieldDef } from "./types";
 
 interface Props {
   field: FieldDef;
   value: string | number | boolean;
   onChange: (value: string | number | boolean) => void;
+  /** Préfixe des clés i18n (ex: "config.fields" pour Palworld). */
+  i18nPrefix: string;
 }
 
 function FieldLabel({
@@ -45,11 +51,16 @@ function FieldLabel({
   );
 }
 
-export default function ConfigField({ field, value, onChange }: Props) {
+export default function ConfigField({
+  field,
+  value,
+  onChange,
+  i18nPrefix,
+}: Props) {
   const { t } = useTranslation();
-  const { key, type } = field;
-  const label = t(`astroneerConfig.fields.${key}.label`, { defaultValue: key });
-  const description = t(`astroneerConfig.fields.${key}.description`, {
+  const { key, type, options } = field;
+  const label = t(`${i18nPrefix}.${key}.label`, { defaultValue: key });
+  const description = t(`${i18nPrefix}.${key}.description`, {
     defaultValue: "",
   });
 
@@ -70,6 +81,28 @@ export default function ConfigField({ field, value, onChange }: Props) {
           flexDirection: "row-reverse",
         }}
       />
+    );
+  }
+
+  if (type === "select") {
+    return (
+      <Stack direction="row" sx={{ alignItems: "center", gap: 2 }}>
+        <FieldLabel label={label} description={description} minWidth={200} />
+        <FormControl size="small" sx={{ flex: 1 }}>
+          <InputLabel>{label}</InputLabel>
+          <Select
+            label={label}
+            value={String(value ?? "")}
+            onChange={(e) => onChange(e.target.value)}
+          >
+            {options?.map((opt) => (
+              <MenuItem key={opt.value} value={opt.value}>
+                {t(opt.labelKey)}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Stack>
     );
   }
 

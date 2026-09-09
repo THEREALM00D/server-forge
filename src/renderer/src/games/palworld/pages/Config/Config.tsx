@@ -22,8 +22,8 @@ import { useNotification } from "../../../../context/NotificationContext";
 import { configService } from "../../services/configService";
 import { DIFFICULTY_PRESETS } from "./presets";
 import { useConfigGroups } from "./hooks/useConfigGroups";
-import ConfigGroup from "./components/ConfigGroup";
-import ConfigField from "./components/ConfigField";
+import ConfigGroup from "../../../../components/config/ConfigGroup";
+import ConfigField from "../../../../components/config/ConfigField";
 import type { Settings } from "./fields";
 
 export default function Config() {
@@ -195,6 +195,7 @@ export default function Config() {
                     <ConfigField
                       field={field}
                       value={f.state.value as string | number | boolean}
+                      i18nPrefix="config.fields"
                       onChange={(v) => {
                         f.handleChange(v as never);
                         if (field.key === "Difficulty")

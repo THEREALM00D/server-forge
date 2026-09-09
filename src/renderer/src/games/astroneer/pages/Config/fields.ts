@@ -1,14 +1,11 @@
-export type Settings = Record<string, string | number | boolean>;
+import type {
+  ConfigSettings,
+  FieldDef,
+  FieldGroup,
+} from "../../../../components/config/types";
 
-export interface FieldDef {
-  key: string;
-  type: "text" | "number" | "boolean";
-}
-
-export interface FieldGroup {
-  labelKey: string;
-  fields: FieldDef[];
-}
+export type Settings = ConfigSettings;
+export type { FieldDef, FieldGroup };
 
 export const FIELD_GROUPS: FieldGroup[] = [
   {

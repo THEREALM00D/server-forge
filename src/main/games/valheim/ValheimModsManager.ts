@@ -14,11 +14,7 @@ import {
 import https from "https";
 import http from "http";
 import extractZip from "extract-zip";
-import type {
-  ValheimMod,
-  ThunderstoreModInfo,
-  ThunderstoreModVersion,
-} from "../../../shared/types";
+import type { ValheimMod } from "../../../shared/types";
 
 interface TSVersion {
   version_number: string;
@@ -126,61 +122,13 @@ export class ValheimModsManager {
     writeFileSync(this.metaPath, JSON.stringify(mods, null, 2), "utf-8");
   }
 
-  async install(
-    mod: ThunderstoreModInfo,
-    file: ThunderstoreModVersion,
-    downloadUrl: string,
-    onProgress: (msg: string) => void,
-  ): Promise<ValheimMod> {
-    mkdirSync(this.pluginsPath, { recursive: true });
-
-    const safeName = mod.name.replace(/[^a-zA-Z0-9_-]/g, "_");
-    const tempZip = join(this.dataDir, `${safeName}_${file.file_id}.zip`);
-
-    onProgress(`Téléchargement de ${mod.name} v${file.version}…`);
-    await this.downloadFile(downloadUrl, tempZip, onProgress);
-
-    const installDir = `${safeName}_${mod.mod_id}`;
-    const targetPath = join(this.pluginsPath, installDir);
-
-    onProgress(`Extraction vers BepInEx/plugins/${installDir}…`);
-    if (existsSync(targetPath))
-      rmSync(targetPath, { recursive: true, force: true });
-    mkdirSync(targetPath, { recursive: true });
-
-    try {
-      await extractZip(tempZip, { dir: targetPath });
-    } finally {
-      try {
-        unlinkSync(tempZip);
-      } catch {
-        // ignore
-      }
-    }
-
-    const entry: ValheimMod = {
-      modId: mod.mod_id,
-      fileId: file.file_id,
-      name: mod.name,
-      version: file.version,
-      author: mod.author,
-      summary: mod.summary,
-      installedAt: Date.now(),
-      enabled: true,
-      installDir,
-      pictureUrl: mod.picture_url,
-    };
-
-    const mods = this.readJson().filter((m) => m.modId !== mod.mod_id);
-    mods.push(entry);
-    this.save(mods);
-
-    onProgress(`${mod.name} installé avec succès.`);
-    return entry;
-  }
-
-  // Fetch JSON avec suivi des redirections (30x) et User-Agent
-  private static fetchJson<T>(url: string, depth = 0): Promise<T> {
+  // Fetch brut avec suivi des redirections (30x) et headers custom — base
+  // commune à fetchJson/fetchText, qui ne diffèrent que par le parsing du body.
+  private static fetchRaw(
+    url: string,
+    headers: Record<string, string>,
+    depth = 0,
+  ): Promise<{ statusCode: number; body: string }> {
     if (depth > 5) return Promise.reject(new Error("Trop de redirections"));
     return new Promise((resolve, reject) => {
       const parsed = new URL(url);
@@ -190,10 +138,7 @@ export class ValheimModsManager {
           {
             hostname: parsed.hostname,
             path: parsed.pathname + parsed.search,
-            headers: {
-              "User-Agent": "ServerForge/1.0.0",
-              Accept: "application/json",
-            },
+            headers,
           },
           (res) => {
             // Suivre les redirections 301/302/303/307/308
@@ -204,7 +149,11 @@ export class ValheimModsManager {
               res.headers.location
             ) {
               res.resume();
-              ValheimModsManager.fetchJson<T>(res.headers.location, depth + 1)
+              ValheimModsManager.fetchRaw(
+                res.headers.location,
+                headers,
+                depth + 1,
+              )
                 .then(resolve)
                 .catch(reject);
               return;
@@ -216,61 +165,34 @@ export class ValheimModsManager {
             }
             let data = "";
             res.on("data", (c: string) => (data += c));
-            res.on("end", () => {
-              try {
-                resolve(JSON.parse(data) as T);
-              } catch {
-                reject(
-                  new Error(
-                    `Réponse JSON invalide (${res.statusCode}): ${data.slice(0, 120)}`,
-                  ),
-                );
-              }
-            });
+            res.on("end", () =>
+              resolve({ statusCode: res.statusCode ?? 0, body: data }),
+            );
           },
         )
         .on("error", reject);
     });
   }
 
-  // Fetch texte brut (pas de JSON.parse) avec suivi des redirections (30x) et User-Agent
-  private static fetchText(url: string, depth = 0): Promise<string> {
-    if (depth > 5) return Promise.reject(new Error("Trop de redirections"));
-    return new Promise((resolve, reject) => {
-      const parsed = new URL(url);
-      const mod = parsed.protocol === "https:" ? https : http;
-      mod
-        .get(
-          {
-            hostname: parsed.hostname,
-            path: parsed.pathname + parsed.search,
-            headers: { "User-Agent": "ServerForge/1.0.0" },
-          },
-          (res) => {
-            if (
-              res.statusCode &&
-              res.statusCode >= 300 &&
-              res.statusCode < 400 &&
-              res.headers.location
-            ) {
-              res.resume();
-              ValheimModsManager.fetchText(res.headers.location, depth + 1)
-                .then(resolve)
-                .catch(reject);
-              return;
-            }
-            if (res.statusCode && res.statusCode >= 400) {
-              res.resume();
-              reject(new Error(`Thunderstore API erreur ${res.statusCode}`));
-              return;
-            }
-            let data = "";
-            res.on("data", (c: string) => (data += c));
-            res.on("end", () => resolve(data));
-          },
-        )
-        .on("error", reject);
+  private static async fetchJson<T>(url: string): Promise<T> {
+    const { statusCode, body } = await ValheimModsManager.fetchRaw(url, {
+      "User-Agent": "ServerForge/1.0.0",
+      Accept: "application/json",
     });
+    try {
+      return JSON.parse(body) as T;
+    } catch {
+      throw new Error(
+        `Réponse JSON invalide (${statusCode}): ${body.slice(0, 120)}`,
+      );
+    }
+  }
+
+  private static async fetchText(url: string): Promise<string> {
+    const { body } = await ValheimModsManager.fetchRaw(url, {
+      "User-Agent": "ServerForge/1.0.0",
+    });
+    return body;
   }
 
   async installBepInEx(onProgress: (msg: string) => void): Promise<void> {

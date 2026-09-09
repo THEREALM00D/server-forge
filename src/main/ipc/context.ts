@@ -2,6 +2,7 @@ import type { BrowserWindow, App } from "electron";
 import type { ServerManager } from "../server/ServerManager";
 import type { SteamCMD } from "../steamcmd/SteamCMD";
 import type { PalConfigParser } from "../games/palworld/PalConfigParser";
+import type { AstroConfigParser } from "../games/astroneer/AstroConfigParser";
 import type { SystemMonitor } from "../monitor/SystemMonitor";
 import type { FirewallManager } from "../firewall/FirewallManager";
 import type { BackupManager } from "../backup/BackupManager";
@@ -49,6 +50,7 @@ export interface IpcContext {
   requireActiveManager: () => ServerManager;
   steamcmd: SteamCMD;
   configParser: PalConfigParser;
+  astroConfigParser: AstroConfigParser;
   systemMonitor: SystemMonitor;
   firewall: FirewallManager;
   backup: BackupManager;

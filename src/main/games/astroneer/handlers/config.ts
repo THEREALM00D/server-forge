@@ -4,9 +4,6 @@ import type {
   AstroneerLaunchConfig,
   AstroneerSettings,
 } from "../../../../shared/types";
-import { AstroConfigParser } from "../AstroConfigParser";
-
-const configParser = new AstroConfigParser();
 
 export function registerAstroneerHandlers(ctx: IpcContext): void {
   // Launch config (customArgs) — stocké dans ServerConfig, comme les autres jeux.
@@ -22,12 +19,12 @@ export function registerAstroneerHandlers(ctx: IpcContext): void {
 
   // Config .ini (Engine.ini + AstroServerSettings.ini fusionnés)
   ipcMain.handle("astroconfig:read", async (_, serverId?: string) => {
-    return configParser.read(ctx.getServerPath(serverId));
+    return ctx.astroConfigParser.read(ctx.getServerPath(serverId));
   });
   ipcMain.handle(
     "astroconfig:write",
     async (_, settings: AstroneerSettings, serverId?: string) => {
-      return configParser.write(ctx.getServerPath(serverId), settings);
+      return ctx.astroConfigParser.write(ctx.getServerPath(serverId), settings);
     },
   );
 }

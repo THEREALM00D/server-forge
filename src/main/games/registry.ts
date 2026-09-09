@@ -21,6 +21,22 @@ export function buildGameArgs(gameType: GameType, cfg: ServerConfig): string[] {
   return palworldServerConfig.buildArgs(cfg.launchArgs);
 }
 
+/**
+ * Résout le dossier de sauvegarde source pour le backup (undefined = laisser
+ * BackupManager utiliser son défaut Palworld, à l'intérieur de serverPath).
+ */
+export function getGameSavePath(
+  gameType: GameType,
+  serverPath: string,
+  cfg: ServerConfig,
+): string | undefined {
+  if (gameType === "valheim")
+    return valheimServerConfig.getSavePath(cfg.valheimConfig);
+  if (gameType === "astroneer")
+    return astroneerServerConfig.getSavePath(serverPath);
+  return undefined;
+}
+
 export function getGameStopConfig(
   gameType: GameType,
   serverPath: string,

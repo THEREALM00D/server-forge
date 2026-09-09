@@ -1,12 +1,7 @@
-import { join, dirname } from "path";
-import {
-  readFileSync,
-  writeFileSync,
-  existsSync,
-  mkdirSync,
-  copyFileSync,
-} from "fs";
+import { join } from "path";
+import { readFileSync, writeFileSync, existsSync } from "fs";
 import type { AstroneerSettings } from "../../../shared/types";
+import { parseIniValue, backupBeforeWrite } from "../../utils/ini";
 
 const ENGINE_REL_PATH = "Astro/Saved/Config/WindowsServer/Engine.ini";
 const SETTINGS_REL_PATH =
@@ -116,7 +111,7 @@ export class AstroConfigParser {
       if (eqIdx === -1) continue;
       const key = trimmed.slice(0, eqIdx).trim();
       if (!keys.has(key)) continue;
-      target[key] = this.parseValue(trimmed.slice(eqIdx + 1).trim());
+      target[key] = parseIniValue(trimmed.slice(eqIdx + 1).trim());
     }
   }
 
@@ -132,9 +127,8 @@ export class AstroConfigParser {
     section: string,
     pairs: AstroneerSettings,
   ): void {
-    mkdirSync(dirname(iniPath), { recursive: true });
     const exists = existsSync(iniPath);
-    if (exists) copyFileSync(iniPath, iniPath + ".backup");
+    backupBeforeWrite(iniPath);
 
     const original = exists ? readFileSync(iniPath, "utf-8") : "";
     const lines = original.length > 0 ? original.split(/\r?\n/) : [];
@@ -186,14 +180,6 @@ export class AstroConfigParser {
     }
 
     writeFileSync(iniPath, result.join("\n").replace(/\n*$/, "\n"), "utf-8");
-  }
-
-  private parseValue(raw: string): string | number | boolean {
-    if (raw === "True" || raw === "true") return true;
-    if (raw === "False" || raw === "false") return false;
-    const num = Number(raw);
-    if (!isNaN(num) && raw !== "") return num;
-    return raw;
   }
 
   private serializeValue(key: string, val: string | number | boolean): string {

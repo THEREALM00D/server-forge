@@ -1,12 +1,6 @@
 import { join } from "path";
-import {
-  readFileSync,
-  writeFileSync,
-  existsSync,
-  mkdirSync,
-  copyFileSync,
-} from "fs";
-import { dirname } from "path";
+import { readFileSync, writeFileSync, existsSync } from "fs";
+import { parseIniValue, backupBeforeWrite } from "../../utils/ini";
 
 export type PalSettings = Record<string, string | number | boolean>;
 
@@ -206,10 +200,7 @@ export class PalConfigParser {
   ): { success: boolean; error?: string } {
     const iniPath = join(serverPath, CONFIG_REL_PATH);
     try {
-      mkdirSync(dirname(iniPath), { recursive: true });
-      if (existsSync(iniPath)) {
-        copyFileSync(iniPath, iniPath + ".backup");
-      }
+      backupBeforeWrite(iniPath);
       writeFileSync(iniPath, this.serializeIni(settings), "utf-8");
       return { success: true };
     } catch (err) {
@@ -230,7 +221,7 @@ export class PalConfigParser {
       if (eqIdx === -1) continue;
       const key = pair.slice(0, eqIdx).trim();
       const raw = pair.slice(eqIdx + 1).trim();
-      settings[key] = this.parseValue(raw);
+      settings[key] = parseIniValue(raw);
     }
     return settings;
   }
@@ -265,14 +256,6 @@ export class PalConfigParser {
     }
     if (current.trim()) pairs.push(current);
     return pairs;
-  }
-
-  private parseValue(raw: string): string | number | boolean {
-    if (raw === "True" || raw === "true") return true;
-    if (raw === "False" || raw === "false") return false;
-    const num = Number(raw);
-    if (!isNaN(num) && raw !== "") return num;
-    return raw.replace(/^"(.*)"$/, "$1");
   }
 
   private serializeIni(settings: PalSettings): string {

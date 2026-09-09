@@ -21,8 +21,8 @@ import { useServer } from "../../../../context/ServerContext";
 import { useNotification } from "../../../../context/NotificationContext";
 import { astroConfigService } from "../../services/configService";
 import { useConfigGroups } from "./hooks/useConfigGroups";
-import ConfigGroup from "./components/ConfigGroup";
-import ConfigField from "./components/ConfigField";
+import ConfigGroup from "../../../../components/config/ConfigGroup";
+import ConfigField from "../../../../components/config/ConfigField";
 import type { Settings } from "./fields";
 
 export default function AstroneerConfig() {
@@ -186,6 +186,7 @@ export default function AstroneerConfig() {
                     <ConfigField
                       field={field}
                       value={f.state.value as string | number | boolean}
+                      i18nPrefix="astroneerConfig.fields"
                       onChange={(v) => f.handleChange(v as never)}
                     />
                   )}

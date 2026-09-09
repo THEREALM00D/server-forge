@@ -160,8 +160,10 @@ export function ServerProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   const refreshServers = async (): Promise<Server[]> => {
-    const list = await window.api.servers.list();
-    const active = await window.api.servers.getActive();
+    const [list, active] = await Promise.all([
+      window.api.servers.list(),
+      window.api.servers.getActive(),
+    ]);
     dispatch({
       type: "SET_ACTIVE",
       payload: { id: active?.id ?? null, servers: list },

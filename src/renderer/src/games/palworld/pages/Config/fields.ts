@@ -1,20 +1,12 @@
-export type Settings = Record<string, string | number | boolean>;
+import type {
+  ConfigSettings,
+  SelectOption,
+  FieldDef,
+  FieldGroup,
+} from "../../../../components/config/types";
 
-export interface SelectOption {
-  value: string;
-  labelKey: string;
-}
-
-export interface FieldDef {
-  key: string;
-  type: "text" | "number" | "boolean" | "select";
-  options?: SelectOption[];
-}
-
-export interface FieldGroup {
-  labelKey: string;
-  fields: FieldDef[];
-}
+export type Settings = ConfigSettings;
+export type { SelectOption, FieldDef, FieldGroup };
 
 export const FIELD_GROUPS: FieldGroup[] = [
   {

@@ -3,6 +3,7 @@ import { join } from "path";
 import Store from "electron-store";
 import { SteamCMD } from "../steamcmd/SteamCMD";
 import { PalConfigParser } from "../games/palworld/PalConfigParser";
+import { AstroConfigParser } from "../games/astroneer/AstroConfigParser";
 import { SystemMonitor } from "../monitor/SystemMonitor";
 import { FirewallManager } from "../firewall/FirewallManager";
 import { BackupManager } from "../backup/BackupManager";
@@ -132,6 +133,7 @@ export function registerIpcHandlers(): void {
 
   const steamcmd = new SteamCMD();
   const configParser = new PalConfigParser();
+  const astroConfigParser = new AstroConfigParser();
   const systemMonitor = new SystemMonitor();
   const firewall = new FirewallManager();
   const backup = new BackupManager();
@@ -290,6 +292,7 @@ export function registerIpcHandlers(): void {
     requireActiveManager,
     steamcmd,
     configParser,
+    astroConfigParser,
     systemMonitor,
     firewall,
     backup,

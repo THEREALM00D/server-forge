@@ -1,7 +1,18 @@
+import { join } from "path";
+import { homedir } from "os";
 import type { ValheimLaunchConfig } from "../../../shared/types";
 
 export const valheimServerConfig = {
   exeName: "valheim_server.exe",
+
+  // Valheim stocke ses mondes hors de `serverPath` : dossier custom (savedir)
+  // ou %LOCALAPPDATA_LOW%/IronGate/Valheim/worlds_local par défaut.
+  getSavePath(cfg: ValheimLaunchConfig): string {
+    const base =
+      cfg.savedir ||
+      join(homedir(), "AppData", "LocalLow", "IronGate", "Valheim");
+    return join(base, "worlds_local");
+  },
 
   buildArgs(cfg: ValheimLaunchConfig): string[] {
     const args = ["-nographics", "-batchmode"];
