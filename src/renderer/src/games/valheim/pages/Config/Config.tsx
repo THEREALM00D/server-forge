@@ -59,10 +59,10 @@ export default function ValheimConfig() {
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
             {t("valheimConfig.subtitle")}
           </Typography>
-          <Tooltip title={t("valheimConfig.openSaves")}>
+          <Tooltip title={t("valheimConfig.openServerFolder")}>
             <IconButton
               size="small"
-              onClick={() => window.api.valheim.openSaveFolder(config.savedir)}
+              onClick={() => window.api.shell.openPath(state.serverPath)}
             >
               <FolderOpenIcon sx={{ fontSize: 16 }} />
             </IconButton>

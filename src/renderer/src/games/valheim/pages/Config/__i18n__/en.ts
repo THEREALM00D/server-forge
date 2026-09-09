@@ -2,7 +2,7 @@ export default {
   valheimConfig: {
     title: "Server Configuration",
     subtitle: "valheim_server.exe launch arguments",
-    openSaves: "Open saves folder",
+    openServerFolder: "Open server folder",
     save: "Save",
     saved: "Saved!",
     noServerPath: "Configure the server path in the Installation tab.",
