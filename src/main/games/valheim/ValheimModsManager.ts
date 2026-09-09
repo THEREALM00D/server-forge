@@ -233,6 +233,46 @@ export class ValheimModsManager {
     });
   }
 
+  // Fetch texte brut (pas de JSON.parse) avec suivi des redirections (30x) et User-Agent
+  private static fetchText(url: string, depth = 0): Promise<string> {
+    if (depth > 5) return Promise.reject(new Error("Trop de redirections"));
+    return new Promise((resolve, reject) => {
+      const parsed = new URL(url);
+      const mod = parsed.protocol === "https:" ? https : http;
+      mod
+        .get(
+          {
+            hostname: parsed.hostname,
+            path: parsed.pathname + parsed.search,
+            headers: { "User-Agent": "ServerForge/1.0.0" },
+          },
+          (res) => {
+            if (
+              res.statusCode &&
+              res.statusCode >= 300 &&
+              res.statusCode < 400 &&
+              res.headers.location
+            ) {
+              res.resume();
+              ValheimModsManager.fetchText(res.headers.location, depth + 1)
+                .then(resolve)
+                .catch(reject);
+              return;
+            }
+            if (res.statusCode && res.statusCode >= 400) {
+              res.resume();
+              reject(new Error(`Thunderstore API erreur ${res.statusCode}`));
+              return;
+            }
+            let data = "";
+            res.on("data", (c: string) => (data += c));
+            res.on("end", () => resolve(data));
+          },
+        )
+        .on("error", reject);
+    });
+  }
+
   async installBepInEx(onProgress: (msg: string) => void): Promise<void> {
     onProgress("Récupération de BepInExPack_Valheim depuis Thunderstore…");
     interface TSPkg {
@@ -359,10 +399,63 @@ export class ValheimModsManager {
     return entry;
   }
 
+  // Extrait les refs de mods ("Auteur-Nom-Major.Minor.Patch") d'un export.r2x
+  // (YAML dumpé par r2modman/Gale — liste d'objets { name, version: { major, minor, patch } }).
+  private static extractModRefsFromR2x(yamlContent: string): string[] {
+    const pattern =
+      /name:\s*["']?([^"'\n\r]+?)["']?\r?\n[\s\S]*?major:\s*(\d+)\r?\n\s*minor:\s*(\d+)\r?\n\s*patch:\s*(\d+)/g;
+    const codes: string[] = [];
+    let m: RegExpExecArray | null;
+    while ((m = pattern.exec(yamlContent)) !== null) {
+      codes.push(`${m[1].trim()}-${m[2]}.${m[3]}.${m[4]}`);
+    }
+    return codes;
+  }
+
+  // Résout un code d'export "r2modman"/Gale via l'API Thunderstore.
+  // Le code est un jeton opaque (UUID historique ou format récent "xxx#yyy") —
+  // la réponse est du texte brut "#r2modman\n" + base64(zip du profil), le zip
+  // contenant un export.r2x (YAML) listant les mods.
+  private async resolveProfileCodeViaApi(code: string): Promise<string[]> {
+    const raw = await ValheimModsManager.fetchText(
+      `https://thunderstore.io/api/experimental/legacyprofile/get/${encodeURIComponent(code)}/`,
+    );
+    const PREFIX = "#r2modman";
+    if (!raw.startsWith(PREFIX))
+      throw new Error("Réponse de profil Thunderstore inattendue");
+    const zipBuf = Buffer.from(raw.slice(PREFIX.length).trim(), "base64");
+
+    mkdirSync(this.dataDir, { recursive: true });
+    const tempZip = join(this.dataDir, `profile_${Date.now()}.r2z`);
+    const tempExtract = join(this.dataDir, `_profile_extract_${Date.now()}`);
+    try {
+      writeFileSync(tempZip, zipBuf);
+      mkdirSync(tempExtract, { recursive: true });
+      await extractZip(tempZip, { dir: tempExtract });
+
+      const r2xPath = join(tempExtract, "export.r2x");
+      if (!existsSync(r2xPath))
+        throw new Error("export.r2x introuvable dans le profil téléchargé");
+      const codes = ValheimModsManager.extractModRefsFromR2x(
+        readFileSync(r2xPath, "utf-8"),
+      );
+      if (codes.length === 0)
+        throw new Error("Aucun mod trouvé dans le profil (export.r2x vide)");
+      return codes;
+    } finally {
+      try {
+        rmSync(tempZip, { force: true });
+        rmSync(tempExtract, { recursive: true, force: true });
+      } catch {
+        // ignore
+      }
+    }
+  }
+
   // Décode un code de profil Thunderstore/r2modman et retourne la liste des
   // codes de packages au format "Auteur-Nom-Major.Minor.Patch".
   // Supporte :
-  //  - UUID Thunderstore (ex: 019e762e-3e8d-2527-6323-118093c16a2a) → API fetch
+  //  - code d'export r2modman/Gale (jeton opaque à un seul "mot") → API fetch
   //  - base64 YAML r2modman (versionNumber.major/minor/patch)
   //  - base64 YAML simplifié (version: "X.Y.Z")
   //  - base64 JSON {mods:[{modRef}]}
@@ -370,21 +463,16 @@ export class ValheimModsManager {
   async parseThunderstoreProfile(input: string): Promise<string[]> {
     const code = input.trim();
 
-    // UUID Thunderstore (profil partagé via le site) → résoudre via l'API
-    if (
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-        code,
-      )
-    ) {
-      const resp = await ValheimModsManager.fetchJson<
-        string | { data?: string }
-      >(`https://thunderstore.io/api/experimental/legacyprofile/${code}/`);
-      // La réponse peut être : { data: "base64..." } ou une string base64 directe
-      const profileData =
-        typeof resp === "string"
-          ? resp
-          : ((resp as { data?: string }).data ?? JSON.stringify(resp));
-      return this.parseThunderstoreProfile(profileData);
+    // Un code d'export ("Exporter en tant que code" dans r2modman/Gale) est un jeton
+    // opaque sans espace ni retour à la ligne — son format n'est pas garanti (UUID
+    // historique ou "xxx#yyy" pour les backends plus récents), donc on tente toujours
+    // l'API pour ce cas avant de retomber sur les heuristiques locales ci-dessous.
+    if (code.length > 0 && !/\s/.test(code)) {
+      try {
+        return await this.resolveProfileCodeViaApi(code);
+      } catch {
+        // Pas un code de profil valide (ou API indisponible) — on retente en local.
+      }
     }
 
     let decoded: string;
@@ -423,13 +511,7 @@ export class ValheimModsManager {
 
     // Format 2: YAML r2modman avec versionNumber.major/minor/patch
     if (decoded.includes("versionNumber")) {
-      const pattern =
-        /name:\s*["']?([^"'\n\r]+?)["']?\r?\n[\s\S]*?major:\s*(\d+)\r?\n\s*minor:\s*(\d+)\r?\n\s*patch:\s*(\d+)/g;
-      const codes: string[] = [];
-      let m: RegExpExecArray | null;
-      while ((m = pattern.exec(decoded)) !== null) {
-        codes.push(`${m[1].trim()}-${m[2]}.${m[3]}.${m[4]}`);
-      }
+      const codes = ValheimModsManager.extractModRefsFromR2x(decoded);
       if (codes.length > 0) return codes;
     }
 

@@ -25,7 +25,6 @@ interface TSPackageV1 extends Omit<
   PackageExperimental,
   "latest" | "community_listings" | "rating_score" | "is_deprecated"
 > {
-  namespace: string;
   name: string;
   full_name: string;
   owner: string;
@@ -124,7 +123,7 @@ export class ThunderstoreClient {
     name: string,
   ): Promise<TSPackageV1> {
     const pkgs = await ThunderstoreClient.listPackages();
-    const pkg = pkgs.find((p) => p.namespace === namespace && p.name === name);
+    const pkg = pkgs.find((p) => p.owner === namespace && p.name === name);
     if (!pkg)
       throw new Error(`Package Thunderstore ${namespace}-${name} introuvable`);
     return pkg;
@@ -138,7 +137,7 @@ export class ThunderstoreClient {
       summary: v.description,
       picture_url: v.icon ?? undefined,
       version: v.version_number,
-      author: pkg.owner ?? pkg.namespace,
+      author: pkg.owner,
       endorsement_count: pkg.rating_score,
       updated_timestamp: Math.floor(
         new Date(pkg.date_updated).getTime() / 1000,
@@ -256,7 +255,7 @@ export class ThunderstoreClient {
       if (installedKeys.has(depKey)) continue;
 
       const depPkg = pkgs.find(
-        (p) => p.namespace === depNamespace && p.name === depName,
+        (p) => p.owner === depNamespace && p.name === depName,
       );
       if (depPkg) result.push(ThunderstoreClient.toModInfo(depPkg));
     }
@@ -278,7 +277,7 @@ export class ThunderstoreClient {
       const modNamespace = parts.slice(0, parts.length - 2).join("-");
 
       const pkg = pkgs.find(
-        (p) => p.namespace === modNamespace && p.name === modName,
+        (p) => p.owner === modNamespace && p.name === modName,
       );
       if (!pkg?.versions[0]) continue;
 
@@ -289,7 +288,7 @@ export class ThunderstoreClient {
           latestCode: `${modNamespace}-${modName}-${latestVersion}`,
           latestVersion,
           name: pkg.name,
-          author: pkg.owner ?? pkg.namespace,
+          author: pkg.owner,
         });
       }
     }

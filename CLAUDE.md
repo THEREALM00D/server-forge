@@ -181,6 +181,14 @@ Au démarrage, `ServerManager.tryAdopt()` scanne les processus via `systeminform
 - UI data-driven comme Palworld : `games/astroneer/pages/Config/fields.ts` (`FIELD_GROUPS`) + composants `ConfigGroup`/`ConfigField` (copie locale, pas de presets de difficulté).
 - IPC : `astroconfig:read` / `astroconfig:write` (dossier `games/astroneer/handlers/config.ts`).
 
+## Mods Valheim (Thunderstore)
+
+- `ThunderstoreClient.ts` consomme l'endpoint **v1 community package list** (`https://thunderstore.io/c/valheim/api/v1/package/`, ~10 000+ packages, mis en cache 5 min). ⚠️ Ce endpoint **ne renvoie pas de champ `namespace`** (contrairement à ce que le spec OpenAPI expérimental laisse penser) — l'identité de l'auteur y est exposée uniquement via `owner`. Toujours matcher les packages avec `p.owner`, jamais `p.namespace` (qui vaut `undefined` en pratique et fait échouer silencieusement tout `.find()`).
+- Le "code" d'un mod (`thunderstoreCode`, format `Auteur-Nom-Version`) est parsé/reconstruit à plusieurs endroits (`ValheimModsManager.installFromThunderstore`, `ThunderstoreClient.checkUpdates`/`getMissingDeps`) — le segment "auteur" de ce code correspond à `owner`, pas à un vrai namespace Thunderstore.
+- `ValheimModsManager` (`src/main/games/valheim/`) gère l'install locale (dossier `BepInEx/plugins/<namespace>_<nomSafe>/`, métadonnées dans `{dataDir}/mods.json`). Les mods installés manuellement (hors app) sont détectés par scan du dossier et taggés `source: "manual"` (pas de vérif de mise à jour possible, pas de `thunderstoreCode`).
+- Vérif des mises à jour : `checkUpdates(installedCodes)` compare la version installée à `pkg.versions[0].version_number` (le tableau `versions` de l'API est trié du plus récent au plus ancien).
+- **Import de profil r2modman/Gale** (`parseThunderstoreProfile`) : un code d'export est un jeton opaque (pas forcément un UUID — le backend Thunderstore actuel génère des clés type `xxx#yyy`), résolu via `GET https://thunderstore.io/api/experimental/legacyprofile/get/<code>/` (⚠️ le `/get/` est obligatoire, absent du spec OpenAPI). La réponse est du **texte brut** (pas du JSON) : `"#r2modman\n" + base64(zip)`. Le zip contient `export.r2x` (YAML avec `name` + `version: {major,minor,patch}` par mod), extrait via `extract-zip` dans un dossier temporaire puis parsé par regex (`extractModRefsFromR2x`, pas de dépendance YAML ajoutée).
+
 ## Arguments de lancement
 
 - **Palworld** : config `launchArgs: { publicLobby, performanceFlags, customArgs }` (type `LaunchArgsConfig`). `buildArgs` dans `src/main/games/palworld/serverConfig.ts`.
