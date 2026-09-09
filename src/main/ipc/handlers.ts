@@ -38,6 +38,7 @@ import {
   getGameServerConfig,
   buildGameArgs,
   getGameStopConfig,
+  getGameSavePath,
 } from "../games/registry";
 
 const DEFAULT_RESTART_CONFIG: RestartConfig = {
@@ -202,8 +203,19 @@ export function registerIpcHandlers(): void {
       if (!mgr || mgr.getStatus() !== "running") return;
       const serverPath = getActiveServerPath();
       if (!serverPath) return;
+      // Résout le vrai dossier de sauvegarde par jeu (ex: Valheim stocke ses
+      // mondes hors de serverPath) — sans ça, l'auto-backup zippait toujours
+      // le dossier Palworld par défaut, introuvable pour les autres jeux.
+      const currentActive = getActiveServer();
+      const sourcePath = currentActive
+        ? getGameSavePath(
+            currentActive.gameType,
+            serverPath,
+            serverConfigs.get(currentActive.id),
+          )
+        : undefined;
       const dir = getBackupDir();
-      await backup.create(serverPath, dir);
+      await backup.create(serverPath, dir, sourcePath);
       backup.rotate(dir, cfg?.backupKeep ?? 10);
     });
   };

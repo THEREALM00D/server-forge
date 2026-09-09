@@ -5,12 +5,16 @@ import { useServer } from "../../../../context/ServerContext";
 import { useServerControls } from "../../../../hooks/useServerControls";
 import ServerControls from "../../../../components/server/ServerControls";
 import StatsGrid from "../../../../components/server/StatsGrid";
+import Logs from "../../../../components/server/Logs";
+import { useValheimJoinInfo } from "./hooks/useValheimJoinInfo";
+import JoinInfoCard from "./components/JoinInfoCard";
 
 export default function ValheimDashboard() {
   const { t } = useTranslation();
   const { state } = useServer();
   const { start, stop, restart, canStart, canStop } = useServerControls();
   const { status, stats, serverPath } = state;
+  const joinInfo = useValheimJoinInfo(state.logs);
 
   return (
     <Stack spacing={3}>
@@ -38,6 +42,8 @@ export default function ValheimDashboard() {
         </Typography>
       )}
 
+      {joinInfo && <JoinInfoCard info={joinInfo} />}
+
       <Alert
         severity="info"
         icon={<InfoOutlinedIcon fontSize="inherit" />}
@@ -45,6 +51,10 @@ export default function ValheimDashboard() {
       >
         {t("valheimDashboard.noApi")}
       </Alert>
+
+      <Box sx={{ height: 400 }}>
+        <Logs />
+      </Box>
     </Stack>
   );
 }
