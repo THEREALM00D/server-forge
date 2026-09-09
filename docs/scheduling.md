@@ -1,94 +1,96 @@
-# Planification
+# Scheduling
 
-Redémarrage automatique quotidien du serveur à une heure fixe.
+🇬🇧 English | 🇫🇷 [Français](scheduling.fr.md)
 
-## À quoi ça sert ?
+Automatic daily server restart at a fixed time.
 
-Les serveurs Palworld peuvent souffrir de fuites mémoire ou de ralentissements après plusieurs jours d'uptime. Un redémarrage régulier :
+## What is it for?
 
-- Libère la mémoire et améliore les performances
-- Permet d'appliquer les modifications de configuration en attente
-- Force la création d'un point de sauvegarde propre
-- Réduit les chances de plantage en pleine session
+Palworld servers can suffer from memory leaks or slowdowns after several days of uptime. A regular restart:
+
+- Frees up memory and improves performance
+- Applies any pending configuration changes
+- Forces a clean save point to be created
+- Reduces the odds of a crash mid-session
 
 ## Configuration
 
-### Activer le redémarrage planifié
+### Enable scheduled restart
 
-Toggle en haut de la page. Quand désactivé, aucun redémarrage automatique n'a lieu.
+Toggle at the top of the page. When disabled, no automatic restart occurs.
 
-### Heure (24h)
+### Time (24h)
 
-Sélecteur d'heure au format `HH:MM`. Le redémarrage se déclenche **chaque jour** à cette heure.
+Time picker in `HH:MM` format. The restart triggers **every day** at that time.
 
-> Choisissez une heure creuse (ex: 04:00 du matin) pour minimiser l'impact sur les joueurs.
+> Pick an off-peak hour (e.g. 4:00 AM) to minimize impact on players.
 
-### Avertissement (minutes avant)
+### Warning (minutes before)
 
-Délai entre l'annonce envoyée aux joueurs et l'arrêt effectif. Par défaut : **5 minutes**.
+Delay between the announcement sent to players and the actual shutdown. Default: **5 minutes**.
 
-- `0` : arrêt immédiat sans avertissement
-- `5` : annonce envoyée, puis arrêt 5 minutes plus tard
-- `15` : annonce envoyée, puis arrêt 15 minutes plus tard
+- `0`: immediate shutdown with no warning
+- `5`: announcement sent, then shutdown 5 minutes later
+- `15`: announcement sent, then shutdown 15 minutes later
 
-### Message d'annonce
+### Announcement message
 
-Texte envoyé à tous les joueurs via l'API REST. Le placeholder `{minutes}` est remplacé par le délai d'avertissement.
+Text sent to all players via the REST API. The `{minutes}` placeholder is replaced with the warning delay.
 
-Exemple : `"Le serveur va redémarrer dans {minutes} minutes"` devient `"Le serveur va redémarrer dans 5 minutes"`.
+Example: `"The server will restart in {minutes} minutes"` becomes `"The server will restart in 5 minutes"`.
 
-## Comment ça fonctionne
+## How it works
 
-Le scheduler côté main :
+The main-process scheduler:
 
-1. Vérifie l'heure actuelle toutes les 30 secondes
-2. Quand l'heure correspond, déclenche le processus de redémarrage **une seule fois par jour** à cette heure
+1. Checks the current time every 30 seconds
+2. When the time matches, triggers the restart process **once per day** at that time
 
-Le processus de redémarrage :
+The restart process:
 
-1. **Annonce** envoyée via `/v1/api/announce` (si message non vide)
-2. **Sauvegarde** du monde via `/v1/api/save`
-3. **Arrêt gracieux** via `/v1/api/shutdown` avec délai d'attente
-4. Attente courte
-5. **Redémarrage** du processus serveur
+1. **Announcement** sent via `/v1/api/announce` (if the message isn't empty)
+2. **World save** via `/v1/api/save`
+3. **Graceful shutdown** via `/v1/api/shutdown` with a wait time
+4. Short pause
+5. **Restart** of the server process
 
-## Prérequis
+## Requirements
 
-> ⚠️ **L'API REST doit être activée** dans `PalWorldSettings.ini` (`RESTAPIEnabled=True`) pour que le redémarrage planifié fonctionne correctement.
+> ⚠️ **The REST API must be enabled** in `PalWorldSettings.ini` (`RESTAPIEnabled=True`) for the scheduled restart to work correctly.
 
-Si l'API est désactivée, ServerForge affiche un avertissement avec un bouton **Activer** qui modifie la configuration en un clic.
+If the API is disabled, ServerForge shows a warning with an **Enable** button that updates the configuration in one click.
 
-> Sans API REST, l'arrêt se fait avec `taskkill /F` sans sauvegarde — vous risquez de perdre des données récentes.
+> Without the REST API, the shutdown happens via `taskkill /F` with no save — you risk losing recent data.
 
-## Cas d'usage
+## Use cases
 
-### Redémarrage de nuit (recommandé)
-
-```
-Heure: 04:00
-Avertissement: 5 minutes
-Message: "Maintenance quotidienne dans {minutes} min"
-```
-
-### Redémarrage rapide pendant maintenance
+### Nightly restart (recommended)
 
 ```
-Heure: 12:00
-Avertissement: 1 minute
-Message: "Redémarrage technique dans {minutes} min"
+Time: 04:00
+Warning: 5 minutes
+Message: "Daily maintenance in {minutes} min"
 ```
 
-## Interaction avec les sauvegardes auto
+### Quick restart during maintenance
 
-Le redémarrage planifié et les sauvegardes automatiques sont **indépendants**. Vous pouvez activer les deux :
+```
+Time: 12:00
+Warning: 1 minute
+Message: "Technical restart in {minutes} min"
+```
 
-- Sauvegardes auto toutes les heures (sécurité continue)
-- Redémarrage planifié à 4h du matin (maintenance quotidienne)
+## Interaction with automatic backups
 
-> Le shutdown gracieux fait sa propre sauvegarde via l'API, indépendamment du scheduler de backups ZIP.
+Scheduled restart and automatic backups are **independent**. You can enable both:
 
-## Limitations actuelles
+- Auto backups every hour (continuous safety net)
+- Scheduled restart at 4 AM (daily maintenance)
 
-- **Une seule heure** par jour (pas de multiples horaires)
-- **Tous les jours** (pas de jours sélectionnables)
-- Pas de notification quand le redémarrage échoue (vérifier les logs)
+> Graceful shutdown makes its own save via the API, independently of the ZIP backup scheduler.
+
+## Current limitations
+
+- **A single time** per day (no multiple schedules)
+- **Every day** (no selectable days)
+- No notification when the restart fails (check the logs)

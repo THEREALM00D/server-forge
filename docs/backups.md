@@ -1,97 +1,99 @@
-# Sauvegardes
+# Backups
 
-Système de sauvegardes ZIP du dossier `SaveGames` du serveur Palworld.
+🇬🇧 English | 🇫🇷 [Français](backups.fr.md)
 
-## Que sauvegarde-t-on ?
+ZIP backup system for the Palworld server's `SaveGames` folder.
 
-ServerForge zippe le dossier suivant :
+## What gets backed up?
+
+ServerForge zips the following folder:
 
 ```
 {serverPath}/Pal/Saved/SaveGames/
 ```
 
-Ce dossier contient :
+This folder contains:
 
-- L'état du monde (terrain, structures, Pals)
-- Les inventaires et progressions des joueurs
-- La liste des bans
-- Les paramètres de la sauvegarde
+- The world state (terrain, structures, Pals)
+- Player inventories and progression
+- The ban list
+- Save settings
 
-> Le fichier `PalWorldSettings.ini` n'est **pas** inclus dans la sauvegarde — il est dans `Pal/Saved/Config/WindowsServer/`.
+> The `PalWorldSettings.ini` file is **not** included in the backup — it lives in `Pal/Saved/Config/WindowsServer/`.
 
 ## Configuration
 
-### Dossier de sauvegarde
+### Backup folder
 
-Par défaut : `{userData}/backups` (typiquement `C:\Users\{user}\AppData\Roaming\server-forge\backups`).
+Default: `{userData}/backups` (typically `C:\Users\{user}\AppData\Roaming\server-forge\backups`).
 
-Vous pouvez choisir un autre dossier (disque externe, NAS) via le bouton **dossier**.
+You can choose a different folder (external drive, NAS) via the **folder** button.
 
 ### Rotation
 
-Le champ **Sauvegardes à conserver** définit combien de backups sont gardés. Quand le nombre est dépassé, les plus anciennes sont supprimées automatiquement.
+The **Backups to keep** field defines how many backups are retained. Once the count is exceeded, the oldest ones are deleted automatically.
 
-- `0` : pas de rotation, tout est conservé
-- `10` (défaut) : garde les 10 plus récentes
+- `0`: no rotation, everything is kept
+- `10` (default): keeps the 10 most recent
 
-### Sauvegarde automatique
+### Automatic backup
 
-Sélecteur d'intervalle :
+Interval selector:
 
-| Option     | Fréquence              |
-| ---------- | ---------------------- |
-| Désactivée | Pas de sauvegarde auto |
-| 15 min     | Toutes les 15 minutes  |
-| 30 min     | Toutes les 30 minutes  |
-| 1 h        | Chaque heure           |
-| 3 h        | Toutes les 3 heures    |
-| 6 h        | Toutes les 6 heures    |
-| 12 h       | Toutes les 12 heures   |
-| 1 jour     | Une fois par jour      |
+| Option   | Frequency        |
+| -------- | ---------------- |
+| Disabled | No auto backup   |
+| 15 min   | Every 15 minutes |
+| 30 min   | Every 30 minutes |
+| 1 h      | Every hour       |
+| 3 h      | Every 3 hours    |
+| 6 h      | Every 6 hours    |
+| 12 h     | Every 12 hours   |
+| 1 day    | Once a day       |
 
-> La sauvegarde automatique tourne **uniquement quand le serveur est en cours d'exécution**.
+> Automatic backup only runs **while the server is running**.
 
 ## Actions
 
-### Créer manuellement
+### Create manually
 
-Bouton **Créer une sauvegarde** :
+**Create a backup** button:
 
-1. Zippe le dossier SaveGames (compression niveau 9 = max)
-2. Nomme le fichier `backup-YYYY-MM-DD_HH-MM-SS.zip`
-3. Applique la rotation si nécessaire
-4. Notification de succès
+1. Zips the SaveGames folder (compression level 9 = max)
+2. Names the file `backup-YYYY-MM-DD_HH-MM-SS.zip`
+3. Applies rotation if needed
+4. Shows a success notification
 
-La création peut prendre de quelques secondes à plusieurs minutes selon la taille du monde.
+Creating a backup can take from a few seconds to several minutes depending on the world's size.
 
-### Restaurer
+### Restore
 
-Bouton **Restaurer** sur chaque sauvegarde :
+**Restore** button on each backup:
 
-1. Confirmation requise
-2. **Le serveur doit être arrêté** (le bouton est désactivé sinon)
-3. Le dossier SaveGames actuel est supprimé
-4. Le contenu du ZIP est extrait à sa place
+1. Confirmation required
+2. **The server must be stopped** (the button is disabled otherwise)
+3. The current SaveGames folder is deleted
+4. The ZIP's contents are extracted in its place
 
-> ⚠️ La restauration **écrase** la sauvegarde actuelle. Faites une sauvegarde manuelle avant de restaurer si vous voulez pouvoir revenir en arrière.
+> ⚠️ Restoring **overwrites** the current save. Make a manual backup before restoring if you want to be able to roll back.
 
-### Supprimer
+### Delete
 
-Bouton **Supprimer** sur chaque sauvegarde — confirmation requise.
+**Delete** button on each backup — confirmation required.
 
-## Bonnes pratiques
+## Best practices
 
-- **Activez la sauvegarde auto** dès le départ (toutes les heures par exemple)
-- **Vérifiez périodiquement** que les sauvegardes se créent correctement (regardez les logs et les dates)
-- **Stockez les sauvegardes sur un autre disque** que celui du serveur (en cas de panne disque)
-- **Testez la restauration** au moins une fois pour vérifier que le processus fonctionne
-- Avant une **mise à jour majeure** de Palworld, faites une sauvegarde manuelle pour pouvoir rollback
+- **Enable auto backup** from the start (every hour, for example)
+- **Check periodically** that backups are being created correctly (check the logs and timestamps)
+- **Store backups on a different drive** than the server's (in case of a disk failure)
+- **Test a restore** at least once to make sure the process works
+- Before a **major Palworld update**, make a manual backup so you can roll back if needed
 
-## Récupération en cas de problème
+## Recovering from a problem
 
-Si le serveur ne démarre plus après corruption :
+If the server no longer starts after corruption:
 
-1. Arrêtez le serveur dans le Dashboard (s'il est en zombie)
-2. Allez dans **Sauvegardes**
-3. Restaurez la sauvegarde la plus récente fonctionnelle
-4. Redémarrez le serveur
+1. Stop the server in the Dashboard (if it's zombied)
+2. Go to **Backups**
+3. Restore the most recent working backup
+4. Restart the server

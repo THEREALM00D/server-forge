@@ -1,52 +1,56 @@
 # Logs
 
-Affichage en temps réel des sorties du processus `PalServer.exe` et des messages internes de ServerForge.
+🇬🇧 English | 🇫🇷 [Français](logs.fr.md)
 
-## Source des logs
+Real-time display of the `PalServer.exe` process output and ServerForge's internal messages.
 
-Trois sources sont fusionnées dans la même vue :
+## Log sources
 
-| Préfixe     | Origine                                                        |
-| ----------- | -------------------------------------------------------------- |
-| `[Manager]` | Messages internes de ServerForge (démarrage, arrêt, API, etc.) |
-| `[ERR]`     | Sortie d'erreur (stderr) du processus serveur                  |
-| _(aucun)_   | Sortie standard (stdout) du processus serveur                  |
+Three sources are merged into the same view:
 
-## Couleurs
+| Prefix      | Origin                                                   |
+| ----------- | -------------------------------------------------------- |
+| `[Manager]` | ServerForge's internal messages (start, stop, API, etc.) |
+| `[ERR]`     | Error output (stderr) from the server process            |
+| _(none)_    | Standard output (stdout) from the server process         |
 
-- **Rouge** : lignes commençant par `[ERR]`
-- **Bleu** : lignes commençant par `[Manager]`
-- **Gris** : reste (sortie standard du serveur)
+> Note: `[Manager]` messages are currently emitted in French only, regardless of the app's display language (see [CLAUDE.md](../CLAUDE.md)).
 
-## Limitations à connaître
+## Colors
 
-### PalServer.exe est silencieux
+- **Red**: lines starting with `[ERR]`
+- **Blue**: lines starting with `[Manager]`
+- **Gray**: everything else (the server's standard output)
 
-Contrairement à beaucoup de serveurs de jeu, **PalServer.exe écrit très peu sur stdout/stderr**. La majorité des logs Palworld sont écrits dans des fichiers internes :
+## Known limitations
+
+### PalServer.exe is quiet
+
+Unlike many game servers, **PalServer.exe writes very little to stdout/stderr**. Most Palworld logs are written to internal files instead:
 
 ```
 {serverPath}/Pal/Saved/Logs/
 ```
 
-Pour les logs détaillés du serveur (connexions joueurs, erreurs Unreal Engine, etc.), consultez ces fichiers directement.
+For detailed server logs (player connections, Unreal Engine errors, etc.), check these files directly.
 
-### Tampon limité
+### Limited buffer
 
-ServerForge garde les **500 dernières lignes** en mémoire. Au-delà, les anciennes lignes sont supprimées de l'affichage (mais pas de l'historique du processus).
+ServerForge keeps the **last 500 lines** in memory. Beyond that, older lines are removed from the display (but not from the process's own history).
 
 ## Actions
 
 ### Auto-scroll
 
-L'affichage défile automatiquement vers le bas quand de nouvelles lignes arrivent. Cliquez et scrollez vers le haut pour interrompre l'auto-scroll, puis revenez en bas pour le réactiver.
+The view automatically scrolls down as new lines arrive. Click and scroll up to pause auto-scroll, then scroll back down to resume it.
 
-### Effacer
+### Clear
 
-Bouton **Effacer** : vide complètement la vue. N'arrête **pas** la capture des logs futurs.
+**Clear** button: empties the view completely. It does **not** stop future log capture.
 
-## Ce qu'on voit typiquement
+## What you'll typically see
 
-### Au démarrage
+### On startup
 
 ```
 [Manager] Starting Palworld server...
@@ -55,11 +59,11 @@ LogPalNetServer: Server starting on port 8211
 LogWorld: Bringing World up for play
 ```
 
-### En cours de fonctionnement
+### While running
 
-Très peu de sortie tant qu'il n'y a pas de connexion ou d'erreur.
+Very little output as long as there's no connection or error.
 
-### À l'arrêt gracieux (avec API)
+### On graceful shutdown (with API)
 
 ```
 [Manager] Annonce envoyée: Le serveur va redémarrer...
@@ -69,19 +73,19 @@ Très peu de sortie tant qu'il n'y a pas de connexion ou d'erreur.
 [Manager] Server exited with code 0
 ```
 
-### À l'arrêt forcé (sans API)
+### On forced shutdown (without API)
 
 ```
 [Manager] API indisponible: Timeout
 [Manager] Server exited with code 1
 ```
 
-## Diagnostic
+## Diagnostics
 
-Pour analyser un crash ou un comportement inattendu :
+To investigate a crash or unexpected behavior:
 
-1. **Logs ServerForge** : recherchez `[ERR]` ou `[Manager]` dans la vue
-2. **Logs Palworld** : ouvrez le dernier fichier dans `{serverPath}/Pal/Saved/Logs/`
-3. **Event Viewer Windows** : Application → Erreurs liées à `PalServer.exe`
+1. **ServerForge logs**: look for `[ERR]` or `[Manager]` in the view
+2. **Palworld logs**: open the latest file in `{serverPath}/Pal/Saved/Logs/`
+3. **Windows Event Viewer**: Application → errors related to `PalServer.exe`
 
-Pour signaler un bug à l'équipe Palworld, joindre les fichiers de `Pal/Saved/Logs/` est plus utile que le log de ServerForge.
+When reporting a bug to the Palworld team, attaching files from `Pal/Saved/Logs/` is more useful than ServerForge's own log.

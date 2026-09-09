@@ -1,56 +1,65 @@
 # ServerForge
 
-Gestionnaire de bureau pour serveurs dédiés de jeux vidéo. Compatible avec **Palworld**, **Valheim** et **Astroneer**.
+🇬🇧 English | 🇫🇷 [Français](README.fr.md)
 
-![Plateforme](https://img.shields.io/badge/platform-Windows-blue)
-![Licence](https://img.shields.io/badge/license-proprietary-red)
+> ⚠️ **The current name and logo are temporary.** The project's final branding has not been decided yet.
 
-## Fonctionnalités
+Desktop manager for dedicated game servers. Compatible with **Palworld**, **Valheim**, and **Astroneer**.
 
-- **Installation automatique** de SteamCMD et du serveur Palworld
-- **Démarrage / arrêt / redémarrage** avec sauvegarde gracieuse via l'API REST
-- **Surveillance temps réel** : CPU, RAM, uptime, FPS serveur, joueurs en ligne
-- **Éditeur de configuration** INI avec presets de difficulté (Casual / Normal / Hard)
-- **Gestion des joueurs** : kick, ban, unban directement depuis le dashboard
-- **Gestion du firewall Windows** (règles automatiques + personnalisées)
-- **Sauvegardes** automatiques planifiables avec rotation
-- **Redémarrage planifié** quotidien avec annonce et sauvegarde
-- **Vérification des mises à jour** Palworld via SteamCMD
-- **Logs en temps réel** du processus serveur
+![Platform](https://img.shields.io/badge/platform-Windows-blue)
+![License](https://img.shields.io/badge/license-proprietary-red)
+
+## Features
+
+- **Automatic installation** of SteamCMD and the game server
+- **Start / stop / restart** with graceful shutdown via the REST API
+- **Real-time monitoring**: CPU, RAM, uptime, server FPS, online players
+- **INI configuration editor** with difficulty presets (Casual / Normal / Hard)
+- **Player management**: kick, ban, unban directly from the dashboard
+- **Windows firewall management** (automatic + custom rules)
+- **Scheduled automatic backups** with rotation
+- **Daily scheduled restart** with in-game announcement and save
+- **Update checking** via SteamCMD
+- **Real-time logs** of the server process
 
 ## Installation
 
-Téléchargez la dernière version depuis [Releases](https://github.com/) :
+Download the latest version from [Releases](https://github.com/THEREALM00D/server-forge/releases):
 
-- **Installateur** : `server-forge-{version}-setup.exe`
+- **Installer**: `server-forge-{version}-setup.exe`
+- **Portable**: `server-forge-{version}-portable.exe`
 
-> L'application requiert les **droits administrateur** pour gérer les règles du firewall Windows.
+> The application requires **administrator rights** to manage Windows firewall rules.
 
-## Démarrage rapide
+## Quick start
 
-1. Lancez **ServerForge**
-2. Allez dans **Installation**
-3. Cliquez sur **Installer SteamCMD** (téléchargement automatique)
-4. Choisissez un dossier de destination et installez **Palworld Server**
-5. Allez dans **Dashboard** et cliquez sur **Démarrer**
+1. Launch **ServerForge**
+2. Go to **Install**
+3. Click **Install SteamCMD** (automatic download)
+4. Choose a destination folder and install the server for your game
+5. Go to **Dashboard** and click **Start**
 
-Voir [docs/installation.md](docs/installation.md) pour le guide complet.
+See [docs/installation.md](docs/installation.md) for the full guide.
 
 ## Documentation
 
 - [Installation](docs/installation.md)
 - [Dashboard](docs/dashboard.md)
-- [Configuration du serveur](docs/configuration.md)
-- [Réseau et firewall](docs/network.md)
-- [Sauvegardes](docs/backups.md)
-- [Planification](docs/scheduling.md)
+- [Server configuration](docs/configuration.md)
+- [Network & firewall](docs/network.md)
+- [Backups](docs/backups.md)
+- [Scheduling](docs/scheduling.md)
 - [Logs](docs/logs.md)
-- [Architecture technique](CLAUDE.md)
+- [Technical architecture](CLAUDE.md)
 
-## Stack technique
+## Tech stack
 
 - Electron 31, React 19, MUI 9, TypeScript 6, Vite 5
 
-## Licence
+## License
 
-Propriétaire — tous droits réservés. Voir [LICENSE](LICENSE). Le code n'est pas open-source : la distribution en alpha est réservée aux testeurs invités et ne constitue pas une autorisation d'utilisation, copie ou redistribution.
+Proprietary — all rights reserved. See [LICENSE](LICENSE). This code is not open-source: making it publicly visible during the alpha does not grant any right to use, copy, or redistribute it.
+
+## Contributing
+
+The `main` branch is protected: all contributions go through a Pull Request, and only the project maintainer can merge it.

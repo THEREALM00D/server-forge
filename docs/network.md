@@ -1,73 +1,75 @@
-# Réseau et firewall
+# Network & firewall
 
-Gestion des règles du firewall Windows pour autoriser les connexions au serveur.
+🇬🇧 English | 🇫🇷 [Français](network.fr.md)
 
-## Pourquoi configurer le firewall ?
+Managing Windows firewall rules to allow connections to the server.
 
-Par défaut, Windows bloque les connexions entrantes vers `PalServer.exe`. Sans règle de firewall :
+## Why configure the firewall?
 
-- Les joueurs **ne peuvent pas rejoindre** votre serveur depuis l'extérieur
-- L'API REST et le RCON sont inaccessibles depuis le réseau local
+By default, Windows blocks inbound connections to `PalServer.exe`. Without a firewall rule:
 
-ServerForge crée des règles `netsh` ciblées pour les ports utilisés.
+- Players **cannot join** your server from outside
+- The REST API and RCON are unreachable even from the local network
+
+ServerForge creates targeted `netsh` rules for the ports in use.
 
 ## Permissions
 
-La gestion des règles requiert les **droits administrateur**. ServerForge détecte automatiquement si vous êtes admin et désactive les boutons sinon.
+Managing rules requires **administrator rights**. ServerForge automatically detects whether you're an admin and disables the buttons otherwise.
 
-> Lancez ServerForge en mode administrateur (clic droit → **Exécuter en tant qu'administrateur**) ou utilisez l'installateur qui élève les privilèges automatiquement.
+> Launch ServerForge as administrator (right-click → **Run as administrator**) or use the installer, which elevates privileges automatically.
 
-## Règles standard
+## Standard rules
 
-Trois règles pré-configurées correspondent aux ports Palworld :
+Three pre-configured rules correspond to the Palworld ports:
 
-| Règle        | Port (défaut) | Protocole | Usage                    |
-| ------------ | ------------- | --------- | ------------------------ |
-| **Game**     | 8211          | UDP + TCP | Connexions des joueurs   |
-| **RCON**     | 25575         | TCP       | Console d'administration |
-| **REST API** | 8212          | TCP       | API HTTP locale          |
+| Rule         | Port (default) | Protocol  | Purpose            |
+| ------------ | -------------- | --------- | ------------------ |
+| **Game**     | 8211           | UDP + TCP | Player connections |
+| **RCON**     | 25575          | TCP       | Admin console      |
+| **REST API** | 8212           | TCP       | Local HTTP API     |
 
-Les ports sont lus depuis `PalWorldSettings.ini` (`PublicPort`, `RCONPort`, `RESTAPIPort`).
+Ports are read from `PalWorldSettings.ini` (`PublicPort`, `RCONPort`, `RESTAPIPort`).
 
-## Actions disponibles
+## Available actions
 
-### Activer/désactiver une règle individuelle
+### Toggle an individual rule
 
-Chaque règle a un toggle. Activer crée la règle dans le firewall Windows ; désactiver la supprime.
+Each rule has a toggle. Enabling it creates the rule in the Windows firewall; disabling it removes it.
 
-### Tout activer / Tout supprimer
+### Enable all / Remove all
 
-- **Tout activer** : crée les 3 règles standard d'un coup
-- **Tout supprimer** : retire toutes les règles ServerForge (standard + custom)
+- **Enable all**: creates the 3 standard rules at once
+- **Remove all**: removes every ServerForge rule (standard + custom)
 
-### Règles personnalisées
+### Custom rules
 
-Pour exposer d'autres ports (mods, services tiers) :
+To expose other ports (mods, third-party services):
 
-1. Entrez un **nom**, un **port** et choisissez le **protocole** (TCP ou UDP)
-2. Cliquez sur **Créer**
-3. La règle apparaît dans la liste avec un bouton de suppression
+1. Enter a **name**, a **port**, and choose the **protocol** (TCP or UDP)
+2. Click **Create**
+3. The rule appears in the list with a delete button
 
-> Les règles custom sont préfixées par `ServerForge - ` dans `netsh advfirewall` pour faciliter l'identification.
+> Custom rules are prefixed with `ServerForge - ` in `netsh advfirewall` to make them easy to identify.
 
-## Exposer le serveur sur Internet
+## Exposing the server to the Internet
 
-Le firewall Windows ne suffit pas — vous devez aussi :
+The Windows firewall alone isn't enough — you also need to:
 
-1. **Configurer le port forwarding** sur votre routeur
-   - Rediriger `PublicPort` (UDP) vers l'IP locale de votre machine
-   - Activer UPnP peut le faire automatiquement
-2. **Connaître votre IP publique** ([whatismyipaddress.com](https://whatismyipaddress.com))
-3. **Partager** : `IP_PUBLIQUE:8211`
+1. **Set up port forwarding** on your router
+   - Forward `PublicPort` (UDP) to your machine's local IP
+   - Enabling UPnP can do this automatically
+2. **Know your public IP** ([whatismyipaddress.com](https://whatismyipaddress.com))
+3. **Share**: `PUBLIC_IP:8211`
 
-> ⚠️ N'exposez **jamais** les ports RCON et REST API sur Internet. Ils sont conçus pour le LAN uniquement et leur exposition permettrait à n'importe qui de manipuler votre serveur.
+> ⚠️ **Never** expose the RCON and REST API ports to the Internet. They are designed for LAN use only, and exposing them would let anyone manipulate your server.
 
-## Vérification
+## Verification
 
-Pour tester que les règles sont actives :
+To test that the rules are active:
 
 ```powershell
 netsh advfirewall firewall show rule name=all | findstr "ServerForge"
 ```
 
-Vous devriez voir les règles créées par l'application.
+You should see the rules created by the application.

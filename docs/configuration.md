@@ -1,99 +1,101 @@
-# Configuration du serveur
+# Server configuration
 
-Éditeur graphique du fichier `PalWorldSettings.ini`.
+🇬🇧 English | 🇫🇷 [Français](configuration.fr.md)
 
-## Fichier source
+Graphical editor for the `PalWorldSettings.ini` file.
+
+## Source file
 
 ```
 {serverPath}/Pal/Saved/Config/WindowsServer/PalWorldSettings.ini
 ```
 
-ServerForge lit ce fichier au chargement de la page **Configuration** et écrit les modifications quand vous cliquez sur **Enregistrer**.
+ServerForge reads this file when the **Configuration** page loads, and writes changes when you click **Save**.
 
-> ⚠️ Le serveur doit être **redémarré** pour que les changements prennent effet.
+> ⚠️ The server must be **restarted** for changes to take effect.
 
-## Presets de difficulté
+## Difficulty presets
 
-Trois presets prédéfinis modifient une vingtaine de paramètres en un clic :
+Three predefined presets change about twenty settings in one click:
 
 ### Casual
 
-- XP, capture et drop ×2 à ×3
-- Dégâts subis très réduits
-- Régénération rapide
-- Pas de pénalité de mort
-- Pas d'invasions
+- XP, capture, and drop rates ×2 to ×3
+- Damage taken greatly reduced
+- Fast regeneration
+- No death penalty
+- No invasions
 
 ### Normal
 
-- Tous les paramètres aux valeurs par défaut Palworld
+- All settings at Palworld's default values
 
 ### Hard
 
-- XP et capture réduits (×0.8)
-- Dégâts subis augmentés
-- Pénalité de mort active
-- Invasions activées
+- XP and capture rates reduced (×0.8)
+- Damage taken increased
+- Death penalty active
+- Invasions enabled
 
-## Paramètres principaux
+## Main settings
 
-### Serveur
+### Server
 
-| Paramètre            | Description                                     |
-| -------------------- | ----------------------------------------------- |
-| `ServerName`         | Nom affiché dans la liste des serveurs          |
-| `ServerDescription`  | Description courte                              |
-| `AdminPassword`      | Mot de passe admin (requis pour l'API REST)     |
-| `ServerPassword`     | Mot de passe d'accès au serveur (vide = public) |
-| `ServerPlayerMaxNum` | Nombre maximal de joueurs (défaut 32)           |
-| `PublicPort`         | Port d'écoute du jeu (défaut 8211, UDP)         |
-| `Region`             | Région d'hébergement                            |
+| Setting              | Description                                  |
+| -------------------- | -------------------------------------------- |
+| `ServerName`         | Name shown in the server list                |
+| `ServerDescription`  | Short description                            |
+| `AdminPassword`      | Admin password (required for the REST API)   |
+| `ServerPassword`     | Password to join the server (empty = public) |
+| `ServerPlayerMaxNum` | Maximum number of players (default 32)       |
+| `PublicPort`         | Game listening port (default 8211, UDP)      |
+| `Region`             | Hosting region                               |
 
-### API REST
+### REST API
 
-| Paramètre        | Description                                            |
-| ---------------- | ------------------------------------------------------ |
-| `RESTAPIEnabled` | Active l'API REST locale (recommandé pour ServerForge) |
-| `RESTAPIPort`    | Port HTTP de l'API (défaut 8212)                       |
+| Setting          | Description                                              |
+| ---------------- | -------------------------------------------------------- |
+| `RESTAPIEnabled` | Enables the local REST API (recommended for ServerForge) |
+| `RESTAPIPort`    | HTTP port for the API (default 8212)                     |
 
-> **Important** : avec l'API REST activée, ServerForge peut afficher les joueurs, gérer kick/ban, et arrêter proprement le serveur avec sauvegarde.
+> **Important**: with the REST API enabled, ServerForge can show players, handle kick/ban, and cleanly stop the server with a save.
 
 ### RCON
 
-| Paramètre     | Description              |
-| ------------- | ------------------------ |
-| `RCONEnabled` | Active le protocole RCON |
-| `RCONPort`    | Port RCON (défaut 25575) |
+| Setting       | Description               |
+| ------------- | ------------------------- |
+| `RCONEnabled` | Enables the RCON protocol |
+| `RCONPort`    | RCON port (default 25575) |
 
-### Gameplay (extraits)
+### Gameplay (selected)
 
-| Paramètre                | Description                                               |
-| ------------------------ | --------------------------------------------------------- |
-| `Difficulty`             | Difficulté globale (None / Easy / Normal / Hard)          |
-| `DayTimeSpeedRate`       | Vitesse du jour                                           |
-| `NightTimeSpeedRate`     | Vitesse de la nuit                                        |
-| `ExpRate`                | Multiplicateur d'XP                                       |
-| `PalCaptureRate`         | Taux de capture des Pals                                  |
-| `DeathPenalty`           | Pénalité à la mort (None / Item / ItemAndEquipment / All) |
-| `bIsPvP`                 | Active le PvP                                             |
-| `bEnableInvaderEnemy`    | Active les raids/invasions                                |
-| `bEnableFriendlyFire`    | Tir allié                                                 |
-| `bEnableNonLoginPenalty` | Décompte du temps offline pour les bases                  |
+| Setting                  | Description                                          |
+| ------------------------ | ---------------------------------------------------- |
+| `Difficulty`             | Overall difficulty (None / Easy / Normal / Hard)     |
+| `DayTimeSpeedRate`       | Daytime speed                                        |
+| `NightTimeSpeedRate`     | Nighttime speed                                      |
+| `ExpRate`                | XP multiplier                                        |
+| `PalCaptureRate`         | Pal capture rate                                     |
+| `DeathPenalty`           | Death penalty (None / Item / ItemAndEquipment / All) |
+| `bIsPvP`                 | Enables PvP                                          |
+| `bEnableInvaderEnemy`    | Enables raids/invasions                              |
+| `bEnableFriendlyFire`    | Friendly fire                                        |
+| `bEnableNonLoginPenalty` | Counts offline time against bases                    |
 
-> Plus de **170 paramètres** sont accessibles dans l'éditeur. Voir la [doc officielle Palworld](https://docs.palworldgame.com) pour la liste complète.
+> Over **170 settings** are available in the editor. See the [official Palworld docs](https://docs.palworldgame.com) for the full list.
 
-## Sauvegarde de la configuration
+## Saving the configuration
 
-Le bouton **Enregistrer** :
+The **Save** button:
 
-1. Écrit toutes les valeurs modifiées dans `PalWorldSettings.ini`
-2. Préserve la structure et la section `[/Script/Pal.PalGameWorldSettings]`
-3. Affiche une notification de succès ou d'erreur
+1. Writes all changed values into `PalWorldSettings.ini`
+2. Preserves the structure and the `[/Script/Pal.PalGameWorldSettings]` section
+3. Shows a success or error notification
 
-> Si le serveur est en cours, **redémarrez-le** depuis le Dashboard pour appliquer les changements.
+> If the server is running, **restart it** from the Dashboard to apply the changes.
 
-## Conseils
+## Tips
 
-- **Activez RESTAPI** dès le départ pour profiter de toutes les fonctionnalités de ServerForge
-- Définissez un **mot de passe admin fort** : il sert à l'API REST et au RCON
-- **Sauvegardez votre INI** avant de tester un preset (le bouton de preset écrase les valeurs concernées)
+- **Enable RESTAPI** from the start to make use of all of ServerForge's features
+- Set a **strong admin password**: it's used for both the REST API and RCON
+- **Back up your INI file** before trying a preset (the preset button overwrites the affected values)

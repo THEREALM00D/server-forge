@@ -1,76 +1,78 @@
 # Dashboard
 
-Vue principale de ServerForge — statut du serveur, statistiques, contrôles et joueurs connectés.
+🇬🇧 English | 🇫🇷 [Français](dashboard.fr.md)
 
-## Statut du serveur
+ServerForge's main view — server status, statistics, controls, and connected players.
 
-Affiché en haut sous forme de chip coloré :
+## Server status
 
-| Statut           | Couleur | Description                                      |
-| ---------------- | ------- | ------------------------------------------------ |
-| **En ligne**     | Vert    | Le serveur est démarré et accepte les connexions |
-| **Démarrage...** | Orange  | Le processus est en cours de lancement           |
-| **Arrêt...**     | Orange  | Arrêt en cours (annonce + sauvegarde + shutdown) |
-| **Arrêté**       | Gris    | Le serveur n'est pas en cours d'exécution        |
-| **Planté**       | Rouge   | Le processus s'est arrêté avec une erreur        |
+Shown at the top as a colored chip:
 
-## Contrôles
+| Status          | Color  | Description                                       |
+| --------------- | ------ | ------------------------------------------------- |
+| **Online**      | Green  | The server is started and accepting connections   |
+| **Starting...** | Orange | The process is launching                          |
+| **Stopping...** | Orange | Shutdown in progress (announce + save + shutdown) |
+| **Stopped**     | Gray   | The server is not running                         |
+| **Crashed**     | Red    | The process exited with an error                  |
 
-- **Démarrer** : lance le processus `PalServer.exe`
-- **Redémarrer** : arrête puis relance
-- **Arrêter** : tente un arrêt gracieux via l'API REST (annonce + save + shutdown), puis force l'arrêt via `taskkill` si nécessaire
+## Controls
 
-> L'arrêt gracieux n'est possible que si **API REST** est activée dans la configuration. Sinon, le serveur est tué brutalement et les modifications récentes peuvent être perdues.
+- **Start**: launches the `PalServer.exe` process
+- **Restart**: stops then relaunches
+- **Stop**: attempts a graceful shutdown via the REST API (announce + save + shutdown), then force-stops via `taskkill` if needed
 
-## Statistiques système
+> Graceful shutdown is only possible if **REST API** is enabled in the configuration. Otherwise the server is killed abruptly and recent changes may be lost.
 
-Quatre cartes affichant en temps réel (rafraîchies toutes les 2 secondes) :
+## System statistics
 
-- **CPU** : utilisation du processeur en %
-- **RAM** : utilisation mémoire en %
-- **RAM utilisée** : mémoire consommée en GB
-- **Uptime** : temps écoulé depuis le démarrage de la machine
+Four cards showing real-time data (refreshed every 2 seconds):
 
-Les barres de progression changent de couleur :
+- **CPU**: processor usage in %
+- **RAM**: memory usage in %
+- **RAM used**: memory consumed in GB
+- **Uptime**: time elapsed since the machine started
 
-- Vert : < 65%
-- Orange : 65-85%
-- Rouge : > 85%
+Progress bars change color:
 
-## Informations du serveur
+- Green: < 65%
+- Orange: 65-85%
+- Red: > 85%
 
-Affichées uniquement quand le serveur est **En ligne** et que l'API REST est accessible :
+## Server information
 
-- Nom du serveur
-- Version Palworld
+Shown only when the server is **Online** and the REST API is reachable:
+
+- Server name
+- Palworld version
 - Description
-- World GUID (identifiant unique du monde)
-- Joueurs en ligne (actuels / max)
-- Jour en jeu (compteur in-game)
-- FPS serveur
-- Nombre de camps de base
+- World GUID (unique world identifier)
+- Online players (current / max)
+- In-game day (in-game counter)
+- Server FPS
+- Number of base camps
 
-Les données sont rafraîchies toutes les 10 secondes.
+Data is refreshed every 10 seconds.
 
-## Joueurs connectés
+## Connected players
 
-Liste en temps réel des joueurs avec :
+Real-time list of players with:
 
-- **Nom** et **niveau**
-- **Ping** (latence en ms)
-- **Bouton Expulser** (icône orange) : déconnecte le joueur sans le bannir
-- **Bouton Bannir** (icône rouge) : déconnecte et empêche toute reconnexion
+- **Name** and **level**
+- **Ping** (latency in ms)
+- **Kick button** (orange icon): disconnects the player without banning them
+- **Ban button** (red icon): disconnects and prevents any reconnection
 
-### Débannir un joueur
+### Unbanning a player
 
-En bas du panel des joueurs :
+At the bottom of the players panel:
 
-- Entrez le **User ID** (Steam ID) du joueur banni
-- Cliquez sur **Débannir**
+- Enter the banned player's **User ID** (Steam ID)
+- Click **Unban**
 
-> Le User ID est visible dans les logs ou via la liste des bans Palworld (`Pal/Saved/SaveGames/{GUID}/banlist.txt`).
+> The User ID is visible in the logs or via Palworld's ban list (`Pal/Saved/SaveGames/{GUID}/banlist.txt`).
 
 ## Limitations
 
-- Les fonctions de gestion des joueurs nécessitent l'**API REST activée**
-- Si l'API n'est pas accessible (REST désactivé, mauvais mot de passe, etc.), aucune information n'est affichée — vérifiez la configuration
+- Player management features require the **REST API to be enabled**
+- If the API is not reachable (REST disabled, wrong password, etc.), no information is shown — check your configuration

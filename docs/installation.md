@@ -1,71 +1,73 @@
 # Installation
 
-## Prérequis
+🇬🇧 English | 🇫🇷 [Français](installation.fr.md)
 
-- **Windows 10 ou 11** (64 bits)
-- **Droits administrateur** (requis pour la gestion du firewall et l'exécution du serveur)
-- **~10 GB d'espace disque** pour SteamCMD + le serveur Palworld
-- Connexion Internet pour le téléchargement initial
+## Requirements
 
-## Installer ServerForge
+- **Windows 10 or 11** (64-bit)
+- **Administrator rights** (required for firewall management and running the server)
+- **~10 GB of disk space** for SteamCMD + the Palworld server
+- Internet connection for the initial download
 
-1. Téléchargez `server-forge-{version}-setup.exe` depuis la page [Releases](https://github.com/)
-2. Lancez l'installateur (acceptez l'élévation administrateur)
-3. Un raccourci est créé sur le bureau
+## Installing ServerForge
 
-## Première utilisation
+1. Download `server-forge-{version}-setup.exe` from the [Releases](https://github.com/THEREALM00D/server-forge/releases) page
+2. Run the installer (accept the administrator elevation prompt)
+3. A shortcut is created on the desktop
 
-### 1. Installer SteamCMD
+## First use
 
-SteamCMD est l'utilitaire officiel de Valve pour télécharger les serveurs Steam.
+### 1. Install SteamCMD
 
-- Ouvrez ServerForge
-- Allez dans **Installation** dans la barre latérale
-- Cliquez sur **Installer SteamCMD**
-- ServerForge télécharge et configure SteamCMD automatiquement (logs visibles en bas)
+SteamCMD is Valve's official utility for downloading Steam servers.
 
-### 2. Installer le serveur Palworld
+- Open ServerForge
+- Go to **Install** in the sidebar
+- Click **Install SteamCMD**
+- ServerForge downloads and configures SteamCMD automatically (logs visible at the bottom)
 
-- Choisissez un dossier de destination (par défaut `C:\PalworldServer`)
-  - Évitez les dossiers protégés (`Program Files`, `Windows`) qui peuvent poser des problèmes de permissions
-  - Préférez un dossier dédié sur un disque rapide (SSD recommandé)
-- Cliquez sur **Installer Palworld**
-- Le téléchargement prend environ 5-15 minutes selon votre connexion (~3 GB)
+### 2. Install the Palworld server
 
-### 3. Configuration initiale (optionnel mais recommandé)
+- Choose a destination folder (default `C:\PalworldServer`)
+  - Avoid protected folders (`Program Files`, `Windows`) which can cause permission issues
+  - Prefer a dedicated folder on a fast drive (SSD recommended)
+- Click **Install Palworld**
+- The download takes about 5-15 minutes depending on your connection (~3 GB)
 
-Avant de démarrer le serveur la première fois :
+### 3. Initial configuration (optional but recommended)
 
-- Allez dans **Configuration**
-- Définissez :
-  - **Nom du serveur** (`ServerName`)
-  - **Mot de passe administrateur** (`AdminPassword`) — important pour l'API REST
-  - **Mot de passe serveur** (`ServerPassword`) — optionnel, pour serveur privé
-- Activez **API REST** (`RESTAPIEnabled`) pour bénéficier de l'arrêt gracieux et de la gestion des joueurs
+Before starting the server for the first time:
 
-> Voir [configuration.md](configuration.md) pour le détail des options.
+- Go to **Configuration**
+- Set:
+  - **Server name** (`ServerName`)
+  - **Admin password** (`AdminPassword`) — important for the REST API
+  - **Server password** (`ServerPassword`) — optional, for a private server
+- Enable **REST API** (`RESTAPIEnabled`) to get graceful shutdown and player management
 
-### 4. Activer le firewall
+> See [configuration.md](configuration.md) for the full list of options.
 
-- Allez dans **Réseau**
-- Cliquez sur **Tout activer** pour créer les règles firewall (Game UDP, RCON, REST API)
+### 4. Enable the firewall
 
-### 5. Premier démarrage
+- Go to **Network**
+- Click **Enable all** to create the firewall rules (Game UDP, RCON, REST API)
 
-- Allez dans **Dashboard**
-- Cliquez sur **Démarrer**
-- Le statut passe à **En ligne** quand le serveur est prêt
+### 5. First start
 
-## Mise à jour du serveur Palworld
+- Go to **Dashboard**
+- Click **Start**
+- The status switches to **Online** once the server is ready
 
-Quand une mise à jour Palworld est disponible :
+## Updating the Palworld server
 
-- Allez dans **Installation**
-- Cliquez sur **Vérifier** pour comparer la version installée et la version Steam
-- Si une mise à jour est disponible, cliquez sur **Mettre à jour Palworld**
+When a Palworld update is available:
 
-## Désinstallation
+- Go to **Install**
+- Click **Check** to compare the installed version against the Steam version
+- If an update is available, click **Update Palworld**
 
-Utilisez le panneau de configuration Windows ou exécutez `Uninstall ServerForge.exe` dans le dossier d'installation.
+## Uninstalling
 
-> Les fichiers du serveur Palworld et les sauvegardes ne sont **pas** supprimés automatiquement.
+Use the Windows Control Panel or run `Uninstall ServerForge.exe` from the installation folder.
+
+> Palworld server files and backups are **not** removed automatically.
