@@ -16,6 +16,9 @@ win:
   executableName: server-forge
   icon: resources/icon.ico
   requestedExecutionLevel: requireAdministrator
+  target:
+    - nsis
+    - portable
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
