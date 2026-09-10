@@ -174,6 +174,8 @@ const api = {
   // Dialog
   dialog: {
     selectFolder: () => ipcRenderer.invoke("dialog:selectFolder"),
+    selectFile: (filters?: { name: string; extensions: string[] }[]) =>
+      ipcRenderer.invoke("dialog:selectFile", filters),
   },
   // Valheim config (serverId optionnel — par défaut actif)
   valheim: {
@@ -212,6 +214,12 @@ const api = {
         ),
       importProfile: (base64Code: string, serverId?: string) =>
         ipcRenderer.invoke("valheim:mods:importProfile", base64Code, serverId),
+      importProfileFile: (filePath: string, serverId?: string) =>
+        ipcRenderer.invoke(
+          "valheim:mods:importProfileFile",
+          filePath,
+          serverId,
+        ),
       openPluginsFolder: (serverId?: string) =>
         ipcRenderer.invoke("valheim:mods:openPluginsFolder", serverId),
       openConfigFolder: (serverId?: string) =>

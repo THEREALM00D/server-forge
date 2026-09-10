@@ -11,6 +11,7 @@ export default {
     language: "Language",
     errorPrefix: "Error: {{msg}}",
     change: "Change",
+    or: "OR",
   },
   status: {
     running: "Online",

@@ -8,6 +8,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   Stack,
   Tab,
   Tabs,
@@ -18,7 +19,9 @@ import DownloadIcon from "@mui/icons-material/Download";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SettingsIcon from "@mui/icons-material/Settings";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { useTranslation } from "react-i18next";
+import { dialogService } from "../../../../services/dialogService";
 import { useValheimMods } from "./hooks/useValheimMods";
 import BepInExBanner from "./components/BepInExBanner";
 import InstalledModsList from "./components/InstalledModsList";
@@ -54,6 +57,7 @@ export default function ValheimMods() {
     handleInstallBepInEx,
     handleInstallFromThunderstore,
     handleImportProfile,
+    handleImportProfileFile,
     handleRefreshUpdates,
     handleInstallAllDeps,
     handleDismissDeps,
@@ -71,6 +75,15 @@ export default function ValheimMods() {
     setProfileDialog(false);
     await handleImportProfile(profileCode.trim());
     setProfileCode("");
+  };
+
+  const importProfileFromFile = async () => {
+    const filePath = await dialogService.selectFile([
+      { name: "Profil r2modman/Gale", extensions: ["r2z", "zip"] },
+    ]);
+    if (!filePath) return;
+    setProfileDialog(false);
+    await handleImportProfileFile(filePath);
   };
 
   return (
@@ -254,6 +267,15 @@ export default function ValheimMods() {
             onChange={(e) => setProfileCode(e.target.value)}
             sx={{ mt: 1, fontFamily: "monospace" }}
           />
+          <Divider sx={{ my: 2 }}>{t("common.or")}</Divider>
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<UploadFileIcon />}
+            onClick={importProfileFromFile}
+          >
+            {t("valheimMods.thunderstore.importProfileFile")}
+          </Button>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setProfileDialog(false)}>

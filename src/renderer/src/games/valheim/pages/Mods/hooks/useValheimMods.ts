@@ -201,6 +201,38 @@ export function useValheimMods() {
     [notify, t, refreshUpdates],
   );
 
+  const handleImportProfileFile = useCallback(
+    async (filePath: string) => {
+      setInstalling(true);
+      try {
+        const { installed, errors } =
+          await window.api.valheim.mods.importProfileFile(filePath);
+        const fresh = await window.api.valheim.mods.list();
+        setInstalledMods(fresh);
+        refreshUpdates(fresh);
+        if (installed.length > 0)
+          notify(
+            t("valheimMods.thunderstore.profileSuccess", {
+              count: installed.length,
+            }),
+            "success",
+          );
+        if (errors.length > 0)
+          notify(
+            t("valheimMods.thunderstore.profileErrors", {
+              count: errors.length,
+            }),
+            "warning",
+          );
+      } catch (e) {
+        notify((e as Error).message, "error");
+      } finally {
+        setInstalling(false);
+      }
+    },
+    [notify, t, refreshUpdates],
+  );
+
   const handleRemoveMod = useCallback(
     async (modId: number, name: string) => {
       if (!window.confirm(t("valheimMods.installed.removeConfirm", { name })))
@@ -267,6 +299,7 @@ export function useValheimMods() {
     handleInstallBepInEx,
     handleInstallFromThunderstore,
     handleImportProfile: handleInstallImportProfile,
+    handleImportProfileFile,
     handleRefreshUpdates,
     handleInstallAllDeps,
     handleDismissDeps: () => setPendingDeps(null),

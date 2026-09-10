@@ -174,6 +174,9 @@ interface API {
   };
   dialog: {
     selectFolder: () => Promise<string | null>;
+    selectFile: (
+      filters?: { name: string; extensions: string[] }[],
+    ) => Promise<string | null>;
   };
   valheim: {
     getConfig: (serverId?: string) => Promise<ValheimLaunchConfig>;
@@ -206,6 +209,10 @@ interface API {
       ) => Promise<ValheimMod>;
       importProfile: (
         base64Code: string,
+        serverId?: string,
+      ) => Promise<{ installed: ValheimMod[]; errors: string[] }>;
+      importProfileFile: (
+        filePath: string,
         serverId?: string,
       ) => Promise<{ installed: ValheimMod[]; errors: string[] }>;
       openPluginsFolder: (serverId?: string) => Promise<string>;

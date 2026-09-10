@@ -13,6 +13,34 @@ function getManager(ctx: IpcContext, serverId?: string): ValheimModsManager {
   );
 }
 
+// Installe une liste de codes de packages ("Auteur-Nom-Version") en série,
+// en continuant sur erreur — partagé entre l'import de profil par code et
+// par fichier, qui ne diffèrent que dans la résolution initiale des codes.
+async function installCodes(
+  manager: ValheimModsManager,
+  codes: string[],
+  event: Electron.IpcMainInvokeEvent,
+) {
+  const results: Awaited<ReturnType<typeof manager.installFromThunderstore>>[] =
+    [];
+  const errors: string[] = [];
+  for (const code of codes) {
+    try {
+      const mod = await manager.installFromThunderstore(code, (msg) =>
+        event.sender.send("valheim:mods:progress", msg),
+      );
+      results.push(mod);
+    } catch (e) {
+      errors.push(`${code}: ${(e as Error).message}`);
+      event.sender.send(
+        "valheim:mods:progress",
+        `⚠ ${code} — ${(e as Error).message}`,
+      );
+    }
+  }
+  return { installed: results, errors };
+}
+
 export function registerValheimModsHandlers(ctx: IpcContext): void {
   // --- Browse Thunderstore (public, sans clé API) ---
 
@@ -94,25 +122,18 @@ export function registerValheimModsHandlers(ctx: IpcContext): void {
     async (event, base64Code: string, serverId?: string) => {
       const manager = getManager(ctx, serverId);
       const codes = await manager.parseThunderstoreProfile(base64Code);
-      const results: Awaited<
-        ReturnType<typeof manager.installFromThunderstore>
-      >[] = [];
-      const errors: string[] = [];
-      for (const code of codes) {
-        try {
-          const mod = await manager.installFromThunderstore(code, (msg) =>
-            event.sender.send("valheim:mods:progress", msg),
-          );
-          results.push(mod);
-        } catch (e) {
-          errors.push(`${code}: ${(e as Error).message}`);
-          event.sender.send(
-            "valheim:mods:progress",
-            `⚠ ${code} — ${(e as Error).message}`,
-          );
-        }
-      }
-      return { installed: results, errors };
+      return installCodes(manager, codes, event);
+    },
+  );
+
+  // Import d'un profil r2modman/Gale depuis un fichier .r2z/.zip local
+  // (bouton "Exporter en tant que fichier" — distinct du code en ligne).
+  ipcMain.handle(
+    "valheim:mods:importProfileFile",
+    async (event, filePath: string, serverId?: string) => {
+      const manager = getManager(ctx, serverId);
+      const codes = await manager.parseThunderstoreProfileFile(filePath);
+      return installCodes(manager, codes, event);
     },
   );
 

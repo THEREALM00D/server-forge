@@ -35,6 +35,7 @@ export default {
       profileLabel: "Code de profil",
       profileHelper:
         "Collez le code exporté depuis Thunderstore ou r2modman (Paramètres → Exporter le profil → Copier le code)",
+      importProfileFile: "Importer depuis un fichier (.r2z)",
       install: "Installer",
       success: "{{name}} installé depuis Thunderstore",
       profileSuccess: "{{count}} mod(s) installé(s) depuis le profil",

@@ -24,6 +24,17 @@ export function registerMiscHandlers(ctx: IpcContext): void {
     return result.canceled ? null : result.filePaths[0];
   });
 
+  ipcMain.handle(
+    "dialog:selectFile",
+    async (_, filters?: { name: string; extensions: string[] }[]) => {
+      const result = await dialog.showOpenDialog({
+        properties: ["openFile"],
+        filters,
+      });
+      return result.canceled ? null : result.filePaths[0];
+    },
+  );
+
   // Shell
   ipcMain.handle("shell:openPath", (_, path: string) => shell.openPath(path));
   ipcMain.handle("shell:openExternal", (_, url: string) =>

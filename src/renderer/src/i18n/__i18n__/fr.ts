@@ -11,6 +11,7 @@ export default {
     language: "Langue",
     errorPrefix: "Erreur : {{msg}}",
     change: "Modifier",
+    or: "OU",
   },
   status: {
     running: "En ligne",

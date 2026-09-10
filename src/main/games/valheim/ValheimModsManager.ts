@@ -334,6 +334,35 @@ export class ValheimModsManager {
     return codes;
   }
 
+  // Extrait les refs de mods d'un fichier .r2z/.zip local contenant un
+  // export.r2x — partagé entre le téléchargement via code (API Thunderstore)
+  // et l'import direct d'un fichier ("Exporter en tant que fichier" dans
+  // r2modman/Gale, distinct du code d'export en ligne).
+  private async extractModRefsFromZipFile(zipPath: string): Promise<string[]> {
+    mkdirSync(this.dataDir, { recursive: true });
+    const tempExtract = join(this.dataDir, `_profile_extract_${Date.now()}`);
+    try {
+      mkdirSync(tempExtract, { recursive: true });
+      await extractZip(zipPath, { dir: tempExtract });
+
+      const r2xPath = join(tempExtract, "export.r2x");
+      if (!existsSync(r2xPath))
+        throw new Error("export.r2x introuvable dans le profil");
+      const codes = ValheimModsManager.extractModRefsFromR2x(
+        readFileSync(r2xPath, "utf-8"),
+      );
+      if (codes.length === 0)
+        throw new Error("Aucun mod trouvé dans le profil (export.r2x vide)");
+      return codes;
+    } finally {
+      try {
+        rmSync(tempExtract, { recursive: true, force: true });
+      } catch {
+        // ignore
+      }
+    }
+  }
+
   // Résout un code d'export "r2modman"/Gale via l'API Thunderstore.
   // Le code est un jeton opaque (UUID historique ou format récent "xxx#yyy") —
   // la réponse est du texte brut "#r2modman\n" + base64(zip du profil), le zip
@@ -349,29 +378,27 @@ export class ValheimModsManager {
 
     mkdirSync(this.dataDir, { recursive: true });
     const tempZip = join(this.dataDir, `profile_${Date.now()}.r2z`);
-    const tempExtract = join(this.dataDir, `_profile_extract_${Date.now()}`);
     try {
       writeFileSync(tempZip, zipBuf);
-      mkdirSync(tempExtract, { recursive: true });
-      await extractZip(tempZip, { dir: tempExtract });
-
-      const r2xPath = join(tempExtract, "export.r2x");
-      if (!existsSync(r2xPath))
-        throw new Error("export.r2x introuvable dans le profil téléchargé");
-      const codes = ValheimModsManager.extractModRefsFromR2x(
-        readFileSync(r2xPath, "utf-8"),
-      );
-      if (codes.length === 0)
-        throw new Error("Aucun mod trouvé dans le profil (export.r2x vide)");
-      return codes;
+      return await this.extractModRefsFromZipFile(tempZip);
     } finally {
       try {
         rmSync(tempZip, { force: true });
-        rmSync(tempExtract, { recursive: true, force: true });
       } catch {
         // ignore
       }
     }
+  }
+
+  /**
+   * Importe un profil r2modman/Gale depuis un fichier .r2z/.zip local sur
+   * le disque ("Exporter en tant que fichier" plutôt qu'un code en ligne —
+   * utile pour partager un profil sans passer par le service Thunderstore,
+   * ex: via Discord).
+   */
+  async parseThunderstoreProfileFile(filePath: string): Promise<string[]> {
+    if (!existsSync(filePath)) throw new Error("Fichier introuvable");
+    return this.extractModRefsFromZipFile(filePath);
   }
 
   // Décode un code de profil Thunderstore/r2modman et retourne la liste des
