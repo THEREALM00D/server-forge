@@ -15,6 +15,7 @@ import https from "https";
 import http from "http";
 import extractZip from "extract-zip";
 import type { ValheimMod } from "../../../shared/types";
+import { ThunderstoreClient } from "./ThunderstoreClient";
 
 interface TSVersion {
   version_number: string;
@@ -277,6 +278,25 @@ export class ValheimModsManager {
     const tempZip = join(this.dataDir, `${safeName}_thunderstore.zip`);
     const downloadUrl = `https://thunderstore.io/package/download/${namespace}/${name}/${version}/`;
 
+    // Icône + date de publication de cette version — best-effort, un échec
+    // réseau ici ne doit pas bloquer l'installation du mod lui-même.
+    let pictureUrl: string | undefined;
+    let publishedAt: number | undefined;
+    try {
+      const pkg = await ThunderstoreClient.getPackage(namespace, name);
+      const versionInfo =
+        pkg.versions.find((v) => v.version_number === version) ??
+        pkg.versions[0];
+      pictureUrl = versionInfo?.icon ?? undefined;
+      if (versionInfo?.date_created) {
+        publishedAt = Math.floor(
+          new Date(versionInfo.date_created).getTime() / 1000,
+        );
+      }
+    } catch {
+      // pas bloquant — le mod s'installe sans icône/date si l'API est indisponible
+    }
+
     onProgress(`Téléchargement de ${namespace}-${name} v${version}…`);
     await this.downloadFile(downloadUrl, tempZip, onProgress);
 
@@ -306,6 +326,8 @@ export class ValheimModsManager {
       installedAt: Date.now(),
       enabled: true,
       installDir,
+      pictureUrl,
+      publishedAt,
       source: "thunderstore",
       thunderstoreCode: packageCode,
     };

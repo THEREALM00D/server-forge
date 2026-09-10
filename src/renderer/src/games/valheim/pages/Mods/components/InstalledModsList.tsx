@@ -121,6 +121,8 @@ export default function InstalledModsList({
                   {mod.author || "—"}{" "}
                   {mod.installedAt > 0 &&
                     `— ${t("valheimMods.installed.installedAt", { date: formatDate(mod.installedAt, locale) })}`}
+                  {mod.publishedAt &&
+                    ` — ${t("valheimMods.installed.updatedAt", { date: formatDate(mod.publishedAt * 1000, locale) })}`}
                 </Typography>
               </Box>
               <Tooltip

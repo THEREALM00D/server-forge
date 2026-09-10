@@ -23,6 +23,7 @@ export default {
       disabled: "Désactivé",
       manual: "Manuel",
       installedAt: "Installé le {{date}}",
+      updatedAt: "MàJ Thunderstore : {{date}}",
       version: "v{{version}}",
       loadFailed: "Impossible de charger les mods installés",
     },

@@ -23,6 +23,7 @@ export default {
       disabled: "Disabled",
       manual: "Manual",
       installedAt: "Installed on {{date}}",
+      updatedAt: "Thunderstore update: {{date}}",
       version: "v{{version}}",
       loadFailed: "Unable to load installed mods",
     },

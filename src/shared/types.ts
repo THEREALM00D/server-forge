@@ -188,6 +188,8 @@ export interface ValheimMod {
   enabled: boolean;
   installDir: string; // nom du dossier dans BepInEx/plugins/
   pictureUrl?: string;
+  /** Date de publication de cette version sur Thunderstore (unix seconds). */
+  publishedAt?: number;
   source?: "thunderstore" | "manual";
   thunderstoreCode?: string; // "Auteur-Nom-Version" pour les mods Thunderstore
 }
