@@ -24,7 +24,7 @@ export const MODIFIER_PRESETS: Record<string, ValheimModifiers> = {
   },
   hardcore: {
     combat: "veryhard",
-    deathpenalty: "hard",
+    deathpenalty: "hardcore",
     resources: "muchless",
     raids: "more",
     portals: "veryhard",

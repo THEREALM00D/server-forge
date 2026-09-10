@@ -46,7 +46,7 @@ export default function ModifiersSection({
         <ModifierSelect
           label={t("valheimConfig.modifiers.combat.label")}
           value={modifiers.combat}
-          options={["veryeasy", "easy", "normal", "hard", "veryhard"]}
+          options={["veryeasy", "easy", "hard", "veryhard"]}
           labelPrefix="valheimConfig.modifiers.combat"
           onChange={(v) =>
             onChange({
@@ -60,7 +60,7 @@ export default function ModifiersSection({
         <ModifierSelect
           label={t("valheimConfig.modifiers.deathpenalty.label")}
           value={modifiers.deathpenalty}
-          options={["casual", "veryeasy", "easy", "normal", "hard"]}
+          options={["casual", "veryeasy", "easy", "hard", "hardcore"]}
           labelPrefix="valheimConfig.modifiers.deathpenalty"
           onChange={(v) =>
             onChange({
@@ -74,7 +74,7 @@ export default function ModifiersSection({
         <ModifierSelect
           label={t("valheimConfig.modifiers.resources.label")}
           value={modifiers.resources}
-          options={["muchless", "less", "normal", "more", "mostmore"]}
+          options={["muchless", "less", "more", "muchmore", "most"]}
           labelPrefix="valheimConfig.modifiers.resources"
           onChange={(v) =>
             onChange({
@@ -88,7 +88,7 @@ export default function ModifiersSection({
         <ModifierSelect
           label={t("valheimConfig.modifiers.raids.label")}
           value={modifiers.raids}
-          options={["none", "muchless", "less", "normal", "more"]}
+          options={["none", "muchless", "less", "more", "muchmore"]}
           labelPrefix="valheimConfig.modifiers.raids"
           onChange={(v) =>
             onChange({

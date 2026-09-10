@@ -125,12 +125,16 @@ export interface LaunchArgsConfig {
 }
 
 // --- Launch arguments (valheim_server.exe) ---
+// Valeurs validées contre le manuel officiel "Valheim Dedicated Server
+// Instruction Manual" (Iron Gate) — Valheim ignore silencieusement toute
+// valeur -modifier non reconnue (pas d'erreur, pas de log), donc une valeur
+// inventée ici se traduirait par un modificateur qui ne s'applique jamais.
 export interface ValheimModifiers {
-  combat: "veryhard" | "hard" | "normal" | "easy" | "veryeasy" | "";
-  deathpenalty: "casual" | "veryeasy" | "easy" | "normal" | "hard" | "";
-  resources: "muchless" | "less" | "normal" | "more" | "mostmore" | "";
-  raids: "none" | "muchless" | "less" | "normal" | "more" | "";
-  portals: "casual" | "hard" | "veryhard" | "";
+  combat: "veryhard" | "hard" | "easy" | "veryeasy" | "";
+  deathpenalty: "hardcore" | "hard" | "easy" | "veryeasy" | "casual" | "";
+  resources: "most" | "muchmore" | "more" | "less" | "muchless" | "";
+  raids: "muchmore" | "more" | "less" | "muchless" | "none" | "";
+  portals: "veryhard" | "hard" | "casual" | "";
 }
 
 export interface ValheimLaunchConfig {
