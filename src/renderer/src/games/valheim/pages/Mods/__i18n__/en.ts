@@ -26,6 +26,8 @@ export default {
       updatedAt: "Thunderstore update: {{date}}",
       version: "v{{version}}",
       loadFailed: "Unable to load installed mods",
+      restartRequired:
+        "Restart the server to apply this change — BepInEx only reloads mods on startup.",
     },
     thunderstore: {
       title: "Thunderstore Code",

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNotification } from "../../../../../context/NotificationContext";
+import { useServer } from "../../../../../context/ServerContext";
 import type { ThunderstoreModInfo, ValheimMod, ModUpdate } from "@shared/types";
 
 type BrowseTab = "trending" | "latest" | "updated";
@@ -8,7 +9,17 @@ type BrowseTab = "trending" | "latest" | "updated";
 export function useValheimMods() {
   const { t, i18n } = useTranslation();
   const { notify } = useNotification();
+  const { state } = useServer();
   const locale = i18n.resolvedLanguage ?? "fr";
+
+  // BepInEx ne scanne les plugins qu'au démarrage du process — un mod
+  // activé/désactivé/supprimé pendant que le serveur tourne encore reste
+  // chargé (ou absent) jusqu'au prochain redémarrage.
+  const notifyRestartNeeded = useCallback(() => {
+    if (state.status === "running") {
+      notify(t("valheimMods.installed.restartRequired"), "info");
+    }
+  }, [notify, t, state.status]);
 
   const [bepInEx, setBepInEx] = useState<boolean | null>(null);
   const [installedMods, setInstalledMods] = useState<ValheimMod[]>([]);
@@ -244,11 +255,12 @@ export function useValheimMods() {
           refreshUpdates(next);
           return next;
         });
+        notifyRestartNeeded();
       } catch (e) {
         notify((e as Error).message, "error");
       }
     },
-    [notify, t, refreshUpdates],
+    [notify, t, refreshUpdates, notifyRestartNeeded],
   );
 
   const handleToggleMod = useCallback(
@@ -258,11 +270,12 @@ export function useValheimMods() {
         setInstalledMods((prev) =>
           prev.map((m) => (m.modId === modId ? { ...m, enabled } : m)),
         );
+        notifyRestartNeeded();
       } catch (e) {
         notify((e as Error).message, "error");
       }
     },
-    [notify],
+    [notify, notifyRestartNeeded],
   );
 
   const handleRefreshUpdates = useCallback(async () => {

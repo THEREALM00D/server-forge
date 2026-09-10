@@ -26,6 +26,8 @@ export default {
       updatedAt: "MàJ Thunderstore : {{date}}",
       version: "v{{version}}",
       loadFailed: "Impossible de charger les mods installés",
+      restartRequired:
+        "Redémarrez le serveur pour appliquer ce changement — BepInEx ne recharge les mods qu'au démarrage.",
     },
     thunderstore: {
       title: "Code Thunderstore",
