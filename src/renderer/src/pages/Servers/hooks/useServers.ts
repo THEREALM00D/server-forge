@@ -13,6 +13,7 @@ export function useServers() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Server | null>(null);
+  const [deletingServer, setDeletingServer] = useState<Server | null>(null);
 
   const openAdd = () => {
     setEditing(null);
@@ -42,17 +43,19 @@ export function useServers() {
     }
   };
 
-  const handleDelete = async (server: Server) => {
-    if (
-      !window.confirm(t("servers.actions.deleteConfirm", { name: server.name }))
-    )
-      return;
+  const openDeleteConfirm = (server: Server) => setDeletingServer(server);
+  const closeDeleteConfirm = () => setDeletingServer(null);
+
+  const confirmDelete = async () => {
+    if (!deletingServer) return;
     try {
-      await window.api.servers.delete(server.id);
+      await window.api.servers.delete(deletingServer.id);
       notify(t("servers.notify.deleted"), "success");
       await refreshServers();
     } catch (e) {
       notify((e as Error).message, "error");
+    } finally {
+      setDeletingServer(null);
     }
   };
 
@@ -89,11 +92,14 @@ export function useServers() {
     state,
     dialogOpen,
     editing,
+    deletingServer,
     openAdd,
     openEdit,
     closeDialog,
     handleSubmit,
-    handleDelete,
+    openDeleteConfirm,
+    closeDeleteConfirm,
+    confirmDelete,
     handleActivate,
     handleServerAction,
   };

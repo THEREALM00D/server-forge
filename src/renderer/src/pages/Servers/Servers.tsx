@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useServers } from "./hooks/useServers";
 import ServersTable from "./components/ServersTable";
 import ServerDialog from "./components/ServerDialog";
+import ConfirmDeleteDialog from "./components/ConfirmDeleteDialog";
 
 export default function Servers() {
   const { t } = useTranslation();
@@ -11,11 +12,14 @@ export default function Servers() {
     state,
     dialogOpen,
     editing,
+    deletingServer,
     openAdd,
     openEdit,
     closeDialog,
     handleSubmit,
-    handleDelete,
+    openDeleteConfirm,
+    closeDeleteConfirm,
+    confirmDelete,
     handleActivate,
     handleServerAction,
   } = useServers();
@@ -50,7 +54,7 @@ export default function Servers() {
         onStop={(srv) => handleServerAction("stop", srv)}
         onRestart={(srv) => handleServerAction("restart", srv)}
         onEdit={openEdit}
-        onDelete={handleDelete}
+        onDelete={openDeleteConfirm}
       />
 
       <ServerDialog
@@ -58,6 +62,12 @@ export default function Servers() {
         initial={editing}
         onClose={closeDialog}
         onSubmit={handleSubmit}
+      />
+
+      <ConfirmDeleteDialog
+        server={deletingServer}
+        onClose={closeDeleteConfirm}
+        onConfirm={confirmDelete}
       />
     </Stack>
   );

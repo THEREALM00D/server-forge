@@ -37,6 +37,7 @@ export default {
       delete: "Supprimer",
       deleteConfirm:
         "Supprimer le serveur « {{name}} » ? Les fichiers du jeu restent intacts, seules les configurations ServerForge sont effacées.",
+      deleteTypeToConfirm: "Tapez « {{name}} » pour confirmer",
     },
     dialog: {
       addTitle: "Nouveau serveur",

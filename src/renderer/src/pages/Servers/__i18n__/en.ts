@@ -35,6 +35,7 @@ export default {
       delete: "Delete",
       deleteConfirm:
         'Delete server "{{name}}"? Game files stay intact, only ServerForge configuration is removed.',
+      deleteTypeToConfirm: 'Type "{{name}}" to confirm',
     },
     dialog: {
       addTitle: "New server",
