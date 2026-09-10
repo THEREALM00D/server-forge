@@ -5,6 +5,9 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -22,21 +25,18 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Build
+      # electron-builder.yml déclare `publish: provider: github` — yarn build
+      # publie donc déjà directement sur la Release GitHub correspondant au
+      # tag (détection auto CI + tag), ce qui rendait l'étape
+      # softprops/action-gh-release plus bas totalement redondante (et jamais
+      # atteinte de toute façon, puisque cette étape échouait avant).
+      - name: Build & publish
         run: yarn build
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload artifacts
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
           path: dist/*.exe
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*.exe
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
