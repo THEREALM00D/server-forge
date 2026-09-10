@@ -97,3 +97,7 @@ If the server no longer starts after corruption:
 2. Go to **Backups**
 3. Restore the most recent working backup
 4. Restart the server
+
+### Valheim: built-in `.old` files
+
+Valheim itself keeps a copy of the previous save state next to the active one (`worldname.db.old` / `worldname.fwl.old`), refreshed on each save cycle. Since ServerForge's ZIP backup already includes the whole save folder, these `.old` files are already captured in every backup automatically. In a pinch, without even going through ServerForge, you can restore one manually by removing the `.old` extension — useful if corruption happened between two scheduled backups.

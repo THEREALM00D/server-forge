@@ -97,3 +97,7 @@ Si le serveur ne démarre plus après corruption :
 2. Allez dans **Sauvegardes**
 3. Restaurez la sauvegarde la plus récente fonctionnelle
 4. Redémarrez le serveur
+
+### Valheim : fichiers `.old` intégrés
+
+Valheim garde lui-même une copie de l'état de sauvegarde précédent à côté du fichier actif (`worldname.db.old` / `worldname.fwl.old`), rafraîchie à chaque cycle de sauvegarde. Comme le backup ZIP de ServerForge zippe tout le dossier de sauvegarde, ces fichiers `.old` sont déjà inclus automatiquement dans chaque backup. En dépannage rapide, sans même passer par ServerForge, vous pouvez en restaurer un manuellement en retirant l'extension `.old` — utile si une corruption est survenue entre deux backups planifiés.
