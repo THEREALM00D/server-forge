@@ -6,13 +6,13 @@
 - Explique ton code et tes décisions en français
 
 ## Commits
-- Écris les messages de commit en français
+- Écris les messages de commit en anglais
 - Sois clair et concis dans la description des changements
-- Utilise l'impératif: "Ajouter", "Corriger", "Mettre à jour", etc.
+- Utilise l'impératif: "fix", "feat", "chore", etc.
 
 ## Pull Requests
-- Rédige les descriptions de PR en français
-- Explique les modifications apportées en français
+- Rédige les descriptions de PR en anglais
+- Explique les modifications apportées en anglais
 - Fournis un contexte clair sur pourquoi les changements sont nécessaires
 
 ## Regles de developpement
