@@ -87,6 +87,8 @@ export default {
       newVersion: "v{{version}} dispo",
       updateBtn: "Mettre à jour vers v{{version}}",
       refresh: "Vérifier les mises à jour",
+      found: "{{count}} mise(s) à jour disponible(s)",
+      none: "Tous les mods sont à jour",
     },
   },
 };

@@ -47,6 +47,7 @@ export default function ValheimMods() {
     browseError,
     installing,
     installingBepInEx,
+    checkingUpdates,
     locale,
     pendingDeps,
     updates,
@@ -144,9 +145,11 @@ export default function ValheimMods() {
         <Button
           variant="outlined"
           size="small"
-          startIcon={<RefreshIcon />}
+          startIcon={
+            checkingUpdates ? <CircularProgress size={14} /> : <RefreshIcon />
+          }
           onClick={handleRefreshUpdates}
-          disabled={installing}
+          disabled={installing || checkingUpdates}
         >
           {t("valheimMods.updates.refresh")}
         </Button>

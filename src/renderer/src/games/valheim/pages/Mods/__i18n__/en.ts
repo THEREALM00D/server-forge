@@ -87,6 +87,8 @@ export default {
       newVersion: "v{{version}} available",
       updateBtn: "Update to v{{version}}",
       refresh: "Check for updates",
+      found: "{{count}} update(s) available",
+      none: "All mods are up to date",
     },
   },
 };

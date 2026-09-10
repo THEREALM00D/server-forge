@@ -29,6 +29,7 @@ export function useValheimMods() {
   const [browseError, setBrowseError] = useState(false);
   const [installing, setInstalling] = useState(false);
   const [installingBepInEx, setInstallingBepInEx] = useState(false);
+  const [checkingUpdates, setCheckingUpdates] = useState(false);
 
   // Dépendances manquantes après une installation
   const [pendingDeps, setPendingDeps] = useState<{
@@ -279,8 +280,26 @@ export function useValheimMods() {
   );
 
   const handleRefreshUpdates = useCallback(async () => {
-    await refreshUpdates(installedMods);
-  }, [refreshUpdates, installedMods]);
+    setCheckingUpdates(true);
+    try {
+      const codes = getInstalledCodes(installedMods);
+      const found =
+        codes.length === 0
+          ? []
+          : await window.api.valheim.mods.checkUpdates(codes);
+      setUpdates(found);
+      notify(
+        found.length > 0
+          ? t("valheimMods.updates.found", { count: found.length })
+          : t("valheimMods.updates.none"),
+        found.length > 0 ? "info" : "success",
+      );
+    } catch (e) {
+      notify((e as Error).message, "error");
+    } finally {
+      setCheckingUpdates(false);
+    }
+  }, [notify, t, installedMods]);
 
   const handleInstallAllDeps = useCallback(async () => {
     if (!pendingDeps) return;
@@ -302,6 +321,7 @@ export function useValheimMods() {
     browseError,
     installing,
     installingBepInEx,
+    checkingUpdates,
     locale,
     pendingDeps,
     updates,
