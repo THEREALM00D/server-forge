@@ -3,6 +3,7 @@ import { join } from "path";
 import { existsSync } from "fs";
 import si from "systeminformation";
 import { PalworldApiClient } from "../games/palworld/PalworldApiClient";
+import { sendCtrlC } from "./windowsCtrlC";
 import type { ServerStatus } from "../../shared/types";
 
 export interface StopConfig {
@@ -11,7 +12,17 @@ export interface StopConfig {
   adminPassword?: string;
   shutdownWaittime?: number;
   shutdownMessage?: string;
+  /**
+   * Pas d'API REST pour ce jeu, mais un arrêt propre reste possible via un
+   * signal CTRL+C émulé (recommandé par le manuel officiel Valheim) plutôt
+   * qu'un taskkill direct, qui risque de corrompre la sauvegarde en cours.
+   */
+  gracefulSignal?: boolean;
 }
+
+// Délai accordé au process pour sauvegarder et quitter après un CTRL+C émulé
+// avant de basculer sur un arrêt forcé.
+const GRACEFUL_SIGNAL_TIMEOUT_MS = 30_000;
 
 // Masque la valeur qui suit -password avant d'afficher les args dans les
 // logs (utile pour diagnostiquer ce qui est réellement envoyé au process).
@@ -316,6 +327,13 @@ export class ServerManager {
         await waitForExit(6000);
         return finalize();
       }
+    }
+
+    if (cfg?.gracefulSignal && process.platform === "win32") {
+      this.onLog("[Manager] Envoi d'un arrêt propre (CTRL+C)...");
+      await sendCtrlC(pid);
+      await waitForExit(GRACEFUL_SIGNAL_TIMEOUT_MS);
+      return finalize();
     }
 
     this.onLog(

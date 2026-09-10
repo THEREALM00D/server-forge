@@ -56,6 +56,10 @@ export const valheimServerConfig = {
       adminPassword: "",
       shutdownWaittime: 0,
       shutdownMessage: "",
+      // Pas d'API REST, mais le manuel officiel recommande explicitement un
+      // CTRL+C pour un arrêt propre plutôt qu'un kill direct (risque de
+      // sauvegarde corrompue sinon).
+      gracefulSignal: true,
     };
   },
 };

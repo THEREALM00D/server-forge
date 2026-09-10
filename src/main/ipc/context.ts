@@ -70,6 +70,7 @@ export interface IpcContext {
     adminPassword: string;
     shutdownWaittime: number;
     shutdownMessage: string;
+    gracefulSignal?: boolean;
   };
   /** Path d'un serveur par son id (par défaut : serveur actif). */
   getServerPath: (serverId?: string) => string;
