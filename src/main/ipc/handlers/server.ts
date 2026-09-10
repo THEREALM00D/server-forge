@@ -6,6 +6,32 @@ import {
   formatConflictsError,
 } from "../../servers/portConflicts";
 import { buildGameArgs, getGameServerConfig } from "../../games/registry";
+import { ValheimModsManager } from "../../games/valheim/ValheimModsManager";
+
+// Liste les mods BepInEx actifs dans la console au démarrage — Valheim ne
+// donne aucune indication en jeu de ce qui est chargé côté serveur.
+function logActiveValheimMods(
+  ctx: IpcContext,
+  id: string,
+  send: (line: string) => void,
+): void {
+  try {
+    const manager = new ValheimModsManager(
+      ctx.getServerPath(id),
+      ctx.getModsDataDir(id),
+    );
+    const active = manager.list().filter((m) => m.enabled);
+    send(
+      active.length > 0
+        ? `[Manager] Mods actifs (${active.length}) : ${active
+            .map((m) => `${m.name} v${m.version}`)
+            .join(", ")}`
+        : "[Manager] Aucun mod actif.",
+    );
+  } catch {
+    // best-effort — ne doit jamais empêcher le démarrage du serveur
+  }
+}
 
 export function registerServerHandlers(ctx: IpcContext): void {
   // Résout un serverId argumenté en serveur du registre. Fallback : actif.
@@ -54,12 +80,14 @@ export function registerServerHandlers(ctx: IpcContext): void {
     const serverPath = ctx.getServerPath(id);
     const exeName = getGameServerConfig(gameType).exeName;
     const args = buildGameArgs(gameType, ctx.getServerConfig(id));
+    const sendLog = (line: string) =>
+      event.sender.send("server:log", { serverId: id, line });
+
+    if (gameType === "valheim") logActiveValheimMods(ctx, id, sendLog);
 
     return ctx.serverManagers
       .getOrCreate(id)
-      .start(serverPath, exeName, args, (line) => {
-        event.sender.send("server:log", { serverId: id, line });
-      });
+      .start(serverPath, exeName, args, sendLog);
   });
 
   ipcMain.handle("server:stop", (_, serverId?: string) => {
@@ -74,15 +102,14 @@ export function registerServerHandlers(ctx: IpcContext): void {
     const serverPath = ctx.getServerPath(id);
     const exeName = getGameServerConfig(gameType).exeName;
     const args = buildGameArgs(gameType, ctx.getServerConfig(id));
+    const sendLog = (line: string) =>
+      event.sender.send("server:log", { serverId: id, line });
+
+    if (gameType === "valheim") logActiveValheimMods(ctx, id, sendLog);
+
     return ctx.serverManagers
       .getOrCreate(id)
-      .restart(
-        serverPath,
-        exeName,
-        args,
-        (line) => event.sender.send("server:log", { serverId: id, line }),
-        ctx.getStopConfig(id),
-      );
+      .restart(serverPath, exeName, args, sendLog, ctx.getStopConfig(id));
   });
 
   // Compat : status du serveur actif. Retourne "stopped" si aucun actif.
