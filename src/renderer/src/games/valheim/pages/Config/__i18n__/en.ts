@@ -32,12 +32,14 @@ export default {
         veryhard: "Very hard",
       },
       deathpenalty: {
-        label: "Death penalty",
-        casual: "None (keep everything on death)",
+        label: "Death penalty (skill loss)",
+        description:
+          "Only controls skill level loss on death — non-equipped items are always dropped (base game mechanic, no modifier prevents it). Only equipped armor, accessories, and the weapon in hand at death are kept.",
+        casual: "No skill loss",
         veryeasy: "Very light",
         easy: "Light",
         hard: "Harsh",
-        hardcore: "Extreme",
+        hardcore: "Full loss (items + skills)",
       },
       resources: {
         label: "Resources",

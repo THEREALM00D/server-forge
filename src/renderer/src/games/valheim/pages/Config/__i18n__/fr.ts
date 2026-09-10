@@ -32,12 +32,14 @@ export default {
         veryhard: "Très difficile",
       },
       deathpenalty: {
-        label: "Pénalité de mort",
-        casual: "Aucune (garde tout à la mort)",
+        label: "Pénalité de mort (perte de compétences)",
+        description:
+          "Contrôle uniquement la perte de niveau de compétences à la mort — les objets non équipés tombent toujours au sol (mécanique du jeu, aucun modificateur ne l'empêche). Seuls l'armure, les accessoires et l'arme en main au moment de la mort sont conservés.",
+        casual: "Aucune perte de compétences",
         veryeasy: "Très légère",
         easy: "Légère",
         hard: "Sévère",
-        hardcore: "Extrême",
+        hardcore: "Perte totale (objets + compétences)",
       },
       resources: {
         label: "Ressources",

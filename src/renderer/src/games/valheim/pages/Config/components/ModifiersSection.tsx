@@ -59,6 +59,7 @@ export default function ModifiersSection({
         />
         <ModifierSelect
           label={t("valheimConfig.modifiers.deathpenalty.label")}
+          description={t("valheimConfig.modifiers.deathpenalty.description")}
           value={modifiers.deathpenalty}
           options={["casual", "veryeasy", "easy", "hard", "hardcore"]}
           labelPrefix="valheimConfig.modifiers.deathpenalty"
