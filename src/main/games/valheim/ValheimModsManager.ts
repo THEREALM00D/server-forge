@@ -32,6 +32,37 @@ export class ValheimModsManager {
     return join(this.serverPath, "BepInEx", "plugins");
   }
 
+  // Dossier hors de BepInEx/plugins/ pour les mods désactivés. BepInEx scanne
+  // récursivement TOUS les .dll sous plugins/, peu importe le nom du dossier
+  // parent — renommer sur place en "<dir>.disabled" ne désactive donc rien,
+  // BepInEx charge quand même le plugin (confirmé par les logs : Awake/Start
+  // s'exécutent normalement pour des dossiers ".disabled"). Il faut sortir le
+  // dossier de l'arborescence scannée pour le désactiver réellement.
+  private get disabledPluginsPath(): string {
+    return join(this.serverPath, "BepInEx", "disabled_plugins");
+  }
+
+  // Migre les anciens dossiers "<installDir>.disabled" laissés sous plugins/
+  // (toujours chargés par BepInEx malgré leur nom) vers disabledPluginsPath.
+  private migrateLegacyDisabled(): void {
+    if (!existsSync(this.pluginsPath)) return;
+    for (const entry of readdirSync(this.pluginsPath, {
+      withFileTypes: true,
+    })) {
+      if (!entry.isDirectory() || !entry.name.endsWith(".disabled")) continue;
+      const baseName = entry.name.slice(0, -".disabled".length);
+      const from = join(this.pluginsPath, entry.name);
+      const to = join(this.disabledPluginsPath, baseName);
+      try {
+        mkdirSync(this.disabledPluginsPath, { recursive: true });
+        if (existsSync(to)) rmSync(to, { recursive: true, force: true });
+        renameSync(from, to);
+      } catch {
+        // best-effort — ne doit pas bloquer le chargement de la liste
+      }
+    }
+  }
+
   private get metaPath(): string {
     return join(this.dataDir, "mods.json");
   }
@@ -64,38 +95,33 @@ export class ValheimModsManager {
   }
 
   list(): ValheimMod[] {
+    this.migrateLegacyDisabled();
     const known = this.readJson();
+    const knownDirs = new Set(known.map((m) => m.installDir));
 
-    // Scanner BepInEx/plugins/ pour détecter les mods installés manuellement
+    // Scanne plugins/ (actifs) et disabled_plugins/ (désactivés) pour
+    // détecter les mods installés manuellement (absents du JSON).
     const manual: ValheimMod[] = [];
-    if (existsSync(this.pluginsPath)) {
-      const knownDirs = new Set([
-        ...known.map((m) => m.installDir),
-        ...known.map((m) => `${m.installDir}.disabled`),
-      ]);
-      for (const entry of readdirSync(this.pluginsPath, {
-        withFileTypes: true,
-      })) {
-        if (!entry.isDirectory()) continue;
-        const dirName = entry.name;
-        const baseName = dirName.endsWith(".disabled")
-          ? dirName.slice(0, -9)
-          : dirName;
-        if (knownDirs.has(dirName) || knownDirs.has(baseName)) continue;
+    const scanManual = (dir: string, enabled: boolean): void => {
+      if (!existsSync(dir)) return;
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        if (!entry.isDirectory() || knownDirs.has(entry.name)) continue;
         manual.push({
-          modId: this.hashDir(baseName),
+          modId: this.hashDir(entry.name),
           fileId: 0,
-          name: baseName,
+          name: entry.name,
           version: "?",
           author: "",
           summary: "",
           installedAt: 0,
-          enabled: !dirName.endsWith(".disabled"),
-          installDir: baseName,
+          enabled,
+          installDir: entry.name,
           source: "manual",
         });
       }
-    }
+    };
+    scanManual(this.pluginsPath, true);
+    scanManual(this.disabledPluginsPath, false);
 
     return [...known, ...manual];
   }
@@ -523,27 +549,33 @@ export class ValheimModsManager {
       this.list().find((m) => m.modId === modId);
     if (!mod) return;
 
-    for (const suffix of ["", ".disabled"]) {
-      const p = join(this.pluginsPath, `${mod.installDir}${suffix}`);
+    for (const dir of [this.pluginsPath, this.disabledPluginsPath]) {
+      const p = join(dir, mod.installDir);
       if (existsSync(p)) rmSync(p, { recursive: true, force: true });
     }
+    // Legacy : ancien dossier "<installDir>.disabled" sous plugins/
+    const legacy = join(this.pluginsPath, `${mod.installDir}.disabled`);
+    if (existsSync(legacy)) rmSync(legacy, { recursive: true, force: true });
 
     // Mettre à jour le JSON (les mods manuels n'y sont pas, save() est no-op)
     this.save(jsonMods.filter((m) => m.modId !== modId));
   }
 
   toggle(modId: number, enabled: boolean): void {
+    this.migrateLegacyDisabled();
     const jsonMods = this.readJson();
     const jsonMod = jsonMods.find((m) => m.modId === modId);
     const mod = jsonMod ?? this.list().find((m) => m.modId === modId);
     if (!mod) return;
 
     const activePath = join(this.pluginsPath, mod.installDir);
-    const disabledPath = join(this.pluginsPath, `${mod.installDir}.disabled`);
+    const disabledPath = join(this.disabledPluginsPath, mod.installDir);
 
     if (enabled && existsSync(disabledPath)) {
+      mkdirSync(this.pluginsPath, { recursive: true });
       renameSync(disabledPath, activePath);
     } else if (!enabled && existsSync(activePath)) {
+      mkdirSync(this.disabledPluginsPath, { recursive: true });
       renameSync(activePath, disabledPath);
     }
 
