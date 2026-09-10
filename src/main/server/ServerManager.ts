@@ -13,6 +13,12 @@ export interface StopConfig {
   shutdownMessage?: string;
 }
 
+// Masque la valeur qui suit -password avant d'afficher les args dans les
+// logs (utile pour diagnostiquer ce qui est réellement envoyé au process).
+function redactArgs(args: string[]): string[] {
+  return args.map((arg, i) => (args[i - 1] === "-password" ? "***" : arg));
+}
+
 export class ServerManager {
   private process: ChildProcess | null = null;
   private adoptedPid: number | null = null;
@@ -113,6 +119,7 @@ export class ServerManager {
     this.onLog = onLog;
     this.status = "starting";
     onLog(`[Manager] Starting server (${exeName})...`);
+    onLog(`[Manager] Args: ${redactArgs(args).join(" ")}`);
 
     try {
       this.process = spawn(exe, args, {
