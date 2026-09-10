@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { ValheimLaunchConfig, ValheimModifiers } from "@shared/types";
 import Section from "./Section";
 import ModifierSelect from "./ModifierSelect";
-import { MODIFIER_PRESETS } from "../presets";
+import { MODIFIER_PRESET_NAMES } from "../presets";
 
 const DEFAULT_MODIFIERS: ValheimModifiers = {
   combat: "",
@@ -29,19 +29,32 @@ export default function ModifiersSection({
         {t("valheimConfig.modifiers.description")}
       </Typography>
 
-      {/* Boutons presets */}
-      <ButtonGroup size="small" variant="outlined">
-        {(["casual", "normal", "hard", "hardcore"] as const).map((key) => (
-          <Button
-            key={key}
-            onClick={() => onChange({ modifiers: MODIFIER_PRESETS[key] })}
-          >
-            {t(`valheimConfig.modifiers.presets.${key}`)}
-          </Button>
-        ))}
-      </ButtonGroup>
+      {/* -preset : écrase tous les modificateurs déjà appliqués sur ce monde */}
+      <Stack spacing={0.5}>
+        <ButtonGroup size="small" variant="outlined">
+          {MODIFIER_PRESET_NAMES.map((preset) => (
+            <Button
+              key={preset}
+              variant={
+                config.modifierPreset === preset ? "contained" : "outlined"
+              }
+              onClick={() =>
+                onChange({
+                  modifierPreset: preset,
+                  modifiers: DEFAULT_MODIFIERS,
+                })
+              }
+            >
+              {t(`valheimConfig.modifiers.presetNames.${preset}`)}
+            </Button>
+          ))}
+        </ButtonGroup>
+        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+          {t("valheimConfig.modifiers.presetHint")}
+        </Typography>
+      </Stack>
 
-      {/* Selects par modificateur */}
+      {/* Selects par modificateur — réglages fins appliqués APRÈS le preset */}
       <Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap", gap: 1.5 }}>
         <ModifierSelect
           label={t("valheimConfig.modifiers.combat.label")}

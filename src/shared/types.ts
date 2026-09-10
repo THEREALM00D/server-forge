@@ -149,6 +149,20 @@ export interface ValheimLaunchConfig {
   customArgs: string;
   worldSeed: string;
   worldSize: "small" | "medium" | "large" | "yolo" | "";
+  // -preset : force le reset de TOUS les modificateurs d'un monde existant
+  // ("Setting a preset will overwrite any other previous modifiers" — manuel
+  // officiel), contrairement à un -modifier individuel vide qui n'écrase pas
+  // ce qui est déjà persisté dans le monde. C'est le seul moyen documenté de
+  // revenir à "Normal" sur un monde qui a déjà des modificateurs appliqués.
+  modifierPreset:
+    | "Normal"
+    | "Casual"
+    | "Easy"
+    | "Hard"
+    | "Hardcore"
+    | "Immersive"
+    | "Hammer"
+    | "";
   modifiers: ValheimModifiers;
 }
 

@@ -37,6 +37,7 @@ const DEFAULT_VALHEIM_CONFIG: ValheimLaunchConfig = {
   customArgs: "",
   worldSeed: "",
   worldSize: "",
+  modifierPreset: "",
   modifiers: DEFAULT_MODIFIERS,
 };
 

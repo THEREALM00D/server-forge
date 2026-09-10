@@ -1,32 +1,13 @@
-import type { ValheimModifiers } from "@shared/types";
-
-export const MODIFIER_PRESETS: Record<string, ValheimModifiers> = {
-  casual: {
-    combat: "easy",
-    deathpenalty: "casual",
-    resources: "more",
-    raids: "none",
-    portals: "casual",
-  },
-  normal: {
-    combat: "",
-    deathpenalty: "",
-    resources: "",
-    raids: "",
-    portals: "",
-  },
-  hard: {
-    combat: "hard",
-    deathpenalty: "hard",
-    resources: "less",
-    raids: "more",
-    portals: "hard",
-  },
-  hardcore: {
-    combat: "veryhard",
-    deathpenalty: "hardcore",
-    resources: "muchless",
-    raids: "more",
-    portals: "veryhard",
-  },
-};
+// Noms de preset valides pour -preset (manuel officiel Iron Gate). Un preset
+// écrase TOUS les modificateurs déjà persistés sur un monde existant — c'est
+// le seul moyen documenté de forcer un reset, contrairement à un -modifier
+// individuel vide/omis qui ne change rien à ce que le monde utilise déjà.
+export const MODIFIER_PRESET_NAMES = [
+  "Normal",
+  "Casual",
+  "Easy",
+  "Hard",
+  "Hardcore",
+  "Immersive",
+  "Hammer",
+] as const;

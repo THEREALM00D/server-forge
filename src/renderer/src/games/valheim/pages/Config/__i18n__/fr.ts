@@ -16,13 +16,18 @@ export default {
     },
     modifiers: {
       description:
-        "Ajuste la difficulté du monde via les arguments -modifier. Utilisez un preset ou configurez chaque paramètre individuellement.",
-      default: "Défaut",
-      presets: {
-        casual: "Débutant",
-        normal: "Standard",
-        hard: "Difficile",
-        hardcore: "Hardcore",
+        "Ajuste la difficulté du monde. Un preset écrase tous les modificateurs déjà appliqués sur ce monde ; les réglages individuels ci-dessous s'appliquent ensuite par-dessus pour un ajustement fin.",
+      default: "Ne pas modifier",
+      presetHint:
+        "Un monde existant garde ses modificateurs précédents tant qu'aucun preset n'est choisi — un champ individuel laissé vide ne les réinitialise pas.",
+      presetNames: {
+        Normal: "Normal",
+        Casual: "Débutant",
+        Easy: "Facile",
+        Hard: "Difficile",
+        Hardcore: "Hardcore",
+        Immersive: "Immersif",
+        Hammer: "Marteau",
       },
       combat: {
         label: "Combat",

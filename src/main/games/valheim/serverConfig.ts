@@ -25,6 +25,13 @@ export const valheimServerConfig = {
     if (cfg.logFile) args.push("-logFile", cfg.logFile);
     if (cfg.worldSeed) args.push("-worldseed", cfg.worldSeed);
     if (cfg.worldSize) args.push("-worldsize", cfg.worldSize);
+    // -preset DOIT précéder les -modifier individuels : "Setting a preset
+    // will overwrite any other previous modifiers. If combined with a
+    // preset [individual modifiers] should be set after" (manuel officiel).
+    // C'est aussi le seul moyen documenté de forcer un monde déjà créé (avec
+    // des modificateurs déjà persistés) à revenir à "Normal" — un
+    // -modifier individuel vide/omis ne réinitialise pas ce qui existe déjà.
+    if (cfg.modifierPreset) args.push("-preset", cfg.modifierPreset);
     if (cfg.modifiers) {
       const entries: Array<[string, string]> = [
         ["combat", cfg.modifiers.combat],
