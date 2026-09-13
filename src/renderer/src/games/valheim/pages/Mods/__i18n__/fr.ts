@@ -89,6 +89,7 @@ export default {
       refresh: "Vérifier les mises à jour",
       found: "{{count}} mise(s) à jour disponible(s)",
       none: "Tous les mods sont à jour",
+      updateAll: "Tout mettre à jour ({{count}})",
     },
   },
 };

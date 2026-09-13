@@ -301,6 +301,42 @@ export function useValheimMods() {
     }
   }, [notify, t, installedMods]);
 
+  const handleUpdateAll = useCallback(async () => {
+    if (updates.length === 0) return;
+    setInstalling(true);
+    let successCount = 0;
+    let errorCount = 0;
+    try {
+      for (const update of updates) {
+        try {
+          await window.api.valheim.mods.installFromThunderstore(
+            update.latestCode,
+          );
+          successCount++;
+        } catch {
+          errorCount++;
+        }
+      }
+      const fresh = await window.api.valheim.mods.list();
+      setInstalledMods(fresh);
+      refreshUpdates(fresh);
+      if (successCount > 0)
+        notify(
+          t("valheimMods.thunderstore.profileSuccess", {
+            count: successCount,
+          }),
+          "success",
+        );
+      if (errorCount > 0)
+        notify(
+          t("valheimMods.thunderstore.profileErrors", { count: errorCount }),
+          "warning",
+        );
+    } finally {
+      setInstalling(false);
+    }
+  }, [updates, notify, t, refreshUpdates]);
+
   const handleInstallAllDeps = useCallback(async () => {
     if (!pendingDeps) return;
     const deps = pendingDeps.deps;
@@ -334,6 +370,7 @@ export function useValheimMods() {
     handleImportProfile: handleInstallImportProfile,
     handleImportProfileFile,
     handleRefreshUpdates,
+    handleUpdateAll,
     handleInstallAllDeps,
     handleDismissDeps: () => setPendingDeps(null),
   };

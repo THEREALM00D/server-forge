@@ -19,6 +19,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SettingsIcon from "@mui/icons-material/Settings";
+import SystemUpdateAltIcon from "@mui/icons-material/SystemUpdateAlt";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { useTranslation } from "react-i18next";
 import { dialogService } from "../../../../services/dialogService";
@@ -60,6 +61,7 @@ export default function ValheimMods() {
     handleImportProfile,
     handleImportProfileFile,
     handleRefreshUpdates,
+    handleUpdateAll,
     handleInstallAllDeps,
     handleDismissDeps,
   } = useValheimMods();
@@ -153,6 +155,18 @@ export default function ValheimMods() {
         >
           {t("valheimMods.updates.refresh")}
         </Button>
+        {updates.length > 0 && (
+          <Button
+            variant="contained"
+            size="small"
+            color="warning"
+            startIcon={<SystemUpdateAltIcon />}
+            onClick={handleUpdateAll}
+            disabled={installing}
+          >
+            {t("valheimMods.updates.updateAll", { count: updates.length })}
+          </Button>
+        )}
       </Stack>
 
       {installing && (

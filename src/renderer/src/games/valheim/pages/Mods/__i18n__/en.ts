@@ -89,6 +89,7 @@ export default {
       refresh: "Check for updates",
       found: "{{count}} update(s) available",
       none: "All mods are up to date",
+      updateAll: "Update all ({{count}})",
     },
   },
 };
