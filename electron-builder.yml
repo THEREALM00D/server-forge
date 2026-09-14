@@ -24,6 +24,8 @@ nsis:
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
+  oneClick: false
+  allowToChangeInstallationDirectory: true
 portable:
   artifactName: ${name}-${version}-portable.${ext}
 publish:

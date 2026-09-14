@@ -117,13 +117,14 @@ export interface UpdateCheckResult {
   requiredBuild: string | null;
 }
 
-// --- Vérification de mise à jour de ServerForge lui-même (releases GitHub) ---
-export interface AppUpdateCheckResult {
-  currentVersion: string;
-  latestVersion: string;
-  hasUpdate: boolean;
-  url: string;
-}
+// --- Mise à jour de ServerForge lui-même (electron-updater, releases GitHub) ---
+export type AppUpdateStatus =
+  | { state: "idle" }
+  | { state: "checking" }
+  | { state: "available"; version: string }
+  | { state: "downloading"; percent: number }
+  | { state: "downloaded"; version: string }
+  | { state: "error"; message: string };
 
 // --- Launch arguments (PalServer.exe) ---
 export interface LaunchArgsConfig {

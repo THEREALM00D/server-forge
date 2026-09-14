@@ -16,7 +16,13 @@ export default {
     collapse: "Collapse",
     expand: "Expand",
     version: "v{{version}}",
-    updateAvailable: "Update v{{version}} available — click to open",
-    updateBadge: "Update",
+    update: {
+      checking: "Checking…",
+      download: "Download v{{version}}",
+      downloading: "Downloading… {{percent}}%",
+      install: "Restart & install v{{version}}",
+      installHint: "The app restarts and installs the update automatically.",
+      error: "Update check failed",
+    },
   },
 };

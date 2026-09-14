@@ -1,24 +1,34 @@
 import { useEffect, useState } from "react";
-import type { AppUpdateCheckResult } from "@shared/types";
+import type { AppUpdateStatus } from "@shared/types";
+
+export interface AppUpdateState {
+  currentVersion: string;
+  status: AppUpdateStatus;
+}
 
 /**
- * Vérifie une fois par session s'il existe une version plus récente sur
- * GitHub Releases — évite d'avoir à checker manuellement le dépôt pendant
- * la phase alpha.
+ * Suit le statut de l'auto-updater (electron-updater) : vérification faite
+ * automatiquement au démarrage par le main process, téléchargement et
+ * installation restent déclenchés depuis l'UI.
  */
-export function useAppUpdate(): AppUpdateCheckResult | null {
-  const [result, setResult] = useState<AppUpdateCheckResult | null>(null);
+export function useAppUpdate() {
+  const [state, setState] = useState<AppUpdateState>({
+    currentVersion: "",
+    status: { state: "idle" },
+  });
 
   useEffect(() => {
-    window.api.update
-      .check()
-      .then((res) => {
-        if (!("error" in res)) setResult(res);
-      })
-      .catch(() => {
-        // best-effort — pas de connexion, rate-limit GitHub, etc.
-      });
+    window.api.update.getCurrentVersion().then((currentVersion) => {
+      setState((s) => ({ ...s, currentVersion }));
+    });
+    return window.api.update.onStatus((status) => {
+      setState((s) => ({ ...s, status }));
+    });
   }, []);
 
-  return result;
+  return {
+    ...state,
+    download: () => window.api.update.download(),
+    install: () => window.api.update.install(),
+  };
 }

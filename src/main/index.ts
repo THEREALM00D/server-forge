@@ -2,6 +2,7 @@ import { app, BrowserWindow, session } from "electron/main";
 import { shell } from "electron";
 import { join, resolve } from "path";
 import { registerIpcHandlers } from "./ipc/handlers";
+import { checkForUpdateOnStartup } from "./update/AutoUpdater";
 
 // En dev sur Windows, setAsDefaultProtocolClient doit recevoir le chemin du
 // script entry point pour enregistrer notre app et non electron.exe directement.
@@ -35,6 +36,7 @@ function createWindow(): void {
     mainWindow.show();
     if (!app.isPackaged)
       mainWindow.webContents.openDevTools({ mode: "detach" });
+    checkForUpdateOnStartup();
   });
 
   mainWindow.webContents.setWindowOpenHandler((details) => {

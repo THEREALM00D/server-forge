@@ -16,8 +16,14 @@ export default {
     collapse: "Réduire",
     expand: "Agrandir",
     version: "v{{version}}",
-    updateAvailable:
-      "Mise à jour v{{version}} disponible — cliquer pour ouvrir",
-    updateBadge: "MàJ",
+    update: {
+      checking: "Vérification…",
+      download: "Télécharger v{{version}}",
+      downloading: "Téléchargement… {{percent}}%",
+      install: "Redémarrer et installer v{{version}}",
+      installHint:
+        "L'app redémarre et installe la mise à jour automatiquement.",
+      error: "Échec de la vérification de mise à jour",
+    },
   },
 };

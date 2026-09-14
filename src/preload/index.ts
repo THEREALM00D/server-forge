@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { GameType } from "../shared/types";
+import type { AppUpdateStatus, GameType } from "../shared/types";
 
 const api = {
   // Window controls
@@ -15,7 +15,14 @@ const api = {
       ipcRenderer.invoke("config:setServerPath", path),
   },
   update: {
+    getCurrentVersion: () => ipcRenderer.invoke("update:getCurrentVersion"),
     check: () => ipcRenderer.invoke("update:check"),
+    download: () => ipcRenderer.invoke("update:download"),
+    install: () => ipcRenderer.invoke("update:install"),
+    onStatus: (cb: (status: AppUpdateStatus) => void) => {
+      ipcRenderer.on("update:status", (_e, status) => cb(status));
+      return () => ipcRenderer.removeAllListeners("update:status");
+    },
   },
   // Multi-serveur
   servers: {
