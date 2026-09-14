@@ -64,7 +64,7 @@ app.on("second-instance", (_, argv) => {
   }
 });
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   if (process.platform === "win32") {
     app.setAppUserModelId("com.palworld.manager");
   }
@@ -83,7 +83,7 @@ app.whenReady().then(() => {
     });
   }
 
-  registerIpcHandlers();
+  await registerIpcHandlers();
   createWindow();
 
   // Premier lancement avec nxm:// (app pas encore ouverte, args de la commande)
