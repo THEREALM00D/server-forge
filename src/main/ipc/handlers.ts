@@ -29,6 +29,7 @@ import { registerFirewallHandlers } from "./handlers/firewall";
 import { registerBackupHandlers } from "./handlers/backup";
 import { registerScheduleHandlers } from "./handlers/schedule";
 import { registerServersHandlers } from "./handlers/servers";
+import { registerUpdateHandlers } from "./handlers/update";
 import { registerPalapiHandlers } from "../games/palworld/handlers/palapi";
 import { registerPlayersHandlers } from "../games/palworld/handlers/players";
 import { registerValheimHandlers } from "../games/valheim/handlers/config";
@@ -330,6 +331,7 @@ export function registerIpcHandlers(): void {
   };
 
   registerMiscHandlers(ctx);
+  registerUpdateHandlers();
   registerSteamHandlers(ctx);
   registerServerHandlers(ctx);
   registerPalapiHandlers(ctx);

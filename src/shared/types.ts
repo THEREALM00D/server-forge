@@ -117,6 +117,14 @@ export interface UpdateCheckResult {
   requiredBuild: string | null;
 }
 
+// --- Vérification de mise à jour de ServerForge lui-même (releases GitHub) ---
+export interface AppUpdateCheckResult {
+  currentVersion: string;
+  latestVersion: string;
+  hasUpdate: boolean;
+  url: string;
+}
+
 // --- Launch arguments (PalServer.exe) ---
 export interface LaunchArgsConfig {
   publicLobby: boolean;

@@ -15,5 +15,8 @@ export default {
     manageServers: "Manage servers",
     collapse: "Collapse",
     expand: "Expand",
+    version: "v{{version}}",
+    updateAvailable: "Update v{{version}} available — click to open",
+    updateBadge: "Update",
   },
 };

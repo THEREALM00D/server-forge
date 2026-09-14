@@ -8,6 +8,7 @@ import type {
   RestartConfig,
   FirewallRuleStatus,
   UpdateCheckResult,
+  AppUpdateCheckResult,
   LaunchArgsConfig,
   ValheimLaunchConfig,
   AstroneerLaunchConfig,
@@ -32,6 +33,9 @@ interface API {
   config: {
     getServerPath: () => Promise<string>;
     setServerPath: (path: string) => Promise<void>;
+  };
+  update: {
+    check: () => Promise<AppUpdateCheckResult | { error: string }>;
   };
   servers: {
     list: () => Promise<Server[]>;

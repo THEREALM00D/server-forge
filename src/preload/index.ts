@@ -14,6 +14,9 @@ const api = {
     setServerPath: (path: string) =>
       ipcRenderer.invoke("config:setServerPath", path),
   },
+  update: {
+    check: () => ipcRenderer.invoke("update:check"),
+  },
   // Multi-serveur
   servers: {
     list: () => ipcRenderer.invoke("servers:list"),

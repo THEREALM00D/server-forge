@@ -15,5 +15,9 @@ export default {
     manageServers: "Gérer les serveurs",
     collapse: "Réduire",
     expand: "Agrandir",
+    version: "v{{version}}",
+    updateAvailable:
+      "Mise à jour v{{version}} disponible — cliquer pour ouvrir",
+    updateBadge: "MàJ",
   },
 };

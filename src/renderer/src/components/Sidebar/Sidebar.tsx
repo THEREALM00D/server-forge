@@ -30,6 +30,7 @@ import { useServer } from "../../context/ServerContext";
 import { DEFAULT_GAME, getGamePlugin } from "../../games/registry";
 import { STATUS_COLOR } from "../../utils/status";
 import ServerSwitcher from "./ServerSwitcher";
+import UpdateIndicator from "./UpdateIndicator";
 
 const EXPANDED_WIDTH = 220;
 const COLLAPSED_WIDTH = 56;
@@ -221,6 +222,7 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
       <Box sx={{ mt: "auto", p: collapsed ? 0.5 : 2 }}>
         {!collapsed && (
           <>
+            <UpdateIndicator />
             <ToggleButtonGroup
               value={i18n.resolvedLanguage ?? "fr"}
               exclusive
