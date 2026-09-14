@@ -1,6 +1,6 @@
 {
   "name": "server-forge",
-  "version": "0.0.1-alpha7",
+  "version": "0.0.1-alpha8",
   "description": "Open-source desktop manager for game dedicated servers",
   "main": "./out/main/index.js",
   "author": "",
