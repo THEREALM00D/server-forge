@@ -7,7 +7,7 @@ export default function InstallLogs({
   logsEndRef,
 }: {
   logs: string[];
-  logsEndRef: RefObject<HTMLDivElement>;
+  logsEndRef: RefObject<HTMLDivElement | null>;
 }) {
   const { t } = useTranslation();
   return (
