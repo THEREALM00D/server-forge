@@ -1,18 +1,8 @@
 import { app, BrowserWindow, session } from "electron/main";
 import { shell } from "electron";
-import { join, resolve } from "path";
+import { join } from "path";
 import { registerIpcHandlers } from "./ipc/handlers";
 import { checkForUpdateOnStartup } from "./update/AutoUpdater";
-
-// En dev sur Windows, setAsDefaultProtocolClient doit recevoir le chemin du
-// script entry point pour enregistrer notre app et non electron.exe directement.
-if (!app.isPackaged) {
-  app.setAsDefaultProtocolClient("nxm", process.execPath, [
-    resolve(process.argv[1]),
-  ]);
-} else {
-  app.setAsDefaultProtocolClient("nxm");
-}
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -51,19 +41,6 @@ function createWindow(): void {
   }
 }
 
-// Événement second-instance : l'app est déjà ouverte, Windows relance avec nxm://
-app.on("second-instance", (_, argv) => {
-  const nxmUrl = argv.find((a) => a.startsWith("nxm://"));
-  if (nxmUrl) {
-    const win = BrowserWindow.getAllWindows()[0];
-    if (win) {
-      if (win.isMinimized()) win.restore();
-      win.focus();
-      win.webContents.send("nxm:install", nxmUrl);
-    }
-  }
-});
-
 app.whenReady().then(async () => {
   if (process.platform === "win32") {
     app.setAppUserModelId("com.palworld.manager");
@@ -85,16 +62,6 @@ app.whenReady().then(async () => {
 
   await registerIpcHandlers();
   createWindow();
-
-  // Premier lancement avec nxm:// (app pas encore ouverte, args de la commande)
-  const nxmUrl = process.argv.find((a) => a.startsWith("nxm://"));
-  if (nxmUrl) {
-    app.once("browser-window-created", (_, win) => {
-      win.webContents.once("did-finish-load", () => {
-        win.webContents.send("nxm:install", nxmUrl);
-      });
-    });
-  }
 
   app.on("activate", function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
