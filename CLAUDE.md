@@ -8,13 +8,15 @@ Gestionnaire de serveurs dédiés de jeux vidéo. Supporte Palworld, Valheim et 
 
 ## Stack
 
-- **Electron 31** (main / preload / renderer)
+- **Electron 44** (main / preload / renderer) — nécessite **Node.js ≥ 22.12** (`engines` d'`electron`/`@electron/rebuild` l'exige ; `yarn install --frozen-lockfile` échoue sinon, y compris en CI)
 - **React 19** + **MUI 9** (Material-UI) — pas de Tailwind
 - **TypeScript 6** strict — types partagés dans `src/shared/types.ts`
 - **Vite 5** via **electron-vite**
 - **Yarn** comme gestionnaire de paquets
 - **i18n** : `react-i18next` + `i18next` + `i18next-browser-languagedetector` (FR + EN)
-- Dépendances-clés : `archiver` + `extract-zip` (backups ZIP), `systeminformation` (CPU/RAM, détection de processus), `date-fns`
+- Dépendances-clés : `archiver` + `extract-zip` (backups ZIP), `electron-store` (config persistée), `electron-updater` (mise à jour in-app), `systeminformation` (CPU/RAM, détection de processus), `date-fns`
+
+⚠️ **`archiver` (v8+) et `electron-store` (v9+) sont en ESM pur** (plus de build CommonJS), alors que le process main est bundlé en CJS. Un `import`/`require` statique classique casse au runtime (`ERR_REQUIRE_ESM` / « X is not a constructor » — le typecheck ne le détecte PAS, seul un vrai lancement le révèle). Pattern obligatoire : `const { default: X } = await import("paquet-esm-only")` au moment de l'utiliser, jamais en haut de fichier. Voir `BackupManager.create()` (archiver → `ZipArchive`) et `ipc/handlers.ts`/`FirewallManager.ts` (electron-store) pour des exemples. Réflexe à avoir à **chaque** bump majeur d'une dépendance qui touche le main process : vérifier `"type"` dans son `package.json`.
 
 Pas de tests unitaires configurés dans ce projet — ne pas en chercher ni en ajouter sans demander.
 
@@ -26,10 +28,18 @@ Pas de tests unitaires configurés dans ce projet — ne pas en chercher ni en a
 | `yarn build`               | Compiler + packager en .exe (NSIS + portable) |
 | `yarn typecheck`           | Vérifier les types (node + web)               |
 | `yarn lint`                | ESLint avec auto-fix                          |
+| `yarn lint:check`          | ESLint sans auto-fix (utilisé en CI)          |
 | `yarn format`              | Prettier sur tout le projet                   |
 | `yarn fix:prettier <file>` | Prettier sur un fichier spécifique            |
 
 Un hook PostToolUse (`.claude/settings.local.json`) lance automatiquement `fix:prettier` après chaque Write/Edit.
+
+## CI / automatisation
+
+- **`.github/workflows/ci.yml`** : `yarn typecheck` + `yarn lint:check` sur chaque PR/push vers `main` (Node 22, `windows-latest`). `main` est protégée — PR obligatoire.
+- **`.github/workflows/release.yml`** : sur un tag `v*`, `yarn build` publie directement la release GitHub (voir `publish.channel: alpha` dans `electron-builder.yml` — nécessaire pour que l'auto-updater trouve le bon fichier `alpha.yml`, voir section Updater plus bas).
+- **`.eslintrc.cjs`** : base `@electron-toolkit`, `explicit-function-return-type` désactivée (trop strict pour du TSX), seulement `react-hooks/rules-of-hooks` + `exhaustive-deps` (pas le ruleset v7 complet orienté React Compiler, qui suppose des patterns qu'on n'utilise pas).
+- **Dependabot** (`.github/dependabot.yml`) : PR hebdo npm (groupées minor/patch) + GitHub Actions. Un bump majeur qui casse la CI doit être corrigé **sur la branche de la PR** (pas juste mergé en espérant) — voir le pattern ESM ci-dessus pour la cause la plus probable si `yarn typecheck`/`install` échoue après un bump.
 
 ## Architecture — points non-évidents
 
@@ -210,7 +220,7 @@ Au démarrage, `ServerManager.tryAdopt()` scanne les processus via `systeminform
 - Une heure quotidienne (`HH:MM` 24h), pas de multi-horaires
 - Flow (Palworld) : annonce (via `/v1/api/announce`) → attente `warningMinutes` → save → shutdown API
 - Scheduler vérifie toutes les 30 secondes
-- **Requiert l'API REST activée** (Palworld) — sinon l'arrêt est brutal (`taskkill`) sans save. Valheim et Astroneer n'ont pas ce flow gracieux dans ServerForge : `getStopConfig()` renvoie toujours `restApiEnabled: false`, donc `taskkill` systématique.
+- **Requiert l'API REST activée** (Palworld) — sinon l'arrêt est brutal (`taskkill`) sans save. Astroneer n'a pas de flow gracieux dans ServerForge (`getStopConfig()` renvoie `restApiEnabled: false` → `taskkill` systématique). **Valheim** n'a pas d'API REST mais a son propre mécanisme : `getStopConfig()` renvoie `gracefulSignal: true`, et `ServerManager.stop()` envoie un vrai CTRL+C (`windowsCtrlC.ts`, via `AttachConsole`/`GenerateConsoleCtrlEvent`) avant de retomber sur `taskkill` en dernier recours (timeout 30s) — recommandé par le manuel officiel pour éviter une sauvegarde corrompue.
 
 ## Historique des joueurs
 
@@ -219,3 +229,10 @@ Au démarrage, `ServerManager.tryAdopt()` scanne les processus via `systeminform
 - Chaque entrée trace `firstSeen`, `lastSeen`, `lastIp`, `totalPlaytimeMs`, `sessionCount`, `online`, `currentSessionStart` et un tableau `sessions[]` (cap à 50, plus anciennes éjectées).
 - Le tracker est démarré/arrêté via une boucle de surveillance dans `handlers.ts` qui vérifie `serverManager.getStatus()` toutes les 5s. À l'arrêt il ferme toutes les sessions ouvertes et persiste.
 - IPC : `players:getHistory` / `players:clearHistory` / `players:removeEntry`. UI : page « Joueurs » dans la Sidebar (icône `PeopleIcon`).
+
+## Mise à jour in-app (electron-updater)
+
+- `src/main/update/AutoUpdater.ts` branche `electron-updater` sur les releases GitHub déjà publiées par `electron-builder` (`publish.channel: alpha` dans `electron-builder.yml`, doit matcher `autoUpdater.channel = "alpha"` fixé explicitement dans le code — sinon `electron-updater` ne trouve pas le fichier `alpha.yml` et échoue silencieusement).
+- Vérification auto au démarrage (`checkForUpdateOnStartup`), mais **téléchargement et installation restent des actions manuelles** déclenchées depuis la Sidebar (`UpdateIndicator.tsx`) — pas d'auto-download/install silencieux.
+- **Format de version obligatoire : `X.Y.Z-alpha.N` (point avant le numéro)**. Sans le point, `semver.prerelease()` traite `alphaN` comme un identifiant opaque unique par build, et `electron-updater` ne peut alors jamais faire le lien entre deux versions alpha (bug vécu : v0.0.1-alpha10 ne détectait jamais alpha11).
+- L'installeur NSIS est en mode assisté (`oneClick: false`, `allowToChangeInstallationDirectory: true`) — nécessaire pour que l'auto-update fonctionne correctement avec un chemin d'installation choisi par l'utilisateur. Le build portable n'a pas d'auto-update (mise à jour manuelle uniquement).
