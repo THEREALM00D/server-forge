@@ -1,6 +1,6 @@
 import { exec } from "child_process";
 import { promisify } from "util";
-import Store from "electron-store";
+import type Store from "electron-store";
 
 const execAsync = promisify(exec);
 
@@ -36,10 +36,23 @@ function getRuleName(
 }
 
 export class FirewallManager {
-  private store = new Store<FWStore>({
-    name: "firewall",
-    defaults: { customRules: [] },
-  });
+  // electron-store est en ESM pur depuis la v9 — chargé dynamiquement (seul
+  // moyen depuis notre process main en CJS) et mis en cache après le premier
+  // appel, car un champ de classe ne peut pas être initialisé par un await.
+  private storePromise: Promise<Store<FWStore>> | null = null;
+
+  private getStore(): Promise<Store<FWStore>> {
+    if (!this.storePromise) {
+      this.storePromise = import("electron-store").then(
+        ({ default: StoreClass }) =>
+          new StoreClass<FWStore>({
+            name: "firewall",
+            defaults: { customRules: [] },
+          }),
+      );
+    }
+    return this.storePromise;
+  }
 
   async isAdmin(): Promise<boolean> {
     try {
@@ -221,12 +234,13 @@ export class FirewallManager {
   ): Promise<{ success: boolean; error?: string }> {
     const result = await this.addRule(name, port, protocol);
     if (result.success) {
-      const existing = this.store.get("customRules");
+      const store = await this.getStore();
+      const existing = store.get("customRules");
       const alreadyStored = existing.some(
         (r) => r.name === name && r.protocol === protocol,
       );
       if (!alreadyStored) {
-        this.store.set("customRules", [...existing, { name, port, protocol }]);
+        store.set("customRules", [...existing, { name, port, protocol }]);
       }
     }
     return result;
@@ -238,10 +252,11 @@ export class FirewallManager {
   ): Promise<{ success: boolean; error?: string }> {
     try {
       await this.deleteRule(name, protocol);
-      const remaining = this.store
+      const store = await this.getStore();
+      const remaining = store
         .get("customRules")
         .filter((r) => !(r.name === name && r.protocol === protocol));
-      this.store.set("customRules", remaining);
+      store.set("customRules", remaining);
       return { success: true };
     } catch (err) {
       return { success: false, error: String(err) };
@@ -249,7 +264,8 @@ export class FirewallManager {
   }
 
   async listCustomRules(): Promise<FirewallPort[]> {
-    const stored = this.store.get("customRules");
+    const store = await this.getStore();
+    const stored = store.get("customRules");
     return Promise.all(
       stored.map(async (r) => ({
         name: r.name,

@@ -1,6 +1,5 @@
 import { BrowserWindow, app } from "electron/main";
 import { join } from "path";
-import Store from "electron-store";
 import { SteamCMD } from "../steamcmd/SteamCMD";
 import { PalConfigParser } from "../games/palworld/PalConfigParser";
 import { AstroConfigParser } from "../games/astroneer/AstroConfigParser";
@@ -49,7 +48,11 @@ const DEFAULT_RESTART_CONFIG: RestartConfig = {
   message: "Le serveur va redémarrer dans {minutes} minutes",
 };
 
-export function registerIpcHandlers(): void {
+export async function registerIpcHandlers(): Promise<void> {
+  // electron-store est en ESM pur depuis la v9 (plus de build CommonJS) —
+  // notre process main est en CJS, donc un import statique planterait
+  // (ERR_REQUIRE_ESM / "Store is not a constructor").
+  const { default: Store } = await import("electron-store");
   const store = new Store<AppStore>();
   const servers = new ServerRegistry(store);
   const serverConfigs = new ServerConfigStore(store);
