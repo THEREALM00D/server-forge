@@ -1,0 +1,31 @@
+name: Feature request
+description: Suggest an idea or improvement
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: game
+    attributes:
+      label: Game
+      options:
+        - Palworld
+        - Valheim
+        - Astroneer
+        - Not game-specific
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: What are you trying to do that ServerForge doesn't support today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Optional — how you imagine it working.
+    validations:
+      required: false

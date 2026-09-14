@@ -292,6 +292,6 @@ if (process.contextIsolated) {
     console.error(error);
   }
 } else {
-  // @ts-ignore
+  // @ts-ignore -- contextIsolation désactivé (fallback dev), window.api n'existe pas dans les types globaux
   window.api = api;
 }
