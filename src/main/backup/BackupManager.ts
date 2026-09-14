@@ -12,7 +12,6 @@ import {
   readSync,
   closeSync,
 } from "fs";
-import archiver from "archiver";
 import extractZip from "extract-zip";
 import type { BackupEntry } from "../../shared/types";
 
@@ -84,11 +83,15 @@ export class BackupManager {
       .sort((a, b) => b.createdAt - a.createdAt);
   }
 
-  create(
+  async create(
     serverPath: string,
     backupDir: string,
     sourcePath?: string,
   ): Promise<BackupEntry> {
+    // archiver est en ESM pur depuis la v8 (plus de build CommonJS) — notre
+    // process main est en CJS, donc un `require()`/import statique planterait
+    // (ERR_REQUIRE_ESM). L'import dynamique fonctionne dans les deux sens.
+    const { ZipArchive } = await import("archiver");
     return new Promise((resolve, reject) => {
       const sourceDir = sourcePath ?? this.getSavePath(serverPath);
       if (!existsSync(sourceDir)) {
@@ -131,7 +134,7 @@ export class BackupManager {
       };
 
       const output = createWriteStream(tempPath);
-      const archive = archiver("zip", { zlib: { level: 9 } });
+      const archive = new ZipArchive({ zlib: { level: 9 } });
 
       let settled = false;
       const settle = (fn: () => void) => {
