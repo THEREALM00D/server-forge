@@ -81,8 +81,8 @@ export default function ConfigPage({
     toggleGroup,
   } = useConfigGroups(fieldGroups, i18nFieldsPrefix);
 
-  const form = useForm<ConfigSettings>({
-    defaultValues: {},
+  const form = useForm({
+    defaultValues: {} as ConfigSettings,
     onSubmit: async ({ value }) => {
       try {
         const res = await writeConfig(value);
