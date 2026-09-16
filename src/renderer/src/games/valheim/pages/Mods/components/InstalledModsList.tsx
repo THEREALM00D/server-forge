@@ -10,10 +10,22 @@ import {
   Typography,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import SystemUpdateAltIcon from "@mui/icons-material/SystemUpdateAlt";
 import { useTranslation } from "react-i18next";
 import type { ValheimMod, ModUpdate } from "@shared/types";
 import { formatDate } from "../../../../../utils/format";
+
+// Le nom Thunderstore complet est stocké comme "auteur-nom" (voir
+// ValheimModsManager.installFromThunderstore) — on retire le préfixe auteur
+// pour reconstruire l'URL de la page du package.
+function thunderstorePageUrl(mod: ValheimMod): string | null {
+  if (!mod.thunderstoreCode || !mod.author) return null;
+  const prefix = `${mod.author}-`;
+  if (!mod.name.startsWith(prefix)) return null;
+  const name = mod.name.slice(prefix.length);
+  return `https://thunderstore.io/c/valheim/p/${mod.author}/${name}/`;
+}
 
 interface Props {
   mods: ValheimMod[];
@@ -51,6 +63,7 @@ export default function InstalledModsList({
           const update = mod.thunderstoreCode
             ? updateMap.get(mod.thunderstoreCode)
             : undefined;
+          const pageUrl = thunderstorePageUrl(mod);
 
           return (
             <Box
@@ -150,6 +163,16 @@ export default function InstalledModsList({
                     onClick={() => onUpdate(update.latestCode)}
                   >
                     <SystemUpdateAltIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+              {pageUrl && (
+                <Tooltip title={t("valheimMods.browse.openTooltip")}>
+                  <IconButton
+                    size="small"
+                    onClick={() => window.api.shell.openExternal(pageUrl)}
+                  >
+                    <OpenInNewIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
               )}

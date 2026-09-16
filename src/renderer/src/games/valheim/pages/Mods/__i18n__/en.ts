@@ -5,6 +5,7 @@ export default {
     tabs: {
       installed: "Installed",
       browse: "Browse",
+      configs: "Configs",
     },
     bepinex: {
       warning:
@@ -90,6 +91,19 @@ export default {
       found: "{{count}} update(s) available",
       none: "All mods are up to date",
       updateAll: "Update all ({{count}})",
+    },
+    configs: {
+      empty:
+        "No config file found in BepInEx/config/. Mods generate one the first time the server starts.",
+      noEntries: "No recognized setting in this file.",
+      default: "Default: {{value}}",
+      edit: "Edit",
+      close: "Close",
+      save: "Save",
+      saved: "{{name}} saved",
+      loadFailed: "Unable to list config files",
+      readFailed: "Unable to read this config file",
+      saveFailed: "Unable to save this config file",
     },
   },
 };

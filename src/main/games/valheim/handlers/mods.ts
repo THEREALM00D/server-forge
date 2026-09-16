@@ -146,4 +146,22 @@ export function registerValheimModsHandlers(ctx: IpcContext): void {
   ipcMain.handle("valheim:mods:checkUpdates", (_, installedCodes: string[]) =>
     ThunderstoreClient.checkUpdates(installedCodes),
   );
+
+  // --- Fichiers de config BepInEx (BepInEx/config/*.cfg) ---
+
+  ipcMain.handle("valheim:mods:listConfigFiles", (_, serverId?: string) =>
+    getManager(ctx, serverId).listConfigFiles(),
+  );
+
+  ipcMain.handle(
+    "valheim:mods:readConfigFile",
+    (_, fileName: string, serverId?: string) =>
+      getManager(ctx, serverId).readConfigFile(fileName),
+  );
+
+  ipcMain.handle(
+    "valheim:mods:writeConfigFile",
+    (_, fileName: string, content: string, serverId?: string) =>
+      getManager(ctx, serverId).writeConfigFile(fileName, content),
+  );
 }

@@ -14,6 +14,7 @@ import type {
   AstroneerLaunchConfig,
   AstroneerSettings,
   ValheimMod,
+  ValheimModConfigFile,
   ThunderstoreModInfo,
   ThunderstoreModVersion,
   ModUpdate,
@@ -231,6 +232,13 @@ interface API {
         installedCodes: string[],
       ) => Promise<ThunderstoreModInfo[]>;
       checkUpdates: (installedCodes: string[]) => Promise<ModUpdate[]>;
+      listConfigFiles: (serverId?: string) => Promise<ValheimModConfigFile[]>;
+      readConfigFile: (fileName: string, serverId?: string) => Promise<string>;
+      writeConfigFile: (
+        fileName: string,
+        content: string,
+        serverId?: string,
+      ) => Promise<void>;
       onProgress: (cb: (msg: string) => void) => () => void;
     };
     getAdminList: (serverId?: string) => Promise<string[]>;

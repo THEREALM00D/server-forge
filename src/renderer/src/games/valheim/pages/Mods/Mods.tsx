@@ -24,12 +24,15 @@ import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { useTranslation } from "react-i18next";
 import { dialogService } from "../../../../services/dialogService";
 import { useValheimMods } from "./hooks/useValheimMods";
+import { useValheimModConfigs } from "./hooks/useValheimModConfigs";
 import BepInExBanner from "./components/BepInExBanner";
 import InstalledModsList from "./components/InstalledModsList";
 import ModBrowser from "./components/ModBrowser";
 import DepsDialog from "./components/DepsDialog";
+import ConfigFilesList from "./components/ConfigFilesList";
+import ConfigFileEditorDialog from "./components/ConfigFileEditorDialog";
 
-type MainTab = "installed" | "browse";
+type MainTab = "installed" | "browse" | "configs";
 
 export default function ValheimMods() {
   const { t } = useTranslation();
@@ -65,6 +68,17 @@ export default function ValheimMods() {
     handleInstallAllDeps,
     handleDismissDeps,
   } = useValheimMods();
+
+  const {
+    files: configFiles,
+    editing: editingConfig,
+    entries: configEntries,
+    saving: savingConfig,
+    updateEntry: updateConfigEntry,
+    openFile: openConfigFile,
+    closeEditor: closeConfigEditor,
+    save: saveConfigFile,
+  } = useValheimModConfigs();
 
   const submitThunderstore = async () => {
     if (!thunderstoreCode.trim()) return;
@@ -201,6 +215,7 @@ export default function ValheimMods() {
             }
           />
           <Tab value="browse" label={t("valheimMods.tabs.browse")} />
+          <Tab value="configs" label={t("valheimMods.tabs.configs")} />
         </Tabs>
 
         {mainTab === "installed" && (
@@ -225,7 +240,24 @@ export default function ValheimMods() {
             onInstallVersion={handleInstallFromThunderstore}
           />
         )}
+
+        {mainTab === "configs" && (
+          <ConfigFilesList
+            files={configFiles}
+            locale={locale}
+            onOpen={openConfigFile}
+          />
+        )}
       </Box>
+
+      <ConfigFileEditorDialog
+        fileName={editingConfig}
+        entries={configEntries}
+        saving={savingConfig}
+        onChange={updateConfigEntry}
+        onClose={closeConfigEditor}
+        onSave={saveConfigFile}
+      />
 
       {/* Dialog import package Thunderstore individuel */}
       <Dialog
