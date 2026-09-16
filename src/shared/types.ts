@@ -120,7 +120,9 @@ export type AppUpdateStatus =
   | { state: "available"; version: string }
   | { state: "downloading"; percent: number }
   | { state: "downloaded"; version: string }
-  | { state: "error"; message: string };
+  | { state: "error"; message: string }
+  /** Fichiers de la release pas encore tous en ligne (déploiement en cours côté GitHub Actions) — pas une vraie erreur. */
+  | { state: "unavailable" };
 
 // --- Launch arguments (PalServer.exe) ---
 export interface LaunchArgsConfig {

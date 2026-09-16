@@ -222,7 +222,6 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
       <Box sx={{ mt: "auto", p: collapsed ? 0.5 : 2 }}>
         {!collapsed && (
           <>
-            <UpdateIndicator />
             <ToggleButtonGroup
               value={i18n.resolvedLanguage ?? "fr"}
               exclusive
@@ -248,6 +247,7 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
               variant="outlined"
               sx={{ width: "100%", fontSize: 11, mb: 1 }}
             />
+            <UpdateIndicator />
           </>
         )}
       </Box>
