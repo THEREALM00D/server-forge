@@ -41,9 +41,22 @@ export function registerAutoUpdater(): void {
   autoUpdater.on("update-downloaded", (info) =>
     broadcast({ state: "downloaded", version: info.version }),
   );
-  autoUpdater.on("error", (err) =>
-    broadcast({ state: "error", message: err.message }),
-  );
+  autoUpdater.on("error", (err) => {
+    // Le tag/la release GitHub existe mais alpha.yml (et le fallback
+    // latest.yml) ne sont pas encore uploadés — le workflow de release est
+    // probablement encore en train de build. Pas une vraie erreur pour
+    // l'utilisateur, juste "réessaie plus tard" (le prochain check au
+    // démarrage retombera sur "idle" une fois les assets en ligne).
+    const code = (err as NodeJS.ErrnoException).code;
+    if (
+      code === "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND" ||
+      code === "ERR_UPDATER_NO_PUBLISHED_VERSIONS"
+    ) {
+      broadcast({ state: "unavailable" });
+      return;
+    }
+    broadcast({ state: "error", message: err.message });
+  });
 
   ipcMain.handle("update:getCurrentVersion", () => app.getVersion());
   ipcMain.handle("update:check", () => {

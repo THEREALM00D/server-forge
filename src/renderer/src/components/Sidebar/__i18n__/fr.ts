@@ -17,6 +17,7 @@ export default {
     expand: "Agrandir",
     version: "v{{version}}",
     update: {
+      checkNow: "Vérifier les mises à jour",
       checking: "Vérification…",
       download: "Télécharger v{{version}}",
       downloading: "Téléchargement… {{percent}}%",
@@ -24,6 +25,7 @@ export default {
       installHint:
         "L'app redémarre et installe la mise à jour automatiquement.",
       error: "Échec de la vérification de mise à jour",
+      unavailable: "Nouvelle version en cours de publication…",
     },
   },
 };

@@ -17,12 +17,14 @@ export default {
     expand: "Expand",
     version: "v{{version}}",
     update: {
+      checkNow: "Check for updates",
       checking: "Checking…",
       download: "Download v{{version}}",
       downloading: "Downloading… {{percent}}%",
       install: "Restart & install v{{version}}",
       installHint: "The app restarts and installs the update automatically.",
       error: "Update check failed",
+      unavailable: "New version is being published…",
     },
   },
 };

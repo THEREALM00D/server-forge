@@ -28,6 +28,7 @@ export function useAppUpdate() {
 
   return {
     ...state,
+    check: () => window.api.update.check(),
     download: () => window.api.update.download(),
     install: () => window.api.update.install(),
   };

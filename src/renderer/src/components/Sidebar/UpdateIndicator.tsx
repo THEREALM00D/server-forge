@@ -2,23 +2,43 @@ import {
   Box,
   Button,
   CircularProgress,
+  IconButton,
+  Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import { useTranslation } from "react-i18next";
 import { useAppUpdate } from "./hooks/useAppUpdate";
 
+// États où lancer une nouvelle vérification manuelle est pertinent — pas
+// pendant un check/téléchargement déjà en cours, ni quand une action est
+// déjà proposée (mise à jour dispo ou prête à installer).
+const CAN_CHECK_STATES = ["idle", "error", "unavailable"];
+
 export default function UpdateIndicator() {
   const { t } = useTranslation();
-  const { currentVersion, status, download, install } = useAppUpdate();
+  const { currentVersion, status, check, download, install } = useAppUpdate();
 
   return (
     <Box sx={{ textAlign: "center", mb: 1.5 }}>
-      <Typography variant="caption" sx={{ color: "text.disabled" }}>
-        {t("sidebar.version", { version: currentVersion })}
-      </Typography>
+      <Stack
+        direction="row"
+        sx={{ alignItems: "center", justifyContent: "center", gap: 0.25 }}
+      >
+        <Typography variant="caption" sx={{ color: "text.disabled" }}>
+          {t("sidebar.version", { version: currentVersion })}
+        </Typography>
+        {CAN_CHECK_STATES.includes(status.state) && (
+          <Tooltip title={t("sidebar.update.checkNow")}>
+            <IconButton size="small" onClick={check} sx={{ p: 0.25 }}>
+              <RefreshIcon sx={{ fontSize: 13 }} />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Stack>
 
       {status.state === "checking" && (
         <Typography
@@ -89,6 +109,15 @@ export default function UpdateIndicator() {
             {t("sidebar.update.error")}
           </Typography>
         </Tooltip>
+      )}
+
+      {status.state === "unavailable" && (
+        <Typography
+          variant="caption"
+          sx={{ display: "block", color: "text.disabled" }}
+        >
+          {t("sidebar.update.unavailable")}
+        </Typography>
       )}
     </Box>
   );
