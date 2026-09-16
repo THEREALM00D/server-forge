@@ -5,6 +5,7 @@ export default {
     tabs: {
       installed: "Installés",
       browse: "Parcourir",
+      configs: "Configs",
     },
     bepinex: {
       warning:
@@ -90,6 +91,19 @@ export default {
       found: "{{count}} mise(s) à jour disponible(s)",
       none: "Tous les mods sont à jour",
       updateAll: "Tout mettre à jour ({{count}})",
+    },
+    configs: {
+      empty:
+        "Aucun fichier de config trouvé dans BepInEx/config/. Les mods en génèrent un au premier lancement du serveur.",
+      noEntries: "Aucun paramètre reconnu dans ce fichier.",
+      default: "Défaut : {{value}}",
+      edit: "Éditer",
+      close: "Fermer",
+      save: "Enregistrer",
+      saved: "{{name}} enregistré",
+      loadFailed: "Impossible de lister les fichiers de config",
+      readFailed: "Impossible de lire ce fichier de config",
+      saveFailed: "Impossible d'enregistrer ce fichier de config",
     },
   },
 };

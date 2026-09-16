@@ -43,11 +43,7 @@ export interface SystemStats {
 }
 
 export type ServerStatus =
-  | "stopped"
-  | "starting"
-  | "running"
-  | "stopping"
-  | "crashed";
+  "stopped" | "starting" | "running" | "stopping" | "crashed";
 
 // --- Palworld REST API ---
 export interface PalServerInfo {
@@ -201,6 +197,12 @@ export interface ValheimMod {
   publishedAt?: number;
   source?: "thunderstore" | "manual";
   thunderstoreCode?: string; // "Auteur-Nom-Version" pour les mods Thunderstore
+}
+
+export interface ValheimModConfigFile {
+  name: string;
+  size: number;
+  mtime: number;
 }
 
 export interface ThunderstoreModInfo {

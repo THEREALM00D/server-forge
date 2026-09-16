@@ -247,6 +247,17 @@ const api = {
         ),
       checkUpdates: (installedCodes: string[]) =>
         ipcRenderer.invoke("valheim:mods:checkUpdates", installedCodes),
+      listConfigFiles: (serverId?: string) =>
+        ipcRenderer.invoke("valheim:mods:listConfigFiles", serverId),
+      readConfigFile: (fileName: string, serverId?: string) =>
+        ipcRenderer.invoke("valheim:mods:readConfigFile", fileName, serverId),
+      writeConfigFile: (fileName: string, content: string, serverId?: string) =>
+        ipcRenderer.invoke(
+          "valheim:mods:writeConfigFile",
+          fileName,
+          content,
+          serverId,
+        ),
       onProgress: (cb: (msg: string) => void) => {
         ipcRenderer.on("valheim:mods:progress", (_e, msg) => cb(msg));
         return () => ipcRenderer.removeAllListeners("valheim:mods:progress");

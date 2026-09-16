@@ -10,11 +10,12 @@ import {
   renameSync,
   createWriteStream,
   unlinkSync,
+  statSync,
 } from "fs";
 import https from "https";
 import http from "http";
 import extractZip from "extract-zip";
-import type { ValheimMod } from "../../../shared/types";
+import type { ValheimMod, ValheimModConfigFile } from "../../../shared/types";
 import { ThunderstoreClient } from "./ThunderstoreClient";
 
 interface TSVersion {
@@ -65,6 +66,40 @@ export class ValheimModsManager {
 
   private get metaPath(): string {
     return join(this.dataDir, "mods.json");
+  }
+
+  private get configPath(): string {
+    return join(this.serverPath, "BepInEx", "config");
+  }
+
+  // BepInEx ne relie pas fiablement un .cfg à un mod installé (le fichier est
+  // nommé d'après le GUID interne du plugin, pas le nom Thunderstore) — on se
+  // contente donc de lister tous les .cfg présents, sans tenter de matching.
+  listConfigFiles(): ValheimModConfigFile[] {
+    if (!existsSync(this.configPath)) return [];
+    return readdirSync(this.configPath, { withFileTypes: true })
+      .filter((e) => e.isFile() && e.name.toLowerCase().endsWith(".cfg"))
+      .map((e) => {
+        const stat = statSync(join(this.configPath, e.name));
+        return { name: e.name, size: stat.size, mtime: stat.mtimeMs };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  private resolveConfigFile(fileName: string): string {
+    // Nom de fichier plat uniquement (pas de séparateur) — évite toute
+    // traversée de chemin hors de BepInEx/config/.
+    if (!/^[^/\\]+\.cfg$/i.test(fileName))
+      throw new Error("Nom de fichier de config invalide");
+    return join(this.configPath, fileName);
+  }
+
+  readConfigFile(fileName: string): string {
+    return readFileSync(this.resolveConfigFile(fileName), "utf-8");
+  }
+
+  writeConfigFile(fileName: string, content: string): void {
+    writeFileSync(this.resolveConfigFile(fileName), content, "utf-8");
   }
 
   detectBepInEx(): boolean {
