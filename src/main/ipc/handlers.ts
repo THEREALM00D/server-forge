@@ -234,11 +234,15 @@ export async function registerIpcHandlers(): Promise<void> {
       ? serverConfigs.get(active.id)
       : DEFAULT_SERVER_CONFIG;
     const args = buildGameArgs(gameType, serverCfg);
+    // Sans callback réel ici, ServerManager.start() écrase son onLog interne
+    // par un no-op pour le reste de la vie du process relancé — la console
+    // restait figée après un redémarrage planifié (le manuel passe bien
+    // sendLog, voir handlers/server.ts).
     await mgr.restart(
       getActiveServerPath(),
       getGameServerConfig(gameType).exeName,
       args,
-      () => {},
+      (line) => broadcastLog(active?.id ?? "", line),
       getStopConfigForRestart(),
     );
   });
