@@ -2,7 +2,7 @@ export default {
   players: {
     title: "Joueurs",
     subtitle:
-      "Historique de connexion suivi automatiquement quand le serveur tourne (API REST requise)",
+      "Historique de connexion suivi automatiquement quand le serveur tourne (nécessite l'API/le plugin de suivi joueurs de ce jeu)",
     search: "Rechercher un joueur ou un ID",
     none: "Aucun joueur dans l'historique. Le suivi démarre dès qu'un joueur se connecte.",
     noResults: "Aucun joueur ne correspond à « {{query}} ».",

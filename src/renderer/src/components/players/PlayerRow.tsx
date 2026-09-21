@@ -11,7 +11,7 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useTranslation } from "react-i18next";
 import type { PlayerHistoryEntry } from "@shared/types";
-import { formatDuration, formatRelative } from "../utils";
+import { formatDuration, formatRelative } from "./utils";
 
 interface Props {
   entry: PlayerHistoryEntry;

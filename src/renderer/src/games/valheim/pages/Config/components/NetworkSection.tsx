@@ -67,6 +67,15 @@ export default function NetworkSection({
           </Box>
         }
       />
+      <TextField
+        label={t("valheimConfig.fields.odinEyeUrl.label")}
+        helperText={t("valheimConfig.fields.odinEyeUrl.description")}
+        value={config.odinEyeUrl}
+        onChange={(e) => onChange({ odinEyeUrl: e.target.value })}
+        size="small"
+        placeholder="http://127.0.0.1:21618"
+        fullWidth
+      />
     </Section>
   );
 }

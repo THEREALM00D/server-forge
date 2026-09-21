@@ -20,8 +20,8 @@ import IconButton from "@mui/material/IconButton";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 import { useTranslation } from "react-i18next";
 import type { PlayerHistoryEntry } from "@shared/types";
-import { useNotification } from "../../../../context/NotificationContext";
-import PlayerRow from "./components/PlayerRow";
+import { useNotification } from "../../context/NotificationContext";
+import PlayerRow from "./PlayerRow";
 
 const REFRESH_INTERVAL_MS = 10_000;
 

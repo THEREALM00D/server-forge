@@ -24,6 +24,7 @@ const DEFAULT_CONFIG: ValheimLaunchConfig = {
   worldSize: "",
   modifierPreset: "",
   modifiers: DEFAULT_MODIFIERS,
+  odinEyeUrl: "",
 };
 
 export function useValheimConfig() {

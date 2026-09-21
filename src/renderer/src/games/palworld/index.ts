@@ -5,7 +5,7 @@ import Logs from "./pages/Logs/Logs";
 import Network from "./pages/Network/Network";
 import Backup from "./pages/Backup/Backup";
 import Schedule from "./pages/Schedule/Schedule";
-import Players from "./pages/Players/Players";
+import Players from "../../components/players/Players";
 import dashboardFr from "./pages/Dashboard/__i18n__/fr";
 import dashboardEn from "./pages/Dashboard/__i18n__/en";
 import configFr from "./pages/Config/__i18n__/fr";
@@ -18,8 +18,8 @@ import backupFr from "./pages/Backup/__i18n__/fr";
 import backupEn from "./pages/Backup/__i18n__/en";
 import scheduleFr from "./pages/Schedule/__i18n__/fr";
 import scheduleEn from "./pages/Schedule/__i18n__/en";
-import playersFr from "./pages/Players/__i18n__/fr";
-import playersEn from "./pages/Players/__i18n__/en";
+import playersFr from "../../components/players/__i18n__/fr";
+import playersEn from "../../components/players/__i18n__/en";
 
 export const palworldPlugin: GamePlugin = {
   id: "palworld",

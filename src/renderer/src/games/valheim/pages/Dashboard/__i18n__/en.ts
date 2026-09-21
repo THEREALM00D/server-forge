@@ -4,7 +4,7 @@ export default {
     noServerPath: "No path configured",
     waitingStats: "Waiting for system stats...",
     noApi:
-      "No native REST API — game stats (players, world) are not available. The server console below shows this information instead (connections, session code, etc.).",
+      "No native REST API — the server console below shows connections, session code, etc. Player tracking (online count, history) requires the Odin-Eye plugin, configured in Configuration → Network.",
     joinInfo: {
       title: "Crossplay connection",
       code: "Join code",

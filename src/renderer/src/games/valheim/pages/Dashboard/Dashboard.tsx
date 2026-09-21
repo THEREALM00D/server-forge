@@ -7,6 +7,7 @@ import ServerControls from "../../../../components/server/ServerControls";
 import StatsGrid from "../../../../components/server/StatsGrid";
 import Logs from "../../../../components/server/Logs";
 import { useValheimJoinInfo } from "./hooks/useValheimJoinInfo";
+import { useOdinEyeOnlineCount } from "./hooks/useOdinEyeOnlineCount";
 import JoinInfoCard from "./components/JoinInfoCard";
 
 export default function ValheimDashboard() {
@@ -14,7 +15,8 @@ export default function ValheimDashboard() {
   const { state } = useServer();
   const { start, stop, restart, canStart, canStop } = useServerControls();
   const { status, stats, serverPath } = state;
-  const joinInfo = useValheimJoinInfo(state.logs);
+  const odinEyeCount = useOdinEyeOnlineCount();
+  const joinInfo = useValheimJoinInfo(state.logs, odinEyeCount);
 
   return (
     <Stack spacing={3}>

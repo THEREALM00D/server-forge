@@ -1,15 +1,29 @@
 import { join } from "path";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
-import { PalworldApiClient } from "../games/palworld/PalworldApiClient";
-import type { PlayerHistoryEntry, PalPlayer } from "../../shared/types";
+import type { PlayerHistoryEntry } from "../../shared/types";
 
 const POLL_INTERVAL_MS = 30_000;
+
+// Format commun attendu de tout client d'API de jeu (Palworld, Odin-Eye pour
+// Valheim, ...) — chacun adapte ses propres champs à cette forme minimale.
+// `PalworldApiClient.getPlayers()` (PalPlayer[], plus de champs) et
+// `OdinEyeApiClient.getPlayers()` la satisfont toutes les deux structurellement.
+interface TrackedPlayer {
+  userId: string;
+  playerId: string;
+  name: string;
+  ip?: string;
+}
+
+interface PlayerApiClient {
+  getPlayers(): Promise<{ players: TrackedPlayer[] }>;
+}
 
 export class PlayerHistoryTracker {
   private timer: NodeJS.Timeout | null = null;
   private filePath: string;
   private entries: Map<string, PlayerHistoryEntry> = new Map();
-  private getClient: (() => PalworldApiClient | null) | null = null;
+  private getClient: (() => PlayerApiClient | null) | null = null;
   private onJoin?: (entry: PlayerHistoryEntry) => void;
   private onLeave?: (entry: PlayerHistoryEntry) => void;
 
@@ -46,7 +60,7 @@ export class PlayerHistoryTracker {
   }
 
   start(
-    getClient: () => PalworldApiClient | null,
+    getClient: () => PlayerApiClient | null,
     callbacks?: {
       onJoin?: (entry: PlayerHistoryEntry) => void;
       onLeave?: (entry: PlayerHistoryEntry) => void;
@@ -103,7 +117,7 @@ export class PlayerHistoryTracker {
     }
   }
 
-  private applyPlayers(players: PalPlayer[]): void {
+  private applyPlayers(players: TrackedPlayer[]): void {
     const now = Date.now();
     const onlineIds = new Set(players.map((p) => p.userId));
     let changed = false;
@@ -118,7 +132,7 @@ export class PlayerHistoryTracker {
           name: p.name,
           firstSeen: now,
           lastSeen: now,
-          lastIp: p.ip,
+          lastIp: p.ip ?? "",
           totalPlaytimeMs: 0,
           sessionCount: 0,
           online: false,

@@ -8,6 +8,7 @@ import { FirewallManager } from "../firewall/FirewallManager";
 import { BackupManager } from "../backup/BackupManager";
 import { RestartScheduler } from "../scheduler/RestartScheduler";
 import { PalworldApiClient } from "../games/palworld/PalworldApiClient";
+import { OdinEyeApiClient } from "../games/valheim/OdinEyeApiClient";
 import { ServerRegistry } from "../servers/ServerRegistry";
 import {
   ServerConfigStore,
@@ -249,17 +250,28 @@ export async function registerIpcHandlers(): Promise<void> {
 
   applyBackupScheduler();
 
-  // Tracker d'historique : démarre par serveur quand son API REST est dispo,
-  // s'arrête sinon. Chaque serveur est suivi indépendamment (via son propre
-  // manager/path) pour ne pas mélanger les données quand plusieurs serveurs
-  // tournent en parallèle — pointer sur "le serveur actif" ferait dériver le
-  // tracker d'un serveur vers l'API d'un autre dès qu'on change l'actif.
+  // Tracker d'historique : démarre par serveur quand son API de suivi joueurs
+  // est dispo (REST Palworld ou plugin Odin-Eye pour Valheim ; pas de source
+  // pour Astroneer), s'arrête sinon. Chaque serveur est suivi indépendamment
+  // (via son propre manager/path) pour ne pas mélanger les données quand
+  // plusieurs serveurs tournent en parallèle — pointer sur "le serveur actif"
+  // ferait dériver le tracker d'un serveur vers l'API d'un autre dès qu'on
+  // change l'actif.
   const getApiClientForServer =
-    (serverId: string) => (): PalworldApiClient | null => {
+    (serverId: string) => (): PalworldApiClient | OdinEyeApiClient | null => {
       const mgr = serverManagers
         .entries()
         .find((e) => e.serverId === serverId)?.manager;
       if (!mgr || mgr.getStatus() !== "running") return null;
+      const gameType =
+        servers.list().find((s) => s.id === serverId)?.gameType ?? "palworld";
+
+      if (gameType === "valheim") {
+        const url = serverConfigs.get(serverId).valheimConfig.odinEyeUrl;
+        return url ? new OdinEyeApiClient(url) : null;
+      }
+      if (gameType !== "palworld") return null;
+
       const serverPath = getServerPath(serverId);
       if (!serverPath) return null;
       try {
