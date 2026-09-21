@@ -50,6 +50,7 @@ See [docs/installation.md](docs/installation.md) for the full guide.
 - [Backups](docs/backups.md)
 - [Scheduling](docs/scheduling.md)
 - [Logs](docs/logs.md)
+- [Valheim player tracking (Odin-Eye)](docs/valheim-players.md)
 - [Technical architecture](CLAUDE.md)
 
 ## Tech stack
