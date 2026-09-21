@@ -1,21 +1,25 @@
 # Instructions Claude
 
 ## Langue de Communication
+
 - Parle-moi toujours en français
 - Réponds à toutes les questions en français
 - Explique ton code et tes décisions en français
 
 ## Commits
+
 - Écris les messages de commit en anglais
 - Sois clair et concis dans la description des changements
 - Utilise l'impératif: "fix", "feat", "chore", etc.
 
 ## Pull Requests
+
 - Rédige les descriptions de PR en anglais
 - Explique les modifications apportées en anglais
 - Fournis un contexte clair sur pourquoi les changements sont nécessaires
 
 ## Regles de developpement
+
 - Chaque page gere l'affichage le plus possible, les components gere la logique.
 - On evite la dupplication
 - Preferer les components reutilisable au lieu de dupliquer les choses
@@ -23,15 +27,18 @@
 - utiliser la doc officiel dans ## Utiliser la doc
 - Tu peux te utiliser et mettre a jour BACKLOG.md
 
-## Use the mui-mcp server to answer any MUI questions --  
-- 1. call the "useMuiDocs" tool to fetch the docs of the package relevant in the question 
-- 2. call the "fetchDocs" tool to fetch any additional docs if needed using ONLY the URLs present in the returned content. 
-- 3. repeat steps 1-2 until you have fetched all relevant docs for the given question 
+## Use the mui-mcp server to answer any MUI questions --
+
+- 1. call the "useMuiDocs" tool to fetch the docs of the package relevant in the question
+- 2. call the "fetchDocs" tool to fetch any additional docs if needed using ONLY the URLs present in the returned content.
+- 3. repeat steps 1-2 until you have fetched all relevant docs for the given question
 - 4. use the fetched content to answer the question
 
-## Utiliser la doc 
+## Utiliser la doc
+
 - https://valheim.fandom.com/wiki/Dedicated_servers
 - https://www.valheimgame.com/support/a-guide-to-dedicated-servers/
 - https://thunderstore.io/api/docs/
--  https://thunderstore.io/api/docs/?format=openapi
+- https://thunderstore.io/api/docs/?format=openapi
 - https://blog.astroneer.space/p/astroneer-dedicated-server-details/
+- https://sparcopt.github.io/odin-eye/ (plugin Odin-Eye, suivi joueurs Valheim — ⚠️ la doc en ligne diverge du plugin v1.0.0.0, voir CLAUDE.md « Historique des joueurs »)

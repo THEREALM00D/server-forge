@@ -50,6 +50,7 @@ Voir [docs/installation.fr.md](docs/installation.fr.md) pour le guide complet.
 - [Sauvegardes](docs/backups.fr.md)
 - [Planification](docs/scheduling.fr.md)
 - [Logs](docs/logs.fr.md)
+- [Suivi des joueurs Valheim (Odin-Eye)](docs/valheim-players.fr.md)
 - [Architecture technique](CLAUDE.md)
 
 ## Stack technique

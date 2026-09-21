@@ -51,7 +51,8 @@ src/
 │   │   ├── palworld/      # Code Palworld : PalworldApiClient, PalConfigParser,
 │   │   │   ├── handlers/  #   handlers IPC (palapi, players), serverConfig
 │   │   │   └── ...
-│   │   ├── valheim/       # Code Valheim : handlers IPC (config), serverConfig
+│   │   ├── valheim/       # Code Valheim : handlers IPC (config), serverConfig,
+│   │   │                  #   OdinEyeApiClient (suivi joueurs), ValheimModsManager
 │   │   ├── astroneer/     # Code Astroneer : AstroConfigParser (2 fichiers .ini),
 │   │   │   ├── handlers/  #   handlers IPC (config), serverConfig
 │   │   │   └── ...
