@@ -27,7 +27,10 @@ const PLAYER_COUNT_RE = /(?:is active with|now) (\d+) player/;
  * du serveur Valheim à partir des logs déjà reçus — pas d'API REST
  * disponible pour ce jeu, la console est la seule source pour ces infos.
  */
-export function useValheimJoinInfo(logs: string[]): ValheimJoinInfo | null {
+export function useValheimJoinInfo(
+  logs: string[],
+  onlineCount: number | null = null,
+): ValheimJoinInfo | null {
   return useMemo(() => {
     let session: Omit<ValheimJoinInfo, "playerCount"> | null = null;
     let playerCount: number | null = null;
@@ -46,6 +49,8 @@ export function useValheimJoinInfo(logs: string[]): ValheimJoinInfo | null {
     }
 
     if (!session) return null;
-    return { ...session, playerCount: playerCount ?? 0 };
-  }, [logs]);
+    // Odin-Eye (si configuré) est plus fiable que les logs : il reste juste
+    // même pour un serveur adopté dont les logs ne sont pas récupérables.
+    return { ...session, playerCount: onlineCount ?? playerCount ?? 0 };
+  }, [logs, onlineCount]);
 }
