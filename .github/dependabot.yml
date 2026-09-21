@@ -9,6 +9,12 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # TypeScript 7 (compilateur natif) n'expose plus l'API JS utilisée par
+      # @typescript-eslint (peer typescript <6.1.0) : le lint casse. À retirer
+      # quand typescript-eslint supportera TS 7.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
