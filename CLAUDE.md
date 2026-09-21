@@ -73,6 +73,7 @@ src/
     │                      #   les strings sont chargées depuis games/*/index.ts
     ├── hooks/             # useServerControls (partagé entre jeux)
     ├── components/
+    │   ├── common/        # Petits composants génériques (SearchField)
     │   ├── firewall/      # AdminBanner, StandardRules, CustomRules, RuleStatus
     │   ├── server/        # ServerControls, StatsGrid
     │   ├── players/       # Page « Joueurs » complète (Palworld + Valheim)
@@ -199,6 +200,7 @@ Au démarrage, `ServerManager.tryAdopt()` scanne les processus via `systeminform
 - Le "code" d'un mod (`thunderstoreCode`, format `Auteur-Nom-Version`) est parsé/reconstruit à plusieurs endroits (`ValheimModsManager.installFromThunderstore`, `ThunderstoreClient.checkUpdates`/`getMissingDeps`) — le segment "auteur" de ce code correspond à `owner`, pas à un vrai namespace Thunderstore.
 - `ValheimModsManager` (`src/main/games/valheim/`) gère l'install locale (dossier `BepInEx/plugins/<namespace>_<nomSafe>/`, métadonnées dans `{dataDir}/mods.json`). Les mods installés manuellement (hors app) sont détectés par scan du dossier et taggés `source: "manual"` (pas de vérif de mise à jour possible, pas de `thunderstoreCode`).
 - Vérif des mises à jour : `checkUpdates(installedCodes)` compare la version installée à `pkg.versions[0].version_number` (le tableau `versions` de l'API est trié du plus récent au plus ancien).
+- **Onglet Configs** (`pages/Mods/`) : `ConfigFilesList` (filtre par nom de fichier) → `ConfigFileEditorDialog` (champ de recherche + `CfgStructuredEditor`, filtre section/clé/description avec `useDeferredValue`). Perf sur les gros fichiers (Valheim Plus = centaines de paramètres) : sections en accordéons (`CfgSection`, `unmountOnExit` → les champs MUI ne sont montés qu'à l'ouverture ; une recherche n'auto-ouvre les sections que sous 40 résultats) et lignes (`CfgEntryRow`) en `React.memo` : `updateEntry` ne doit remplacer que l'objet de l'entrée modifiée et `onChange` rester stable. ⚠️ Pas de `content-visibility: auto` sur les lignes (son paint containment rogne le label flottant des Select) ni de `InputLabel` sur les Select (la clé est déjà affichée à gauche).
 - **Import de profil r2modman/Gale** (`parseThunderstoreProfile`) : un code d'export est un jeton opaque (pas forcément un UUID — le backend Thunderstore actuel génère des clés type `xxx#yyy`), résolu via `GET https://thunderstore.io/api/experimental/legacyprofile/get/<code>/` (⚠️ le `/get/` est obligatoire, absent du spec OpenAPI). La réponse est du **texte brut** (pas du JSON) : `"#r2modman\n" + base64(zip)`. Le zip contient `export.r2x` (YAML avec `name` + `version: {major,minor,patch}` par mod), extrait via `extract-zip` dans un dossier temporaire puis parsé par regex (`extractModRefsFromR2x`, pas de dépendance YAML ajoutée).
 
 ## Arguments de lancement

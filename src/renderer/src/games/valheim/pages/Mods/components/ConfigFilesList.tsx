@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import {
   Box,
   IconButton,
@@ -10,6 +11,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import { useTranslation } from "react-i18next";
 import type { ValheimModConfigFile } from "@shared/types";
 import { formatDate, formatSize } from "../../../../../utils/format";
+import SearchField from "../../../../../components/common/SearchField";
 
 interface Props {
   files: ValheimModConfigFile[];
@@ -19,6 +21,14 @@ interface Props {
 
 export default function ConfigFilesList({ files, locale, onOpen }: Props) {
   const { t } = useTranslation();
+  const [search, setSearch] = useState("");
+
+  const visibleFiles = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return query
+      ? files.filter((f) => f.name.toLowerCase().includes(query))
+      : files;
+  }, [files, search]);
 
   if (files.length === 0) {
     return (
@@ -30,8 +40,19 @@ export default function ConfigFilesList({ files, locale, onOpen }: Props) {
 
   return (
     <Paper sx={{ p: 2 }}>
+      <SearchField
+        value={search}
+        onChange={setSearch}
+        placeholder={t("valheimMods.configs.searchFiles")}
+        sx={{ mb: 1.5, width: "100%" }}
+      />
+      {visibleFiles.length === 0 && (
+        <Typography variant="body2" sx={{ color: "text.secondary", py: 1 }}>
+          {t("valheimMods.configs.noMatch")}
+        </Typography>
+      )}
       <Stack spacing={0.5}>
-        {files.map((file) => (
+        {visibleFiles.map((file) => (
           <Box
             key={file.name}
             onClick={() => onOpen(file.name)}

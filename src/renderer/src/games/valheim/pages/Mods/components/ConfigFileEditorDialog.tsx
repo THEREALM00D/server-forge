@@ -1,3 +1,4 @@
+import { useDeferredValue, useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -8,6 +9,7 @@ import {
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import type { CfgEntry } from "../utils/cfgParser";
+import SearchField from "../../../../../components/common/SearchField";
 import CfgStructuredEditor from "./CfgStructuredEditor";
 
 interface Props {
@@ -28,13 +30,30 @@ export default function ConfigFileEditorDialog({
   onSave,
 }: Props) {
   const { t } = useTranslation();
+  const [search, setSearch] = useState("");
+  // La saisie reste fluide : le filtrage (lourd sur un gros fichier) est différé.
+  const deferredSearch = useDeferredValue(search);
+
+  useEffect(() => {
+    setSearch("");
+  }, [fileName]);
 
   return (
     <Dialog open={fileName !== null} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ fontFamily: "monospace" }}>{fileName}</DialogTitle>
       <DialogContent>
         <Box sx={{ mt: 1 }}>
-          <CfgStructuredEditor entries={entries} onChange={onChange} />
+          <SearchField
+            value={search}
+            onChange={setSearch}
+            placeholder={t("valheimMods.configs.searchSettings")}
+            sx={{ mb: 2, width: "100%" }}
+          />
+          <CfgStructuredEditor
+            entries={entries}
+            search={deferredSearch}
+            onChange={onChange}
+          />
         </Box>
       </DialogContent>
       <DialogActions>

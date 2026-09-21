@@ -96,6 +96,9 @@ export default {
       empty:
         "No config file found in BepInEx/config/. Mods generate one the first time the server starts.",
       noEntries: "No recognized setting in this file.",
+      noMatch: "No results.",
+      searchFiles: "Search a config file…",
+      searchSettings: "Search a setting (name, description, section)…",
       default: "Default: {{value}}",
       edit: "Edit",
       close: "Close",
