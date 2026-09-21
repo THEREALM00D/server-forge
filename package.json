@@ -59,7 +59,7 @@
     "openapi-typescript": "^7.13.0",
     "prettier": "^3.9.8",
     "swagger-typescript-api": "^13.12.6",
-    "typescript": "^6.0.2",
+    "typescript": "^7.0.2",
     "vite": "^5.3.1"
   }
 }
