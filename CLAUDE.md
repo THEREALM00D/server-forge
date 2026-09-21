@@ -61,7 +61,7 @@ src/
 │   │   ├── context.ts     # IpcContext passé aux sous-handlers
 │   │   └── handlers/*.ts  # Domaines partagés (server, backup, firewall, etc.)
 │   ├── server/            # ServerManager (générique, tous jeux)
-│   ├── players/           # PlayerHistoryTracker (poller API Palworld + JSON)
+│   ├── players/           # PlayerHistoryTracker (poller générique + JSON)
 │   ├── backup/, scheduler/, firewall/, monitor/, steamcmd/
 ├── preload/
 │   ├── index.ts           # contextBridge → window.api
@@ -74,6 +74,7 @@ src/
     ├── components/
     │   ├── firewall/      # AdminBanner, StandardRules, CustomRules, RuleStatus
     │   ├── server/        # ServerControls, StatsGrid
+    │   ├── players/       # Page « Joueurs » complète (Palworld + Valheim)
     │   ├── Sidebar/       # Sidebar + ServerSwitcher
     │   └── Titlebar/
     ├── games/
@@ -120,7 +121,7 @@ Chaque jeu expose un manifest typé dans `games/<jeu>/index.ts`. Le shell consom
 4. Ajouter les types spécifiques dans `src/shared/types.ts` s'ils traversent IPC
 5. Wirer les handlers IPC dans `src/main/ipc/handlers.ts`
 
-**Composants partagés entre jeux** → `src/renderer/src/components/firewall/` et `components/server/`. Ne jamais importer depuis `games/<autre-jeu>/`.
+**Composants partagés entre jeux** → `src/renderer/src/components/firewall/`, `components/server/` et `components/players/` (page « Joueurs » complète, montée dans le manifest des jeux qui ont une source de données — voir « Historique des joueurs »). Ne jamais importer depuis `games/<autre-jeu>/`.
 
 ### Internationalisation (i18n)
 
@@ -224,11 +225,15 @@ Au démarrage, `ServerManager.tryAdopt()` scanne les processus via `systeminform
 
 ## Historique des joueurs
 
-- `PlayerHistoryTracker` (`src/main/players/`) poll `/v1/api/players` toutes les 30s **uniquement quand le serveur tourne ET que l'API REST est activée**.
-- Stockage : `{userData}/players/history.json` — un fichier JSON unique avec tableau de `PlayerHistoryEntry` (cf. `shared/types.ts`).
+- `PlayerHistoryTracker` (`src/main/players/`) est **générique multi-jeux** : il ne connaît que l'interface structurelle `{ getPlayers(): Promise<{ players: TrackedPlayer[] }> }` (voir en tête du fichier), pas les clients concrets. Poll toutes les 30s **uniquement quand le serveur tourne ET qu'une source de données joueurs est configurée pour ce jeu**.
+  - **Palworld** : `PalworldApiClient.getPlayers()` (API REST officielle, voir plus haut).
+  - **Valheim** : `OdinEyeApiClient.getPlayers()` (`src/main/games/valheim/OdinEyeApiClient.ts`), qui interroge le plugin BepInEx tiers **Odin-Eye** ([sparcopt.github.io/odin-eye](https://sparcopt.github.io/odin-eye/)). ⚠️ La doc en ligne (`GET /v1/players` → `{ entries: [...] }`) ne correspond pas au plugin v1.0.0.0 réellement installé, qui expose `GET /players` (tableau JSON) et répond un **200 au corps vide** sur tout chemin inconnu (donc un 200 ne prouve rien) — le client essaie les deux et échoue si aucun ne renvoie du JSON. Il adapte `steamId`→`userId`/`id`→`playerId` (pas d'IP disponible côté cette API). `odinEyeUrl` (ex: `http://127.0.0.1:21618`) est un champ de `ValheimLaunchConfig`, édité dans la section Réseau de la page Config Valheim — vide = suivi désactivé. **Installation côté serveur** (à faire manuellement par l'utilisateur, ServerForge ne l'automatise pas) : BepInEx requis, copier les `.dll` de la release Odin-Eye dans `Valheim/BepInEx/plugins/`, démarrer une fois pour générer `Valheim/BepInEx/config/org.bepinex.plugins.odineye.cfg`, y renseigner `HttpServerAddress` sur un port ≠ 2456/2457, redémarrer. ⚠️ Comme Palworld, **pas d'authentification** côté plugin à ce jour — ne jamais exposer ce port publiquement.
+  - **Astroneer** : pas de source (MVP sans RCON, voir plus haut) — le tracker ne démarre jamais pour ce jeu.
+  - Le routage par jeu (`gameType` → bon client) est fait dans `getApiClientForServer` (`main/ipc/handlers.ts`).
+- Stockage : `{userData}/servers/<id>/players/history.json` — un fichier JSON par serveur avec tableau de `PlayerHistoryEntry` (cf. `shared/types.ts`).
 - Chaque entrée trace `firstSeen`, `lastSeen`, `lastIp`, `totalPlaytimeMs`, `sessionCount`, `online`, `currentSessionStart` et un tableau `sessions[]` (cap à 50, plus anciennes éjectées).
 - Le tracker est démarré/arrêté via une boucle de surveillance dans `handlers.ts` qui vérifie `serverManager.getStatus()` toutes les 5s. À l'arrêt il ferme toutes les sessions ouvertes et persiste.
-- IPC : `players:getHistory` / `players:clearHistory` / `players:removeEntry`. UI : page « Joueurs » dans la Sidebar (icône `PeopleIcon`).
+- IPC : `players:getHistory` / `players:clearHistory` / `players:removeEntry` (déjà génériques). UI : page « Joueurs » — composant **partagé** `src/renderer/src/components/players/` (comme `components/firewall/`), montée dans le manifest de chaque jeu qui a une source de données (Palworld, Valheim ; pas Astroneer).
 
 ## Mise à jour in-app (electron-updater)
 

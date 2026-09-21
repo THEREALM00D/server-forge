@@ -171,6 +171,26 @@ export interface ValheimLaunchConfig {
     | "Hammer"
     | "";
   modifiers: ValheimModifiers;
+  // Base URL du plugin BepInEx Odin-Eye (ex: "http://127.0.0.1:21618"),
+  // configurée manuellement par l'utilisateur (HttpServerAddress dans
+  // org.bepinex.plugins.odineye.cfg). Vide = suivi des joueurs désactivé.
+  odinEyeUrl: string;
+}
+
+// --- Odin-Eye REST API (plugin BepInEx tiers, Valheim) ---
+// Pas d'authentification à ce jour côté plugin — ne jamais exposer ce port
+// publiquement (même logique que l'avertissement Palworld).
+// Forme réelle du plugin v1.0.0.0 (champs en PascalCase, IDs en chaînes, ex:
+// SteamId "Steam_7656119…") — la doc en ligne montre du camelCase et des
+// nombres, qui ne correspondent pas à ce que le plugin renvoie.
+export interface OdinEyePlayer {
+  Id: string;
+  CharacterId: string;
+  SteamId: string;
+  Name: string;
+  Health: number;
+  MaxHealth: number;
+  Stamina: number;
 }
 
 // --- Launch arguments (AstroServer.exe) ---

@@ -125,6 +125,11 @@ export default {
         label: "Arguments supplémentaires",
         description: "Arguments additionnels ajoutés à la ligne de commande.",
       },
+      odinEyeUrl: {
+        label: "URL Odin-Eye (suivi des joueurs)",
+        description:
+          "Nécessite le plugin BepInEx Odin-Eye installé sur le serveur (voir sparcopt.github.io/odin-eye). Renseignez l'adresse configurée dans HttpServerAddress, ex: http://127.0.0.1:21618. Vide = suivi des joueurs désactivé. Ne jamais exposer ce port publiquement (pas d'authentification côté plugin).",
+      },
     },
     administration: {
       description:

@@ -39,6 +39,7 @@ const DEFAULT_VALHEIM_CONFIG: ValheimLaunchConfig = {
   worldSize: "",
   modifierPreset: "",
   modifiers: DEFAULT_MODIFIERS,
+  odinEyeUrl: "",
 };
 
 const DEFAULT_ASTRONEER_CONFIG: AstroneerLaunchConfig = {

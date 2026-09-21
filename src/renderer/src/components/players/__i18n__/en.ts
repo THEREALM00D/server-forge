@@ -2,7 +2,7 @@ export default {
   players: {
     title: "Players",
     subtitle:
-      "Connection history automatically tracked while the server is running (REST API required)",
+      "Connection history automatically tracked while the server is running (requires this game's player-tracking API/plugin)",
     search: "Search by name or ID",
     none: "No players tracked yet. Tracking starts as soon as a player connects.",
     noResults: 'No player matches "{{query}}".',
