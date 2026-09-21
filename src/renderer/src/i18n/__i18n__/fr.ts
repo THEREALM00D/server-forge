@@ -12,6 +12,7 @@ export default {
     errorPrefix: "Erreur : {{msg}}",
     change: "Modifier",
     or: "OU",
+    clearSearch: "Effacer la recherche",
   },
   status: {
     running: "En ligne",
