@@ -13,18 +13,24 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import SystemUpdateAltIcon from "@mui/icons-material/SystemUpdateAlt";
 import { useTranslation } from "react-i18next";
-import type { ValheimMod, ModUpdate } from "@shared/types";
+import type { ValheimMod, ModUpdate, ModRegistry } from "@shared/types";
 import { formatDate } from "../../../../../utils/format";
+import { REGISTRY_LABEL, modPageUrl } from "../utils/modPageUrl";
 
-// Le nom Thunderstore complet est stocké comme "auteur-nom" (voir
-// ValheimModsManager.installFromThunderstore) — on retire le préfixe auteur
-// pour reconstruire l'URL de la page du package.
-function thunderstorePageUrl(mod: ValheimMod): string | null {
-  if (!mod.thunderstoreCode || !mod.author) return null;
+// Le nom complet est stocké comme "auteur-nom" (voir
+// ValheimModsManager.installMod) — on retire le préfixe auteur pour
+// reconstruire l'URL de la page du package sur son registre d'origine.
+function modPage(mod: ValheimMod): string | null {
+  if (
+    !mod.thunderstoreCode ||
+    !mod.author ||
+    (mod.source !== "thunderstore" && mod.source !== "hexium")
+  )
+    return null;
   const prefix = `${mod.author}-`;
   if (!mod.name.startsWith(prefix)) return null;
   const name = mod.name.slice(prefix.length);
-  return `https://thunderstore.io/c/valheim/p/${mod.author}/${name}/`;
+  return modPageUrl(mod.source, mod.author, name);
 }
 
 interface Props {
@@ -33,7 +39,7 @@ interface Props {
   updates: ModUpdate[];
   onRemove: (modId: number, name: string) => void;
   onToggle: (modId: number, enabled: boolean) => void;
-  onUpdate: (latestCode: string) => void;
+  onUpdate: (registry: ModRegistry, latestCode: string) => void;
 }
 
 export default function InstalledModsList({
@@ -63,7 +69,7 @@ export default function InstalledModsList({
           const update = mod.thunderstoreCode
             ? updateMap.get(mod.thunderstoreCode)
             : undefined;
-          const pageUrl = thunderstorePageUrl(mod);
+          const pageUrl = modPage(mod);
 
           return (
             <Box
@@ -106,9 +112,10 @@ export default function InstalledModsList({
                       sx={{ fontSize: 10, height: 18, px: 0 }}
                     />
                   )}
-                  {mod.source === "thunderstore" && (
+                  {(mod.source === "thunderstore" ||
+                    mod.source === "hexium") && (
                     <Chip
-                      label="Thunderstore"
+                      label={REGISTRY_LABEL[mod.source]}
                       size="small"
                       variant="outlined"
                       color="secondary"
@@ -117,9 +124,16 @@ export default function InstalledModsList({
                   )}
                   {update && (
                     <Chip
-                      label={t("valheimMods.updates.newVersion", {
-                        version: update.latestVersion,
-                      })}
+                      label={
+                        update.sourceChanged
+                          ? t("valheimMods.updates.newVersionOnRegistry", {
+                              version: update.latestVersion,
+                              registry: REGISTRY_LABEL[update.registry],
+                            })
+                          : t("valheimMods.updates.newVersion", {
+                              version: update.latestVersion,
+                            })
+                      }
                       size="small"
                       color="warning"
                       sx={{ fontSize: 10, height: 18, px: 0.5 }}
@@ -135,7 +149,12 @@ export default function InstalledModsList({
                   {mod.installedAt > 0 &&
                     `— ${t("valheimMods.installed.installedAt", { date: formatDate(mod.installedAt, locale) })}`}
                   {mod.publishedAt &&
-                    ` — ${t("valheimMods.installed.updatedAt", { date: formatDate(mod.publishedAt * 1000, locale) })}`}
+                    (mod.source === "thunderstore" ||
+                      mod.source === "hexium") &&
+                    ` — ${t("valheimMods.installed.updatedAt", {
+                      registry: REGISTRY_LABEL[mod.source],
+                      date: formatDate(mod.publishedAt * 1000, locale),
+                    })}`}
                 </Typography>
               </Box>
               <Tooltip
@@ -153,21 +172,36 @@ export default function InstalledModsList({
               </Tooltip>
               {update && (
                 <Tooltip
-                  title={t("valheimMods.updates.updateBtn", {
-                    version: update.latestVersion,
-                  })}
+                  title={
+                    update.sourceChanged
+                      ? t("valheimMods.updates.updateBtnSourceChanged", {
+                          version: update.latestVersion,
+                          from: REGISTRY_LABEL[
+                            mod.source as "thunderstore" | "hexium"
+                          ],
+                          to: REGISTRY_LABEL[update.registry],
+                        })
+                      : t("valheimMods.updates.updateBtn", {
+                          version: update.latestVersion,
+                        })
+                  }
                 >
                   <IconButton
                     size="small"
                     color="warning"
-                    onClick={() => onUpdate(update.latestCode)}
+                    onClick={() => onUpdate(update.registry, update.latestCode)}
                   >
                     <SystemUpdateAltIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
               )}
               {pageUrl && (
-                <Tooltip title={t("valheimMods.browse.openTooltip")}>
+                <Tooltip
+                  title={t("valheimMods.browse.openTooltip", {
+                    registry:
+                      REGISTRY_LABEL[mod.source as "thunderstore" | "hexium"],
+                  })}
+                >
                   <IconButton
                     size="small"
                     onClick={() => window.api.shell.openExternal(pageUrl)}

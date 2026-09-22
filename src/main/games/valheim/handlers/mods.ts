@@ -3,8 +3,10 @@ import { shell } from "electron";
 import { join } from "path";
 import { mkdirSync } from "fs";
 import type { IpcContext } from "../../../ipc/context";
-import { ThunderstoreClient } from "../ThunderstoreClient";
+import type { ModRegistry } from "../../../../shared/types";
+import { ModRegistryClient } from "../ModRegistryClient";
 import { ValheimModsManager } from "../ValheimModsManager";
+import { REGISTRIES } from "../registries";
 
 function getManager(ctx: IpcContext, serverId?: string): ValheimModsManager {
   return new ValheimModsManager(
@@ -16,56 +18,66 @@ function getManager(ctx: IpcContext, serverId?: string): ValheimModsManager {
 // Installe une liste de codes de packages ("Auteur-Nom-Version") en série,
 // en continuant sur erreur — partagé entre l'import de profil par code et
 // par fichier, qui ne diffèrent que dans la résolution initiale des codes.
+// Un profil r2modman/Gale peut mélanger Thunderstore et Hexium dans les mêmes
+// codes (voir resolveProfileCodeViaApi) : on ne sait pas d'où vient chaque
+// mod, donc on essaie chaque registre jusqu'à ce que l'un accepte le code.
 async function installCodes(
   manager: ValheimModsManager,
   codes: string[],
   event: Electron.IpcMainInvokeEvent,
 ) {
-  const results: Awaited<ReturnType<typeof manager.installFromThunderstore>>[] =
-    [];
+  const results: Awaited<ReturnType<typeof manager.installMod>>[] = [];
   const errors: string[] = [];
   for (const code of codes) {
-    try {
-      const mod = await manager.installFromThunderstore(code, (msg) =>
-        event.sender.send("valheim:mods:progress", msg),
-      );
-      results.push(mod);
-    } catch (e) {
-      errors.push(`${code}: ${(e as Error).message}`);
-      event.sender.send(
-        "valheim:mods:progress",
-        `⚠ ${code} — ${(e as Error).message}`,
-      );
+    let installed = false;
+    let lastError: unknown;
+    for (const registry of REGISTRIES) {
+      try {
+        const mod = await manager.installMod(registry, code, (msg) =>
+          event.sender.send("valheim:mods:progress", msg),
+        );
+        results.push(mod);
+        installed = true;
+        break;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    if (!installed) {
+      const message = (lastError as Error)?.message ?? "erreur inconnue";
+      errors.push(`${code}: ${message}`);
+      event.sender.send("valheim:mods:progress", `⚠ ${code} — ${message}`);
     }
   }
   return { installed: results, errors };
 }
 
 export function registerValheimModsHandlers(ctx: IpcContext): void {
-  // --- Browse Thunderstore (public, sans clé API) ---
+  // --- Parcourir un registre (public, sans clé API) ---
 
-  ipcMain.handle("valheim:mods:getTrending", () =>
-    ThunderstoreClient.getTrending(),
+  ipcMain.handle("valheim:mods:getTrending", (_, registry: ModRegistry) =>
+    ModRegistryClient.getTrending(registry),
   );
 
-  ipcMain.handle("valheim:mods:getLatestAdded", () =>
-    ThunderstoreClient.getLatestAdded(),
+  ipcMain.handle("valheim:mods:getLatestAdded", (_, registry: ModRegistry) =>
+    ModRegistryClient.getLatestAdded(registry),
   );
 
-  ipcMain.handle("valheim:mods:getLatestUpdated", () =>
-    ThunderstoreClient.getLatestUpdated(),
+  ipcMain.handle("valheim:mods:getLatestUpdated", (_, registry: ModRegistry) =>
+    ModRegistryClient.getLatestUpdated(registry),
   );
 
-  ipcMain.handle("valheim:mods:search", (_, query: string) =>
-    ThunderstoreClient.search(query),
+  ipcMain.handle(
+    "valheim:mods:search",
+    (_, registry: ModRegistry, query: string) =>
+      ModRegistryClient.search(registry, query),
   );
 
-  // getModFiles prend maintenant (namespace, name) — les versions du package Thunderstore
   ipcMain.handle(
     "valheim:mods:getModFiles",
-    (_, namespace: string, name: string) =>
-      ThunderstoreClient.getPackage(namespace, name).then(
-        ThunderstoreClient.toModFiles,
+    (_, registry: ModRegistry, namespace: string, name: string) =>
+      ModRegistryClient.getPackage(registry, namespace, name).then(
+        ModRegistryClient.toModFiles,
       ),
   );
 
@@ -110,9 +122,9 @@ export function registerValheimModsHandlers(ctx: IpcContext): void {
   );
 
   ipcMain.handle(
-    "valheim:mods:installFromThunderstore",
-    async (event, code: string, serverId?: string) =>
-      getManager(ctx, serverId).installFromThunderstore(code, (msg) =>
+    "valheim:mods:installMod",
+    async (event, registry: ModRegistry, code: string, serverId?: string) =>
+      getManager(ctx, serverId).installMod(registry, code, (msg) =>
         event.sender.send("valheim:mods:progress", msg),
       ),
   );
@@ -139,12 +151,25 @@ export function registerValheimModsHandlers(ctx: IpcContext): void {
 
   ipcMain.handle(
     "valheim:mods:getMissingDeps",
-    (_, namespace: string, name: string, installedCodes: string[]) =>
-      ThunderstoreClient.getMissingDeps(namespace, name, installedCodes),
+    (
+      _,
+      registry: ModRegistry,
+      namespace: string,
+      name: string,
+      installedCodes: string[],
+    ) =>
+      ModRegistryClient.getMissingDeps(
+        registry,
+        namespace,
+        name,
+        installedCodes,
+      ),
   );
 
-  ipcMain.handle("valheim:mods:checkUpdates", (_, installedCodes: string[]) =>
-    ThunderstoreClient.checkUpdates(installedCodes),
+  ipcMain.handle(
+    "valheim:mods:checkUpdates",
+    (_, entries: { code: string; registry: ModRegistry }[]) =>
+      ModRegistryClient.checkUpdates(entries),
   );
 
   // --- Fichiers de config BepInEx (BepInEx/config/*.cfg) ---

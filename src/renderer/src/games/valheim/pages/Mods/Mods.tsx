@@ -13,8 +13,11 @@ import {
   Tab,
   Tabs,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
+import type { ModRegistry } from "@shared/types";
 import DownloadIcon from "@mui/icons-material/Download";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import RefreshIcon from "@mui/icons-material/Refresh";
@@ -31,6 +34,7 @@ import ModBrowser from "./components/ModBrowser";
 import DepsDialog from "./components/DepsDialog";
 import ConfigFilesList from "./components/ConfigFilesList";
 import ConfigFileEditorDialog from "./components/ConfigFileEditorDialog";
+import { REGISTRY_LABEL } from "./utils/modPageUrl";
 
 type MainTab = "installed" | "browse" | "configs";
 
@@ -39,6 +43,8 @@ export default function ValheimMods() {
   const [mainTab, setMainTab] = useState<MainTab>("installed");
   const [thunderstoreDialog, setThunderstoreDialog] = useState(false);
   const [thunderstoreCode, setThunderstoreCode] = useState("");
+  const [installRegistry, setInstallRegistry] =
+    useState<ModRegistry>("thunderstore");
   const [profileDialog, setProfileDialog] = useState(false);
   const [profileCode, setProfileCode] = useState("");
 
@@ -46,6 +52,7 @@ export default function ValheimMods() {
     bepInEx,
     installedMods,
     browseTab,
+    browseRegistry,
     browseMods,
     browseLoading,
     browseError,
@@ -56,11 +63,12 @@ export default function ValheimMods() {
     pendingDeps,
     updates,
     handleTabChange,
+    handleBrowseRegistryChange,
     handleSearch,
     handleRemoveMod,
     handleToggleMod,
     handleInstallBepInEx,
-    handleInstallFromThunderstore,
+    handleInstallMod,
     handleImportProfile,
     handleImportProfileFile,
     handleRefreshUpdates,
@@ -83,7 +91,7 @@ export default function ValheimMods() {
   const submitThunderstore = async () => {
     if (!thunderstoreCode.trim()) return;
     setThunderstoreDialog(false);
-    await handleInstallFromThunderstore(thunderstoreCode.trim());
+    await handleInstallMod(installRegistry, thunderstoreCode.trim());
     setThunderstoreCode("");
   };
 
@@ -225,19 +233,21 @@ export default function ValheimMods() {
             updates={updates}
             onRemove={handleRemoveMod}
             onToggle={handleToggleMod}
-            onUpdate={handleInstallFromThunderstore}
+            onUpdate={handleInstallMod}
           />
         )}
 
         {mainTab === "browse" && (
           <ModBrowser
             tab={browseTab}
+            registry={browseRegistry}
             mods={browseMods}
             loading={browseLoading}
             error={browseError}
             onTabChange={handleTabChange}
+            onRegistryChange={handleBrowseRegistryChange}
             onSearch={handleSearch}
-            onInstallVersion={handleInstallFromThunderstore}
+            onInstallVersion={handleInstallMod}
           />
         )}
 
@@ -268,6 +278,18 @@ export default function ValheimMods() {
       >
         <DialogTitle>{t("valheimMods.thunderstore.title")}</DialogTitle>
         <DialogContent>
+          <ToggleButtonGroup
+            value={installRegistry}
+            exclusive
+            size="small"
+            onChange={(_, v) => v && setInstallRegistry(v as ModRegistry)}
+            sx={{ mt: 1, mb: 1 }}
+          >
+            <ToggleButton value="thunderstore">
+              {REGISTRY_LABEL.thunderstore}
+            </ToggleButton>
+            <ToggleButton value="hexium">{REGISTRY_LABEL.hexium}</ToggleButton>
+          </ToggleButtonGroup>
           <TextField
             autoFocus
             fullWidth
@@ -278,7 +300,6 @@ export default function ValheimMods() {
             value={thunderstoreCode}
             onChange={(e) => setThunderstoreCode(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && submitThunderstore()}
-            sx={{ mt: 1 }}
           />
         </DialogContent>
         <DialogActions>

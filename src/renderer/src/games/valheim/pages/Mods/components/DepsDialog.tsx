@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -10,6 +11,7 @@ import {
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import type { ThunderstoreModInfo } from "@shared/types";
+import { REGISTRY_LABEL } from "../utils/modPageUrl";
 
 interface Props {
   modName: string;
@@ -47,7 +49,13 @@ export default function DepsDialog({
                   sx={{ color: "text.secondary" }}
                 >
                   v{dep.version}
-                </Typography>
+                </Typography>{" "}
+                <Chip
+                  label={REGISTRY_LABEL[dep.registry]}
+                  size="small"
+                  variant="outlined"
+                  sx={{ fontSize: 10, height: 16, px: 0 }}
+                />
               </Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
                 {dep.author}

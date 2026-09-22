@@ -15,6 +15,7 @@ import type {
   AstroneerSettings,
   ValheimMod,
   ValheimModConfigFile,
+  ModRegistry,
   ThunderstoreModInfo,
   ThunderstoreModVersion,
   ModUpdate,
@@ -195,11 +196,17 @@ interface API {
     ) => Promise<void>;
     openSaveFolder: (customSavedir: string) => Promise<void>;
     mods: {
-      getTrending: () => Promise<ThunderstoreModInfo[]>;
-      getLatestAdded: () => Promise<ThunderstoreModInfo[]>;
-      getLatestUpdated: () => Promise<ThunderstoreModInfo[]>;
-      search: (query: string) => Promise<ThunderstoreModInfo[]>;
+      getTrending: (registry: ModRegistry) => Promise<ThunderstoreModInfo[]>;
+      getLatestAdded: (registry: ModRegistry) => Promise<ThunderstoreModInfo[]>;
+      getLatestUpdated: (
+        registry: ModRegistry,
+      ) => Promise<ThunderstoreModInfo[]>;
+      search: (
+        registry: ModRegistry,
+        query: string,
+      ) => Promise<ThunderstoreModInfo[]>;
       getModFiles: (
+        registry: ModRegistry,
         namespace: string,
         name: string,
       ) => Promise<ThunderstoreModVersion[]>;
@@ -212,7 +219,8 @@ interface API {
         serverId?: string,
       ) => Promise<void>;
       installBepInEx: (serverId?: string) => Promise<void>;
-      installFromThunderstore: (
+      installMod: (
+        registry: ModRegistry,
         code: string,
         serverId?: string,
       ) => Promise<ValheimMod>;
@@ -227,11 +235,14 @@ interface API {
       openPluginsFolder: (serverId?: string) => Promise<string>;
       openConfigFolder: (serverId?: string) => Promise<string>;
       getMissingDeps: (
+        registry: ModRegistry,
         namespace: string,
         name: string,
         installedCodes: string[],
       ) => Promise<ThunderstoreModInfo[]>;
-      checkUpdates: (installedCodes: string[]) => Promise<ModUpdate[]>;
+      checkUpdates: (
+        entries: { code: string; registry: ModRegistry }[],
+      ) => Promise<ModUpdate[]>;
       listConfigFiles: (serverId?: string) => Promise<ValheimModConfigFile[]>;
       readConfigFile: (fileName: string, serverId?: string) => Promise<string>;
       writeConfigFile: (
