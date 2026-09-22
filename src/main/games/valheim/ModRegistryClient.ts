@@ -1,12 +1,17 @@
 import https from "https";
 import http from "http";
 import type {
+  ModRegistry,
   ThunderstoreModInfo,
   ThunderstoreModVersion,
   ModUpdate,
 } from "../../../shared/types";
+import { REGISTRIES, REGISTRY_API_BASE } from "./registries";
 // Importer les types générés depuis le spec OpenAPI Thunderstore
 // Régénérer avec : yarn generate:thunderstore
+// Hexium expose une API "compatible Thunderstore" avec le même schéma (mêmes
+// champs, même bizarrerie owner/namespace) — on réutilise donc ces mêmes types
+// générés plutôt que de dupliquer un codegen pour un second registre.
 import type {
   PackageVersionExperimental,
   PackageExperimental,
@@ -14,14 +19,14 @@ import type {
 
 // Le endpoint v1 /c/valheim/api/v1/package/ retourne les versions avec file_size,
 // champ présent dans la réponse réelle mais absent du spec (erreur du spec).
-type TSVersion = PackageVersionExperimental & { file_size?: number };
+type RegistryVersion = PackageVersionExperimental & { file_size?: number };
 
 // Le Swagger spec décrit incorrectement le endpoint v1 community list :
 // - rating_score est un nombre dans la réponse réelle (string dans PackageListing)
 // - is_deprecated est un boolean réel (string dans PackageListing)
-// - versions est TSVersion[] réel (string dans PackageListing)
+// - versions est RegistryVersion[] réel (string dans PackageListing)
 // On redéfinit proprement en réutilisant PackageVersionExperimental.
-interface TSPackageV1 extends Omit<
+interface RegistryPackage extends Omit<
   PackageExperimental,
   "latest" | "community_listings" | "rating_score" | "is_deprecated"
 > {
@@ -32,7 +37,7 @@ interface TSPackageV1 extends Omit<
   date_updated: string;
   rating_score: number;
   is_deprecated: boolean;
-  versions: TSVersion[];
+  versions: RegistryVersion[];
 }
 
 function hashString(s: string): number {
@@ -43,8 +48,11 @@ function hashString(s: string): number {
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
-export class ThunderstoreClient {
-  private static cache: { data: TSPackageV1[]; ts: number } | null = null;
+export class ModRegistryClient {
+  private static cache = new Map<
+    ModRegistry,
+    { data: RegistryPackage[]; ts: number }
+  >();
 
   private static fetchJson<T>(url: string, depth = 0): Promise<T> {
     if (depth > 5) return Promise.reject(new Error("Trop de redirections"));
@@ -69,14 +77,14 @@ export class ThunderstoreClient {
               res.headers.location
             ) {
               res.resume();
-              ThunderstoreClient.fetchJson<T>(res.headers.location, depth + 1)
+              ModRegistryClient.fetchJson<T>(res.headers.location, depth + 1)
                 .then(resolve)
                 .catch(reject);
               return;
             }
             if (res.statusCode && res.statusCode >= 400) {
               res.resume();
-              reject(new Error(`Thunderstore API erreur ${res.statusCode}`));
+              reject(new Error(`Erreur API registre ${res.statusCode}`));
               return;
             }
             let data = "";
@@ -98,38 +106,63 @@ export class ThunderstoreClient {
     });
   }
 
-  // Récupère tous les packages Valheim avec cache TTL 5 min
-  static async listPackages(): Promise<TSPackageV1[]> {
+  // Récupère tous les packages Valheim d'un registre, avec cache TTL 5 min par registre
+  static async listPackages(registry: ModRegistry): Promise<RegistryPackage[]> {
     const now = Date.now();
-    if (
-      ThunderstoreClient.cache &&
-      now - ThunderstoreClient.cache.ts < CACHE_TTL_MS
-    ) {
-      return ThunderstoreClient.cache.data;
-    }
-    const data = await ThunderstoreClient.fetchJson<TSPackageV1[]>(
-      "https://thunderstore.io/c/valheim/api/v1/package/",
+    const cached = ModRegistryClient.cache.get(registry);
+    if (cached && now - cached.ts < CACHE_TTL_MS) return cached.data;
+
+    const data = await ModRegistryClient.fetchJson<RegistryPackage[]>(
+      `${REGISTRY_API_BASE[registry]}/c/valheim/api/v1/package/`,
     );
     const filtered = data.filter(
       (p) => !p.is_deprecated && p.versions.length > 0,
     );
-    ThunderstoreClient.cache = { data: filtered, ts: now };
+    ModRegistryClient.cache.set(registry, { data: filtered, ts: now });
     return filtered;
   }
 
-  // Cherche un package dans le cache puis dans la liste complète
+  // Cherche un package dans le cache puis dans la liste complète d'un registre
   static async getPackage(
+    registry: ModRegistry,
     namespace: string,
     name: string,
-  ): Promise<TSPackageV1> {
-    const pkgs = await ThunderstoreClient.listPackages();
+  ): Promise<RegistryPackage> {
+    const pkgs = await ModRegistryClient.listPackages(registry);
     const pkg = pkgs.find((p) => p.owner === namespace && p.name === name);
-    if (!pkg)
-      throw new Error(`Package Thunderstore ${namespace}-${name} introuvable`);
+    if (!pkg) throw new Error(`Package ${namespace}-${name} introuvable`);
     return pkg;
   }
 
-  static toModInfo(pkg: TSPackageV1): ThunderstoreModInfo {
+  // Essaie tous les registres à tour de rôle jusqu'à trouver le package —
+  // utile quand on ne sait pas d'où vient un code (ex: profil r2modman/Gale
+  // qui peut mélanger Thunderstore et Hexium dans un seul profil).
+  static async getPackageAnyRegistry(
+    namespace: string,
+    name: string,
+    preferred?: ModRegistry,
+  ): Promise<{ registry: ModRegistry; pkg: RegistryPackage }> {
+    const order = preferred
+      ? [preferred, ...REGISTRIES.filter((r) => r !== preferred)]
+      : REGISTRIES;
+    let lastError: unknown;
+    for (const registry of order) {
+      try {
+        return {
+          registry,
+          pkg: await ModRegistryClient.getPackage(registry, namespace, name),
+        };
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    throw lastError ?? new Error(`Package ${namespace}-${name} introuvable`);
+  }
+
+  static toModInfo(
+    pkg: RegistryPackage,
+    registry: ModRegistry,
+  ): ThunderstoreModInfo {
     const v = pkg.versions[0];
     return {
       mod_id: hashString(pkg.full_name),
@@ -142,10 +175,11 @@ export class ThunderstoreClient {
       updated_timestamp: Math.floor(
         new Date(pkg.date_updated).getTime() / 1000,
       ),
+      registry,
     };
   }
 
-  static toModFiles(pkg: TSPackageV1): ThunderstoreModVersion[] {
+  static toModFiles(pkg: RegistryPackage): ThunderstoreModVersion[] {
     return pkg.versions
       .filter((v) => v.is_active !== false)
       .map((v) => ({
@@ -161,16 +195,22 @@ export class ThunderstoreClient {
       }));
   }
 
-  static async getTrending(limit = 20): Promise<ThunderstoreModInfo[]> {
-    const pkgs = await ThunderstoreClient.listPackages();
+  static async getTrending(
+    registry: ModRegistry,
+    limit = 20,
+  ): Promise<ThunderstoreModInfo[]> {
+    const pkgs = await ModRegistryClient.listPackages(registry);
     return pkgs
       .sort((a, b) => b.rating_score - a.rating_score)
       .slice(0, limit)
-      .map(ThunderstoreClient.toModInfo);
+      .map((p) => ModRegistryClient.toModInfo(p, registry));
   }
 
-  static async getLatestAdded(limit = 20): Promise<ThunderstoreModInfo[]> {
-    const pkgs = await ThunderstoreClient.listPackages();
+  static async getLatestAdded(
+    registry: ModRegistry,
+    limit = 20,
+  ): Promise<ThunderstoreModInfo[]> {
+    const pkgs = await ModRegistryClient.listPackages(registry);
     return pkgs
       .sort(
         (a, b) =>
@@ -178,11 +218,14 @@ export class ThunderstoreClient {
           new Date(a.date_created).getTime(),
       )
       .slice(0, limit)
-      .map(ThunderstoreClient.toModInfo);
+      .map((p) => ModRegistryClient.toModInfo(p, registry));
   }
 
-  static async getLatestUpdated(limit = 20): Promise<ThunderstoreModInfo[]> {
-    const pkgs = await ThunderstoreClient.listPackages();
+  static async getLatestUpdated(
+    registry: ModRegistry,
+    limit = 20,
+  ): Promise<ThunderstoreModInfo[]> {
+    const pkgs = await ModRegistryClient.listPackages(registry);
     return pkgs
       .sort(
         (a, b) =>
@@ -190,15 +233,16 @@ export class ThunderstoreClient {
           new Date(a.date_updated).getTime(),
       )
       .slice(0, limit)
-      .map(ThunderstoreClient.toModInfo);
+      .map((p) => ModRegistryClient.toModInfo(p, registry));
   }
 
   static async search(
+    registry: ModRegistry,
     query: string,
     limit = 50,
   ): Promise<ThunderstoreModInfo[]> {
     const q = query.toLowerCase();
-    const pkgs = await ThunderstoreClient.listPackages();
+    const pkgs = await ModRegistryClient.listPackages(registry);
     return pkgs
       .filter(
         (p) =>
@@ -208,18 +252,22 @@ export class ThunderstoreClient {
           p.versions[0]?.description.toLowerCase().includes(q),
       )
       .slice(0, limit)
-      .map(ThunderstoreClient.toModInfo);
+      .map((p) => ModRegistryClient.toModInfo(p, registry));
   }
 
-  // Retourne les dépendances non installées d'un package (exclut BepInExPack_Valheim)
+  // Retourne les dépendances non installées d'un package (exclut BepInExPack_Valheim).
+  // Cherche chaque dépendance dans le même registre que le package parent
+  // d'abord, puis dans les autres registres (un mod Hexium peut dépendre d'un
+  // mod resté sur Thunderstore, et inversement).
   static async getMissingDeps(
+    registry: ModRegistry,
     namespace: string,
     name: string,
     installedCodes: string[],
   ): Promise<ThunderstoreModInfo[]> {
-    let pkg: TSPackageV1;
+    let pkg: RegistryPackage;
     try {
-      pkg = await ThunderstoreClient.getPackage(namespace, name);
+      pkg = await ModRegistryClient.getPackage(registry, namespace, name);
     } catch {
       return [];
     }
@@ -241,7 +289,6 @@ export class ThunderstoreClient {
       }),
     );
 
-    const pkgs = await ThunderstoreClient.listPackages();
     const result: ThunderstoreModInfo[] = [];
 
     for (const dep of deps) {
@@ -254,21 +301,42 @@ export class ThunderstoreClient {
       if (depName === "BepInExPack_Valheim") continue;
       if (installedKeys.has(depKey)) continue;
 
-      const depPkg = pkgs.find(
-        (p) => p.owner === depNamespace && p.name === depName,
-      );
-      if (depPkg) result.push(ThunderstoreClient.toModInfo(depPkg));
+      try {
+        const { registry: depRegistry, pkg: depPkg } =
+          await ModRegistryClient.getPackageAnyRegistry(
+            depNamespace,
+            depName,
+            registry,
+          );
+        result.push(ModRegistryClient.toModInfo(depPkg, depRegistry));
+      } catch {
+        // dépendance introuvable sur aucun registre connu — ignorée
+      }
     }
 
     return result;
   }
 
-  // Retourne les mods installés (via thunderstoreCode) qui ont une version plus récente
-  static async checkUpdates(installedCodes: string[]): Promise<ModUpdate[]> {
-    const pkgs = await ThunderstoreClient.listPackages();
+  // Retourne les mods installés qui ont une version plus récente disponible.
+  // Cherche d'abord sur le registre d'origine du mod, puis sur les autres —
+  // un mod peut être déprécié/gelé sur son registre d'origine et continuer
+  // d'être maintenu ailleurs (cas Azumatt : mods figés sur Thunderstore,
+  // toujours à jour sur Hexium). `sourceChanged` signale ce cas à l'UI, à la
+  // manière de Gale qui prévient explicitement du changement de source.
+  static async checkUpdates(
+    installed: { code: string; registry: ModRegistry }[],
+  ): Promise<ModUpdate[]> {
+    const packagesByRegistry = new Map<ModRegistry, RegistryPackage[]>();
+    for (const registry of REGISTRIES) {
+      packagesByRegistry.set(
+        registry,
+        await ModRegistryClient.listPackages(registry),
+      );
+    }
+
     const updates: ModUpdate[] = [];
 
-    for (const code of installedCodes) {
+    for (const { code, registry } of installed) {
       if (!code) continue;
       const parts = code.split("-");
       if (parts.length < 3) continue;
@@ -276,20 +344,29 @@ export class ThunderstoreClient {
       const modName = parts[parts.length - 2];
       const modNamespace = parts.slice(0, parts.length - 2).join("-");
 
-      const pkg = pkgs.find(
-        (p) => p.owner === modNamespace && p.name === modName,
-      );
-      if (!pkg?.versions[0]) continue;
+      // Registre d'origine en premier, puis les autres — dès qu'un registre
+      // propose une version différente de celle installée, on s'arrête là.
+      const searchOrder = [
+        registry,
+        ...REGISTRIES.filter((r) => r !== registry),
+      ];
+      for (const candidateRegistry of searchOrder) {
+        const pkg = packagesByRegistry
+          .get(candidateRegistry)!
+          .find((p) => p.owner === modNamespace && p.name === modName);
+        const latestVersion = pkg?.versions[0]?.version_number;
+        if (!latestVersion || latestVersion === installedVersion) continue;
 
-      const latestVersion = pkg.versions[0].version_number;
-      if (latestVersion && latestVersion !== installedVersion) {
         updates.push({
           installedCode: code,
           latestCode: `${modNamespace}-${modName}-${latestVersion}`,
           latestVersion,
-          name: pkg.name,
-          author: pkg.owner,
+          name: pkg!.name,
+          author: pkg!.owner,
+          registry: candidateRegistry,
+          sourceChanged: candidateRegistry !== registry,
         });
+        break;
       }
     }
 

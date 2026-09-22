@@ -15,8 +15,14 @@ import {
 import https from "https";
 import http from "http";
 import extractZip from "extract-zip";
-import type { ValheimMod, ValheimModConfigFile } from "../../../shared/types";
-import { ThunderstoreClient } from "./ThunderstoreClient";
+import type {
+  ModRegistry,
+  ValheimMod,
+  ValheimModConfigFile,
+} from "../../../shared/types";
+import { ModRegistryClient } from "./ModRegistryClient";
+import { REGISTRIES, REGISTRY_API_BASE } from "./registries";
+import { backupBeforeWrite } from "../../utils/ini";
 
 interface TSVersion {
   version_number: string;
@@ -99,7 +105,13 @@ export class ValheimModsManager {
   }
 
   writeConfigFile(fileName: string, content: string): void {
-    writeFileSync(this.resolveConfigFile(fileName), content, "utf-8");
+    const path = this.resolveConfigFile(fileName);
+    // Un mod avec ConfigSync (ex: AzuAntiArthriticCrafting) peut planter la
+    // synchro serveur→client si une valeur ne correspond pas au type attendu
+    // — sauvegarde avant écriture pour pouvoir revenir en arrière (même
+    // pattern que PalConfigParser/AstroConfigParser, voir utils/ini.ts).
+    backupBeforeWrite(path);
+    writeFileSync(path, content, "utf-8");
   }
 
   detectBepInEx(): boolean {
@@ -264,7 +276,7 @@ export class ValheimModsManager {
       latest?: TSVersion;
     }
     const pkg = await ValheimModsManager.fetchJson<TSPkg>(
-      "https://thunderstore.io/api/experimental/package/denikson/BepInExPack_Valheim/",
+      `${REGISTRY_API_BASE.thunderstore}/api/experimental/package/denikson/BepInExPack_Valheim/`,
     );
     // L'API peut retourner soit versions[], soit un objet latest
     const latest = pkg.versions?.[0] ?? pkg.latest;
@@ -319,7 +331,8 @@ export class ValheimModsManager {
     );
   }
 
-  async installFromThunderstore(
+  async installMod(
+    registry: ModRegistry,
     packageCode: string,
     onProgress: (msg: string) => void,
   ): Promise<ValheimMod> {
@@ -336,18 +349,22 @@ export class ValheimModsManager {
 
     const safeName = name.replace(/[^a-zA-Z0-9_-]/g, "_");
     const installDir = `${namespace}_${safeName}`;
-    const tempZip = join(this.dataDir, `${safeName}_thunderstore.zip`);
-    const downloadUrl = `https://thunderstore.io/package/download/${namespace}/${name}/${version}/`;
+    const tempZip = join(this.dataDir, `${safeName}_${registry}.zip`);
+    // URL construite par convention (marche pour Thunderstore) — remplacée
+    // ci-dessous par le download_url réel de l'API dès qu'on l'a, seul moyen
+    // fiable pour un registre dont on n'a pas vérifié le pattern d'URL.
+    let downloadUrl = `${REGISTRY_API_BASE[registry]}/package/download/${namespace}/${name}/${version}/`;
 
     // Icône + date de publication de cette version — best-effort, un échec
     // réseau ici ne doit pas bloquer l'installation du mod lui-même.
     let pictureUrl: string | undefined;
     let publishedAt: number | undefined;
     try {
-      const pkg = await ThunderstoreClient.getPackage(namespace, name);
+      const pkg = await ModRegistryClient.getPackage(registry, namespace, name);
       const versionInfo =
         pkg.versions.find((v) => v.version_number === version) ??
         pkg.versions[0];
+      if (versionInfo?.download_url) downloadUrl = versionInfo.download_url;
       pictureUrl = versionInfo?.icon ?? undefined;
       if (versionInfo?.date_created) {
         publishedAt = Math.floor(
@@ -389,7 +406,7 @@ export class ValheimModsManager {
       installDir,
       pictureUrl,
       publishedAt,
-      source: "thunderstore",
+      source: registry,
       thunderstoreCode: packageCode,
     };
 
@@ -400,7 +417,7 @@ export class ValheimModsManager {
     mods.push(entry);
     this.save(mods);
 
-    onProgress(`${entry.name} v${version} installé depuis Thunderstore.`);
+    onProgress(`${entry.name} v${version} installé depuis ${registry}.`);
     return entry;
   }
 
@@ -446,17 +463,31 @@ export class ValheimModsManager {
     }
   }
 
-  // Résout un code d'export "r2modman"/Gale via l'API Thunderstore.
-  // Le code est un jeton opaque (UUID historique ou format récent "xxx#yyy") —
-  // la réponse est du texte brut "#r2modman\n" + base64(zip du profil), le zip
+  // Résout un code d'export "r2modman"/Gale — le code est un jeton opaque
+  // (UUID historique ou format récent "xxx#yyy") créé par l'un ou l'autre
+  // registre (Gale permet de mélanger Thunderstore et Hexium dans un même
+  // profil), donc on essaie chaque registre jusqu'à ce que l'un réponde. La
+  // réponse est du texte brut "#r2modman\n" + base64(zip du profil), le zip
   // contenant un export.r2x (YAML) listant les mods.
   private async resolveProfileCodeViaApi(code: string): Promise<string[]> {
-    const raw = await ValheimModsManager.fetchText(
-      `https://thunderstore.io/api/experimental/legacyprofile/get/${encodeURIComponent(code)}/`,
-    );
+    let lastError: unknown;
+    let raw: string | undefined;
+    for (const registry of REGISTRIES) {
+      try {
+        raw = await ValheimModsManager.fetchText(
+          `${REGISTRY_API_BASE[registry]}/api/experimental/legacyprofile/get/${encodeURIComponent(code)}/`,
+        );
+        break;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    if (raw === undefined)
+      throw lastError ?? new Error("Impossible de résoudre le profil");
+
     const PREFIX = "#r2modman";
     if (!raw.startsWith(PREFIX))
-      throw new Error("Réponse de profil Thunderstore inattendue");
+      throw new Error("Réponse de profil inattendue");
     const zipBuf = Buffer.from(raw.slice(PREFIX.length).trim(), "base64");
 
     mkdirSync(this.dataDir, { recursive: true });

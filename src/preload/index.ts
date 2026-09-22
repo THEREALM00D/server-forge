@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { AppUpdateStatus, GameType } from "../shared/types";
+import type { AppUpdateStatus, GameType, ModRegistry } from "../shared/types";
 
 const api = {
   // Window controls
@@ -196,15 +196,22 @@ const api = {
     openSaveFolder: (customSavedir: string) =>
       ipcRenderer.invoke("valheim:openSaveFolder", customSavedir),
     mods: {
-      // Browse Thunderstore (public, sans clé API)
-      getTrending: () => ipcRenderer.invoke("valheim:mods:getTrending"),
-      getLatestAdded: () => ipcRenderer.invoke("valheim:mods:getLatestAdded"),
-      getLatestUpdated: () =>
-        ipcRenderer.invoke("valheim:mods:getLatestUpdated"),
-      search: (query: string) =>
-        ipcRenderer.invoke("valheim:mods:search", query),
-      getModFiles: (namespace: string, name: string) =>
-        ipcRenderer.invoke("valheim:mods:getModFiles", namespace, name),
+      // Parcourir un registre (public, sans clé API)
+      getTrending: (registry: ModRegistry) =>
+        ipcRenderer.invoke("valheim:mods:getTrending", registry),
+      getLatestAdded: (registry: ModRegistry) =>
+        ipcRenderer.invoke("valheim:mods:getLatestAdded", registry),
+      getLatestUpdated: (registry: ModRegistry) =>
+        ipcRenderer.invoke("valheim:mods:getLatestUpdated", registry),
+      search: (registry: ModRegistry, query: string) =>
+        ipcRenderer.invoke("valheim:mods:search", registry, query),
+      getModFiles: (registry: ModRegistry, namespace: string, name: string) =>
+        ipcRenderer.invoke(
+          "valheim:mods:getModFiles",
+          registry,
+          namespace,
+          name,
+        ),
       // Gestion locale
       detectBepInEx: (serverId?: string) =>
         ipcRenderer.invoke("valheim:mods:detectBepInEx", serverId),
@@ -216,12 +223,8 @@ const api = {
         ipcRenderer.invoke("valheim:mods:toggle", modId, enabled, serverId),
       installBepInEx: (serverId?: string) =>
         ipcRenderer.invoke("valheim:mods:installBepInEx", serverId),
-      installFromThunderstore: (code: string, serverId?: string) =>
-        ipcRenderer.invoke(
-          "valheim:mods:installFromThunderstore",
-          code,
-          serverId,
-        ),
+      installMod: (registry: ModRegistry, code: string, serverId?: string) =>
+        ipcRenderer.invoke("valheim:mods:installMod", registry, code, serverId),
       importProfile: (base64Code: string, serverId?: string) =>
         ipcRenderer.invoke("valheim:mods:importProfile", base64Code, serverId),
       importProfileFile: (filePath: string, serverId?: string) =>
@@ -235,18 +238,20 @@ const api = {
       openConfigFolder: (serverId?: string) =>
         ipcRenderer.invoke("valheim:mods:openConfigFolder", serverId),
       getMissingDeps: (
+        registry: ModRegistry,
         namespace: string,
         name: string,
         installedCodes: string[],
       ) =>
         ipcRenderer.invoke(
           "valheim:mods:getMissingDeps",
+          registry,
           namespace,
           name,
           installedCodes,
         ),
-      checkUpdates: (installedCodes: string[]) =>
-        ipcRenderer.invoke("valheim:mods:checkUpdates", installedCodes),
+      checkUpdates: (entries: { code: string; registry: ModRegistry }[]) =>
+        ipcRenderer.invoke("valheim:mods:checkUpdates", entries),
       listConfigFiles: (serverId?: string) =>
         ipcRenderer.invoke("valheim:mods:listConfigFiles", serverId),
       readConfigFile: (fileName: string, serverId?: string) =>

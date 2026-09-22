@@ -15,6 +15,8 @@ import {
   Tab,
   Tabs,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -27,26 +29,32 @@ import { useTranslation } from "react-i18next";
 import type {
   ThunderstoreModInfo,
   ThunderstoreModVersion,
+  ModRegistry,
 } from "@shared/types";
+import { REGISTRY_LABEL, modPageUrl } from "../utils/modPageUrl";
 
 type BrowseTab = "trending" | "latest" | "updated";
 
 interface Props {
   tab: BrowseTab;
+  registry: ModRegistry;
   mods: ThunderstoreModInfo[];
   loading: boolean;
   error: boolean;
   onTabChange: (tab: BrowseTab) => void;
+  onRegistryChange: (registry: ModRegistry) => void;
   onSearch: (query: string) => void;
-  onInstallVersion: (code: string) => void;
+  onInstallVersion: (registry: ModRegistry, code: string) => void;
 }
 
 export default function ModBrowser({
   tab,
+  registry,
   mods,
   loading,
   error,
   onTabChange,
+  onRegistryChange,
   onSearch,
   onInstallVersion,
 }: Props) {
@@ -63,6 +71,7 @@ export default function ModBrowser({
     setLoadingFiles(true);
     try {
       const files = await window.api.valheim.mods.getModFiles(
+        mod.registry,
         mod.author,
         mod.name,
       );
@@ -88,6 +97,19 @@ export default function ModBrowser({
 
   return (
     <Stack spacing={2}>
+      {/* Sélecteur de registre — Thunderstore ou Hexium, listes indépendantes */}
+      <ToggleButtonGroup
+        value={registry}
+        exclusive
+        size="small"
+        onChange={(_, v) => v && onRegistryChange(v as ModRegistry)}
+      >
+        <ToggleButton value="thunderstore">
+          {REGISTRY_LABEL.thunderstore}
+        </ToggleButton>
+        <ToggleButton value="hexium">{REGISTRY_LABEL.hexium}</ToggleButton>
+      </ToggleButtonGroup>
+
       {/* Champ de recherche — soumet via Entrée ou bouton */}
       <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
         <TextField
@@ -151,7 +173,9 @@ export default function ModBrowser({
 
       {error && !loading && (
         <Typography variant="body2" sx={{ color: "error.main", py: 2 }}>
-          {t("valheimMods.browse.error")}
+          {t("valheimMods.browse.error", {
+            registry: REGISTRY_LABEL[registry],
+          })}
         </Typography>
       )}
 
@@ -233,6 +257,7 @@ export default function ModBrowser({
                       color="primary"
                       onClick={() =>
                         onInstallVersion(
+                          mod.registry,
                           `${mod.author}-${mod.name}-${mod.version}`,
                         )
                       }
@@ -240,12 +265,16 @@ export default function ModBrowser({
                       <DownloadIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title={t("valheimMods.browse.openTooltip")}>
+                  <Tooltip
+                    title={t("valheimMods.browse.openTooltip", {
+                      registry: REGISTRY_LABEL[mod.registry],
+                    })}
+                  >
                     <IconButton
                       size="small"
                       onClick={() =>
                         window.api.shell.openExternal(
-                          `https://thunderstore.io/c/valheim/p/${mod.author}/${mod.name}/`,
+                          modPageUrl(mod.registry, mod.author, mod.name),
                         )
                       }
                     >
@@ -311,6 +340,7 @@ export default function ModBrowser({
                         startIcon={<DownloadIcon />}
                         onClick={() => {
                           onInstallVersion(
+                            filesDialog.mod.registry,
                             `${filesDialog.mod.author}-${filesDialog.mod.name}-${f.version}`,
                           );
                           setFilesDialog(null);

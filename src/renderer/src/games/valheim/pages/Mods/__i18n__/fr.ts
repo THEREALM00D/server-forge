@@ -1,7 +1,8 @@
 export default {
   valheimMods: {
     title: "Mods",
-    subtitle: "Gérez les mods de votre serveur Valheim via Thunderstore",
+    subtitle:
+      "Gérez les mods de votre serveur Valheim via Thunderstore et Hexium",
     tabs: {
       installed: "Installés",
       browse: "Parcourir",
@@ -17,31 +18,31 @@ export default {
     },
     installed: {
       empty:
-        "Aucun mod installé. Parcourez Thunderstore ou importez un profil r2modman.",
+        "Aucun mod installé. Parcourez Thunderstore/Hexium ou importez un profil r2modman.",
       remove: "Désinstaller",
       removeConfirm: "Désinstaller {{name}} ?",
       enabled: "Activé",
       disabled: "Désactivé",
       manual: "Manuel",
       installedAt: "Installé le {{date}}",
-      updatedAt: "MàJ Thunderstore : {{date}}",
+      updatedAt: "MàJ {{registry}} : {{date}}",
       version: "v{{version}}",
       loadFailed: "Impossible de charger les mods installés",
       restartRequired:
         "Redémarrez le serveur pour appliquer ce changement — BepInEx ne recharge les mods qu'au démarrage.",
     },
     thunderstore: {
-      title: "Code Thunderstore",
+      title: "Installer via un code",
       label: "Code de package",
       helper:
         "Format : Auteur-NomDuMod-Version (ex : denikson-BepInExPack_Valheim-5.4.2202)",
       importProfile: "Importer un profil",
       profileLabel: "Code de profil",
       profileHelper:
-        "Collez le code exporté depuis Thunderstore ou r2modman (Paramètres → Exporter le profil → Copier le code)",
+        "Collez le code exporté depuis Thunderstore, Hexium ou r2modman/Gale (Paramètres → Exporter le profil → Copier le code)",
       importProfileFile: "Importer depuis un fichier (.r2z)",
       install: "Installer",
-      success: "{{name}} installé depuis Thunderstore",
+      success: "{{name}} installé depuis {{registry}}",
       profileSuccess: "{{count}} mod(s) installé(s) depuis le profil",
       profileErrors: "{{count}} mod(s) en erreur — voir les notifications",
     },
@@ -51,12 +52,11 @@ export default {
         latest: "Nouveaux",
         updated: "Mis à jour",
       },
-      search: "Rechercher sur Thunderstore…",
+      search: "Rechercher…",
       searchBtn: "Rechercher",
       clearSearch: "Effacer",
       installLatest: "Installer la dernière version",
-      openOnThunderstore: "Ouvrir sur Thunderstore",
-      openTooltip: "Ouvre la page du mod sur Thunderstore",
+      openTooltip: "Ouvre la page du mod sur {{registry}}",
       viewFiles: "Versions",
       filesDialog: {
         title: "Versions de {{name}}",
@@ -66,7 +66,7 @@ export default {
       },
       endorsements: "{{count}} étoiles",
       loading: "Chargement…",
-      error: "Impossible de charger les mods Thunderstore",
+      error: "Impossible de charger les mods {{registry}}",
     },
     folders: {
       plugins: "Dossier des mods",
@@ -86,7 +86,10 @@ export default {
     },
     updates: {
       newVersion: "v{{version}} dispo",
+      newVersionOnRegistry: "v{{version}} dispo sur {{registry}}",
       updateBtn: "Mettre à jour vers v{{version}}",
+      updateBtnSourceChanged:
+        "Mettre à jour vers v{{version}} — passera de {{from}} à {{to}}",
       refresh: "Vérifier les mises à jour",
       found: "{{count}} mise(s) à jour disponible(s)",
       none: "Tous les mods sont à jour",

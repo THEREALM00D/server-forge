@@ -2,7 +2,13 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNotification } from "../../../../../context/NotificationContext";
 import { useServer } from "../../../../../context/ServerContext";
-import type { ThunderstoreModInfo, ValheimMod, ModUpdate } from "@shared/types";
+import type {
+  ThunderstoreModInfo,
+  ValheimMod,
+  ModUpdate,
+  ModRegistry,
+} from "@shared/types";
+import { REGISTRY_LABEL } from "../utils/modPageUrl";
 
 type BrowseTab = "trending" | "latest" | "updated";
 
@@ -24,6 +30,8 @@ export function useValheimMods() {
   const [bepInEx, setBepInEx] = useState<boolean | null>(null);
   const [installedMods, setInstalledMods] = useState<ValheimMod[]>([]);
   const [browseTab, setBrowseTab] = useState<BrowseTab>("trending");
+  const [browseRegistry, setBrowseRegistry] =
+    useState<ModRegistry>("thunderstore");
   const [browseMods, setBrowseMods] = useState<ThunderstoreModInfo[]>([]);
   const [browseLoading, setBrowseLoading] = useState(false);
   const [browseError, setBrowseError] = useState(false);
@@ -40,18 +48,30 @@ export function useValheimMods() {
   // Mises à jour disponibles pour les mods installés
   const [updates, setUpdates] = useState<ModUpdate[]>([]);
 
-  const getInstalledCodes = (mods: ValheimMod[]) =>
-    mods.map((m) => m.thunderstoreCode).filter((c): c is string => Boolean(c));
+  // Entrées {code, registry} des mods installés via un registre (exclut les
+  // mods manuels, qui n'ont pas de thunderstoreCode) — nécessaire pour
+  // checkUpdates, qui doit savoir sur quel registre interroger chaque mod.
+  const getInstalledEntries = (
+    mods: ValheimMod[],
+  ): { code: string; registry: ModRegistry }[] =>
+    mods.flatMap((m) => {
+      if (
+        !m.thunderstoreCode ||
+        (m.source !== "thunderstore" && m.source !== "hexium")
+      )
+        return [];
+      return [{ code: m.thunderstoreCode, registry: m.source }];
+    });
 
   const refreshUpdates = useCallback(
     async (mods: ValheimMod[]) => {
-      const codes = getInstalledCodes(mods);
-      if (codes.length === 0) {
+      const entries = getInstalledEntries(mods);
+      if (entries.length === 0) {
         setUpdates([]);
         return;
       }
       try {
-        const found = await window.api.valheim.mods.checkUpdates(codes);
+        const found = await window.api.valheim.mods.checkUpdates(entries);
         setUpdates(found);
       } catch (e) {
         notify((e as Error).message, "error");
@@ -60,32 +80,38 @@ export function useValheimMods() {
     [notify],
   );
 
-  const loadBrowse = useCallback(async (tab: BrowseTab, searchQuery = "") => {
-    setBrowseLoading(true);
-    setBrowseError(false);
-    try {
-      let mods: ThunderstoreModInfo[];
-      if (searchQuery.trim()) {
-        mods = await window.api.valheim.mods.search(searchQuery.trim());
-      } else if (tab === "trending") {
-        mods = await window.api.valheim.mods.getTrending();
-      } else if (tab === "latest") {
-        mods = await window.api.valheim.mods.getLatestAdded();
-      } else {
-        mods = await window.api.valheim.mods.getLatestUpdated();
+  const loadBrowse = useCallback(
+    async (registry: ModRegistry, tab: BrowseTab, searchQuery = "") => {
+      setBrowseLoading(true);
+      setBrowseError(false);
+      try {
+        let mods: ThunderstoreModInfo[];
+        if (searchQuery.trim()) {
+          mods = await window.api.valheim.mods.search(
+            registry,
+            searchQuery.trim(),
+          );
+        } else if (tab === "trending") {
+          mods = await window.api.valheim.mods.getTrending(registry);
+        } else if (tab === "latest") {
+          mods = await window.api.valheim.mods.getLatestAdded(registry);
+        } else {
+          mods = await window.api.valheim.mods.getLatestUpdated(registry);
+        }
+        setBrowseMods(mods);
+      } catch {
+        setBrowseError(true);
+        setBrowseMods([]);
+      } finally {
+        setBrowseLoading(false);
       }
-      setBrowseMods(mods);
-    } catch {
-      setBrowseError(true);
-      setBrowseMods([]);
-    } finally {
-      setBrowseLoading(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   // Chargement initial
   useEffect(() => {
-    loadBrowse("trending");
+    loadBrowse("thunderstore", "trending");
     window.api.valheim.mods
       .detectBepInEx()
       .then(setBepInEx)
@@ -103,16 +129,24 @@ export function useValheimMods() {
   const handleTabChange = useCallback(
     (tab: BrowseTab) => {
       setBrowseTab(tab);
-      loadBrowse(tab);
+      loadBrowse(browseRegistry, tab);
     },
-    [loadBrowse],
+    [loadBrowse, browseRegistry],
+  );
+
+  const handleBrowseRegistryChange = useCallback(
+    (registry: ModRegistry) => {
+      setBrowseRegistry(registry);
+      loadBrowse(registry, browseTab);
+    },
+    [loadBrowse, browseTab],
   );
 
   const handleSearch = useCallback(
     (query: string) => {
-      loadBrowse(browseTab, query);
+      loadBrowse(browseRegistry, browseTab, query);
     },
-    [loadBrowse, browseTab],
+    [loadBrowse, browseRegistry, browseTab],
   );
 
   const handleInstallBepInEx = useCallback(async () => {
@@ -131,14 +165,22 @@ export function useValheimMods() {
 
   // Vérifie les dépendances manquantes après une installation
   const checkDepsAfterInstall = useCallback(
-    async (code: string, currentMods: ValheimMod[], modName: string) => {
+    async (
+      registry: ModRegistry,
+      code: string,
+      currentMods: ValheimMod[],
+      modName: string,
+    ) => {
       const parts = code.split("-");
       if (parts.length < 3) return;
       const name = parts[parts.length - 2];
       const namespace = parts.slice(0, parts.length - 2).join("-");
-      const installedCodes = getInstalledCodes(currentMods);
+      const installedCodes = getInstalledEntries(currentMods).map(
+        (e) => e.code,
+      );
       try {
         const deps = await window.api.valheim.mods.getMissingDeps(
+          registry,
           namespace,
           name,
           installedCodes,
@@ -151,11 +193,11 @@ export function useValheimMods() {
     [notify],
   );
 
-  const handleInstallFromThunderstore = useCallback(
-    async (code: string) => {
+  const handleInstallMod = useCallback(
+    async (registry: ModRegistry, code: string) => {
       setInstalling(true);
       try {
-        const mod = await window.api.valheim.mods.installFromThunderstore(code);
+        const mod = await window.api.valheim.mods.installMod(registry, code);
         setInstalledMods((prev) => {
           const next = [
             ...prev.filter(
@@ -165,11 +207,14 @@ export function useValheimMods() {
             mod,
           ];
           refreshUpdates(next);
-          checkDepsAfterInstall(code, next, mod.name);
+          checkDepsAfterInstall(registry, code, next, mod.name);
           return next;
         });
         notify(
-          t("valheimMods.thunderstore.success", { name: mod.name }),
+          t("valheimMods.thunderstore.success", {
+            name: mod.name,
+            registry: REGISTRY_LABEL[registry],
+          }),
           "success",
         );
       } catch (e) {
@@ -282,11 +327,11 @@ export function useValheimMods() {
   const handleRefreshUpdates = useCallback(async () => {
     setCheckingUpdates(true);
     try {
-      const codes = getInstalledCodes(installedMods);
+      const entries = getInstalledEntries(installedMods);
       const found =
-        codes.length === 0
+        entries.length === 0
           ? []
-          : await window.api.valheim.mods.checkUpdates(codes);
+          : await window.api.valheim.mods.checkUpdates(entries);
       setUpdates(found);
       notify(
         found.length > 0
@@ -309,7 +354,8 @@ export function useValheimMods() {
     try {
       for (const update of updates) {
         try {
-          await window.api.valheim.mods.installFromThunderstore(
+          await window.api.valheim.mods.installMod(
+            update.registry,
             update.latestCode,
           );
           successCount++;
@@ -342,16 +388,18 @@ export function useValheimMods() {
     const deps = pendingDeps.deps;
     setPendingDeps(null);
     for (const dep of deps) {
-      await handleInstallFromThunderstore(
+      await handleInstallMod(
+        dep.registry,
         `${dep.author}-${dep.name}-${dep.version}`,
       );
     }
-  }, [pendingDeps, handleInstallFromThunderstore]);
+  }, [pendingDeps, handleInstallMod]);
 
   return {
     bepInEx,
     installedMods,
     browseTab,
+    browseRegistry,
     browseMods,
     browseLoading,
     browseError,
@@ -362,11 +410,12 @@ export function useValheimMods() {
     pendingDeps,
     updates,
     handleTabChange,
+    handleBrowseRegistryChange,
     handleSearch,
     handleRemoveMod,
     handleToggleMod,
     handleInstallBepInEx,
-    handleInstallFromThunderstore,
+    handleInstallMod,
     handleImportProfile: handleInstallImportProfile,
     handleImportProfileFile,
     handleRefreshUpdates,

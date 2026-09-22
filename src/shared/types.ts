@@ -204,6 +204,11 @@ export interface AstroneerLaunchConfig {
 export type AstroneerSettings = Record<string, string | number | boolean>;
 
 // --- Mods Valheim ---
+// Registres de mods supportés — Hexium expose une API "compatible Thunderstore"
+// (mêmes endpoints /c/{communauté}/api/v1/package/, même champ owner au lieu de
+// namespace) donc les deux sont traités par le même client, voir ModRegistryClient.
+export type ModRegistry = "thunderstore" | "hexium";
+
 export interface ValheimMod {
   modId: number;
   fileId: number;
@@ -215,10 +220,12 @@ export interface ValheimMod {
   enabled: boolean;
   installDir: string; // nom du dossier dans BepInEx/plugins/
   pictureUrl?: string;
-  /** Date de publication de cette version sur Thunderstore (unix seconds). */
+  /** Date de publication de cette version sur le registre d'origine (unix seconds). */
   publishedAt?: number;
-  source?: "thunderstore" | "manual";
-  thunderstoreCode?: string; // "Auteur-Nom-Version" pour les mods Thunderstore
+  source?: ModRegistry | "manual";
+  // "Auteur-Nom-Version" — nom historique conservé (persisté dans mods.json),
+  // vaut pour Thunderstore ET Hexium ; `source` dit lequel interpréter.
+  thunderstoreCode?: string;
 }
 
 export interface ValheimModConfigFile {
@@ -236,6 +243,7 @@ export interface ThunderstoreModInfo {
   author: string;
   endorsement_count: number;
   updated_timestamp: number;
+  registry: ModRegistry;
 }
 
 export interface ThunderstoreModVersion {
@@ -254,6 +262,10 @@ export interface ModUpdate {
   latestVersion: string;
   name: string;
   author: string;
+  /** Registre à utiliser pour installer cette mise à jour. */
+  registry: ModRegistry;
+  /** true si `registry` diffère du registre sur lequel le mod est actuellement installé (ex: mod déprécié sur Thunderstore, toujours maintenu sur Hexium). */
+  sourceChanged: boolean;
 }
 
 // --- Historique des joueurs ---
