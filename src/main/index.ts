@@ -47,13 +47,17 @@ app.whenReady().then(async () => {
   }
 
   // CSP en production uniquement (dev : Vite HMR utilise eval)
+  // img-src : icônes de mods des registres Valheim (voir registries.ts). En
+  // wildcard de sous-domaine car les CDN changent sans prévenir : Thunderstore
+  // est passé de gcdn. à ccdn.thunderstore.io (les anciennes URL persistées
+  // dans mods.json restent en gcdn.), Hexium sert depuis cdn.hexium.gg.
   if (app.isPackaged) {
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
       callback({
         responseHeaders: {
           ...details.responseHeaders,
           "Content-Security-Policy": [
-            "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://gcdn.thunderstore.io; font-src 'self' data:",
+            "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.thunderstore.io https://*.hexium.gg; font-src 'self' data:",
           ],
         },
       });
