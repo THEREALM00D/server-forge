@@ -4,16 +4,12 @@ import type { AppUpdateStatus } from "../../shared/types";
 
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = false;
-// Toutes nos releases sont marquées "pre-release" pendant l'alpha — sans ça,
-// electron-updater les ignore par défaut (comme l'API "latest" de GitHub).
-autoUpdater.allowPrerelease = true;
-// Fixé explicitement (plutôt que dérivé du suffixe de currentVersion) pour
-// ne pas dépendre du format exact de la version qui tourne. Doit matcher
-// `publish.channel` dans electron-builder.yml (génère "alpha.yml"), et les
-// tags de version doivent utiliser le format pointé "X.Y.Z-alpha.N" — sans
-// le point, semver traite "alphaN" comme un identifiant unique par build et
-// electron-updater ne peut jamais faire le lien entre deux versions alpha.
-autoUpdater.channel = "alpha";
+// Versions semver stables (0.x.y, sans suffixe -alpha/-beta) depuis le
+// passage à release-please : canal par défaut ("latest.yml" via l'API
+// "latest release" de GitHub), donc ni `allowPrerelease` ni `channel` à fixer.
+// Les installs encore en 0.0.1-alpha.N (canal "alpha") retrouvent quand même
+// ces versions : electron-updater y cherche "alpha.yml" puis retombe sur
+// "latest.yml" (fallback actif avec leur `allowPrerelease = true`).
 
 function broadcast(status: AppUpdateStatus): void {
   for (const win of BrowserWindow.getAllWindows()) {
@@ -24,7 +20,7 @@ function broadcast(status: AppUpdateStatus): void {
 /**
  * Branche electron-updater sur les releases GitHub (déjà publiées par
  * electron-builder via `publish: provider: github` dans electron-builder.yml
- * — le `alpha.yml` nécessaire est généré automatiquement à chaque build).
+ * — le `latest.yml` nécessaire est généré automatiquement à chaque build).
  * Flow entièrement manuel côté utilisateur : on vérifie automatiquement au
  * démarrage, mais le téléchargement et l'installation restent des actions
  * explicites (pas d'auto-download/install silencieux).
@@ -42,10 +38,10 @@ export function registerAutoUpdater(): void {
     broadcast({ state: "downloaded", version: info.version }),
   );
   autoUpdater.on("error", (err) => {
-    // Le tag/la release GitHub existe mais alpha.yml (et le fallback
-    // latest.yml) ne sont pas encore uploadés — le workflow de release est
-    // probablement encore en train de build. Pas une vraie erreur pour
-    // l'utilisateur, juste "réessaie plus tard" (le prochain check au
+    // Le tag/la release GitHub existe mais latest.yml n'est pas (encore)
+    // uploadé — normalement impossible depuis que la release reste en draft
+    // jusqu'à la fin du build (voir release.yml), gardé par sécurité. Pas
+    // une vraie erreur pour l'utilisateur, juste "réessaie plus tard" (le prochain check au
     // démarrage retombera sur "idle" une fois les assets en ligne).
     const code = (err as NodeJS.ErrnoException).code;
     if (
