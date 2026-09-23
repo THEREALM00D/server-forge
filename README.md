@@ -81,3 +81,5 @@ Proprietary — all rights reserved. See [LICENSE](LICENSE). This code is not op
 ## Contributing
 
 The `main` branch is protected: all contributions go through a Pull Request, and only the project maintainer can merge it.
+
+PR titles must follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat: …`, `fix: …`, `chore: …`), which is checked in CI. Versions and the [CHANGELOG](CHANGELOG.md) are generated from these titles by [release-please](https://github.com/googleapis/release-please-action): `fix` bumps the patch version, `feat` bumps the minor version, and releases are published by merging the release PR it opens.

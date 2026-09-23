@@ -17,6 +17,8 @@
 - Rédige les descriptions de PR en anglais
 - Explique les modifications apportées en anglais
 - Fournis un contexte clair sur pourquoi les changements sont nécessaires
+- **Titre de PR au format Conventional Commits obligatoire** (`feat: …`, `fix: …`, `chore: …` — vérifié en CI par `pr-title.yml`) : il devient le commit squash sur `main` et détermine la version (release-please : `feat` → mineur, `fix` → patch, le reste → pas de release). Choisir le type avec soin.
+- Ne jamais bumper `version` dans `package.json` ni créer de tag à la main — voir CLAUDE.md « Versioning & releases »
 
 ## Regles de developpement
 
