@@ -22,6 +22,23 @@ Gestionnaire de bureau pour serveurs dédiés de jeux vidéo. Compatible avec **
 - **Vérification des mises à jour** Palworld via SteamCMD
 - **Logs en temps réel** du processus serveur
 
+## Captures d'écran
+
+<table>
+  <tr>
+    <td><img src="docs/images/dashboard.png" alt="Dashboard" width="420"/><br/><sub>Dashboard</sub></td>
+    <td><img src="docs/images/mods.png" alt="Mods" width="420"/><br/><sub>Mods (Thunderstore & Hexium)</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/configuration.png" alt="Configuration du serveur" width="420"/><br/><sub>Configuration du serveur</sub></td>
+    <td><img src="docs/images/network.png" alt="Règles de pare-feu" width="420"/><br/><sub>Règles de pare-feu</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/players.png" alt="Historique des joueurs" width="420"/><br/><sub>Historique des joueurs</sub></td>
+    <td></td>
+  </tr>
+</table>
+
 ## Installation
 
 Téléchargez la dernière version depuis [Releases](https://github.com/THEREALM00D/server-forge/releases) :

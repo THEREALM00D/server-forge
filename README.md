@@ -22,6 +22,23 @@ Desktop manager for dedicated game servers. Compatible with **Palworld**, **Valh
 - **Update checking** via SteamCMD
 - **Real-time logs** of the server process
 
+## Screenshots
+
+<table>
+  <tr>
+    <td><img src="docs/images/dashboard.png" alt="Dashboard" width="420"/><br/><sub>Dashboard</sub></td>
+    <td><img src="docs/images/mods.png" alt="Mods" width="420"/><br/><sub>Mods (Thunderstore & Hexium)</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/configuration.png" alt="Server configuration" width="420"/><br/><sub>Server configuration</sub></td>
+    <td><img src="docs/images/network.png" alt="Firewall rules" width="420"/><br/><sub>Firewall rules</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/players.png" alt="Player history" width="420"/><br/><sub>Player history</sub></td>
+    <td></td>
+  </tr>
+</table>
+
 ## Installation
 
 Download the latest version from [Releases](https://github.com/THEREALM00D/server-forge/releases):
