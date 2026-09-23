@@ -37,7 +37,7 @@ Un hook PostToolUse (`.claude/settings.local.json`) lance automatiquement `fix:p
 ## CI / automatisation
 
 - **`.github/workflows/ci.yml`** : `yarn typecheck` + `yarn lint:check` sur chaque PR/push vers `main` (Node 22, `windows-latest`). `main` est protégée — PR obligatoire.
-- **`.github/workflows/release.yml`** : sur un tag `v*`, `yarn build` publie directement la release GitHub (voir `publish.channel: alpha` dans `electron-builder.yml` — nécessaire pour que l'auto-updater trouve le bon fichier `alpha.yml`, voir section Updater plus bas).
+- **Versioning / release automatique (release-please)** — voir section « Versioning & releases » plus bas. `.github/workflows/release.yml` (push sur `main`) + `.github/workflows/pr-title.yml` (titre de PR conventional commits obligatoire).
 - **`.eslintrc.cjs`** : base `@electron-toolkit`, `explicit-function-return-type` désactivée (trop strict pour du TSX), seulement `react-hooks/rules-of-hooks` + `exhaustive-deps` (pas le ruleset v7 complet orienté React Compiler, qui suppose des patterns qu'on n'utilise pas).
 - **Dependabot** (`.github/dependabot.yml`) : PR hebdo npm (groupées minor/patch) + GitHub Actions. Un bump majeur qui casse la CI doit être corrigé **sur la branche de la PR** (pas juste mergé en espérant) — voir le pattern ESM ci-dessus pour la cause la plus probable si `yarn typecheck`/`install` échoue après un bump.
 
@@ -244,9 +244,22 @@ Au démarrage, `ServerManager.tryAdopt()` scanne les processus via `systeminform
 - Le tracker est démarré/arrêté via une boucle de surveillance dans `handlers.ts` qui vérifie `serverManager.getStatus()` toutes les 5s. À l'arrêt il ferme toutes les sessions ouvertes et persiste.
 - IPC : `players:getHistory` / `players:clearHistory` / `players:removeEntry` (déjà génériques). UI : page « Joueurs » — composant **partagé** `src/renderer/src/components/players/` (comme `components/firewall/`), montée dans le manifest de chaque jeu qui a une source de données (Palworld, Valheim ; pas Astroneer).
 
+## Versioning & releases (release-please)
+
+- **Semver sans suffixe** : `0.x.y` (le `0.` signale déjà l'instabilité). Plus de `-alpha.N` depuis la `0.1.0`.
+- **Version calculée automatiquement** par [release-please](https://github.com/googleapis/release-please-action) à partir des **titres de PR** (squash-merge → le titre devient le commit sur `main`) :
+  - `fix: …` → patch, `feat: …` → mineur, `feat!: …` → mineur aussi tant qu'on est en `0.x` (`bump-minor-pre-major`) ;
+  - `chore:`/`docs:`/`ci:`/`refactor:` … → pas de release (masqués du CHANGELOG, voir `changelog-sections`).
+  - `pr-title.yml` bloque une PR dont le titre n'est pas conventional commits.
+- **Flow** : chaque push sur `main` → release-please met à jour une PR `chore(main): release X.Y.Z` (bump `package.json` + `.release-please-manifest.json` + `CHANGELOG.md`). **Merger cette PR = publier** : release-please crée la release GitHub **en draft** + le tag (`force-tag-creation`, sinon GitHub ne crée le tag d'un draft qu'à la publication et release-please ne retrouve plus la release précédente), puis le job `build-windows` lance `yarn build --publish always` (electron-builder réutilise toujours un draft existant pour le tag ; `releaseType: draft` dans `electron-builder.yml` pour ne jamais publier seul) et publie enfin la release (`gh release edit --draft=false`) — l'updater ne voit jamais une release sans `latest.yml`.
+- Tout est dans **un seul workflow** : un tag créé avec `GITHUB_TOKEN` ne déclenche aucun autre workflow.
+- **Ne jamais** bumper `version` dans `package.json` ni pousser de tag à la main.
+- `release-as: "0.1.0"` dans `release-please-config.json` force la première version stable — **à retirer** dans la PR qui suit la sortie de la 0.1.0 (sinon release-please continue de proposer 0.1.0).
+- Prérequis côté repo GitHub : _Settings → Actions → General → « Allow GitHub Actions to create and approve pull requests »_ (sinon release-please ne peut pas ouvrir sa PR), et squash-merge avec _« Default to pull request title »_.
+
 ## Mise à jour in-app (electron-updater)
 
-- `src/main/update/AutoUpdater.ts` branche `electron-updater` sur les releases GitHub déjà publiées par `electron-builder` (`publish.channel: alpha` dans `electron-builder.yml`, doit matcher `autoUpdater.channel = "alpha"` fixé explicitement dans le code — sinon `electron-updater` ne trouve pas le fichier `alpha.yml` et échoue silencieusement).
+- `src/main/update/AutoUpdater.ts` branche `electron-updater` sur les releases GitHub publiées par le workflow de release (canal par défaut → `latest.yml`, ni `allowPrerelease` ni `channel` — versions stables `0.x.y` depuis la `0.1.0`).
+- **Migration depuis les alphas** : les installs en `0.0.1-alpha.N` ont `channel = "alpha"` + `allowPrerelease = true` codés en dur. Elles retrouvent quand même les versions stables : `electron-updater` (6.8.x, `GitHubProvider`) accepte un tag sans suffixe depuis le canal alpha, cherche `alpha.yml` puis retombe sur `latest.yml`. Ne pas réintroduire de suffixe `-alpha`/`-beta` sans revoir ça.
 - Vérification auto au démarrage (`checkForUpdateOnStartup`), mais **téléchargement et installation restent des actions manuelles** déclenchées depuis la Sidebar (`UpdateIndicator.tsx`) — pas d'auto-download/install silencieux.
-- **Format de version obligatoire : `X.Y.Z-alpha.N` (point avant le numéro)**. Sans le point, `semver.prerelease()` traite `alphaN` comme un identifiant opaque unique par build, et `electron-updater` ne peut alors jamais faire le lien entre deux versions alpha (bug vécu : v0.0.1-alpha10 ne détectait jamais alpha11).
 - L'installeur NSIS est en mode assisté (`oneClick: false`, `allowToChangeInstallationDirectory: true`) — nécessaire pour que l'auto-update fonctionne correctement avec un chemin d'installation choisi par l'utilisateur. Le build portable n'a pas d'auto-update (mise à jour manuelle uniquement).

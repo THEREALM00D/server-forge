@@ -81,3 +81,5 @@ Propriétaire — tous droits réservés. Voir [LICENSE](LICENSE). Le code n'est
 ## Contribuer
 
 La branche `main` est protégée : toute contribution passe par une Pull Request, et seul le mainteneur du projet peut la merger.
+
+Les titres de PR doivent suivre [Conventional Commits](https://www.conventionalcommits.org/) (`feat: …`, `fix: …`, `chore: …`), ce qui est vérifié en CI. Les versions et le [CHANGELOG](CHANGELOG.md) sont générés à partir de ces titres par [release-please](https://github.com/googleapis/release-please-action) : `fix` fait monter la version patch, `feat` la version mineure, et une release est publiée en mergeant la PR de release qu'il ouvre.

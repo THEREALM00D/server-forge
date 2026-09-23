@@ -30,9 +30,8 @@ portable:
   artifactName: ${name}-${version}-portable.${ext}
 publish:
   provider: github
-  releaseType: release
-  # Sans ça, electron-builder publie "latest.yml" — mais electron-updater,
-  # avec allowPrerelease + un tag semver "X.Y.Z-alpha.N", cherche le canal
-  # dérivé du tag ("alpha.yml"), jamais "latest.yml". Les deux doivent
-  # correspondre pour que la détection de mise à jour fonctionne.
-  channel: alpha
+  # release-please crée la release en draft (release-please-config.json) :
+  # electron-builder y attache les assets (il réutilise toujours un draft
+  # existant pour le tag), puis release.yml la publie. "draft" ici garantit
+  # qu'aucun build ne publie jamais une release visible par lui-même.
+  releaseType: draft
