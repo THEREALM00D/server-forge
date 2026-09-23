@@ -20,8 +20,6 @@
     { "type": "test", "section": "Tests", "hidden": true }
   ],
   "packages": {
-    ".": {
-      "release-as": "0.1.0"
-    }
+    ".": {}
   }
 }
